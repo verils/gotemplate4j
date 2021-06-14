@@ -10,7 +10,10 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 class LexerTest {
 
+    private static final Item DOT_ITEM = makeItem(ItemType.DOT, ".");
+    private static final Item BLOCK_ITEM = makeItem(ItemType.BLOCK, "block");
     private static final Item EOF_ITEM = makeItem(ItemType.EOF, "");
+    private static final Item FOR_ITEM = makeItem(ItemType.IDENTIFIER, "for");
 
     private static final Item LEFT_DELIM_ITEM = makeItem(ItemType.LEFT_DELIM, "{{");
     private static final Item RIGHT_DELIM_ITEM = makeItem(ItemType.RIGHT_DELIM, "}}");
@@ -66,6 +69,27 @@ class LexerTest {
                         RIGHT_PAREN_ITEM,
                         RIGHT_DELIM_ITEM,
                         EOF_ITEM
+                }),
+                new Test("{{}}", new Item[]{
+                        LEFT_DELIM_ITEM,
+                        RIGHT_DELIM_ITEM,
+                        EOF_ITEM
+                }),
+                new Test("{{for}}", new Item[]{
+                        LEFT_DELIM_ITEM,
+                        FOR_ITEM,
+                        RIGHT_DELIM_ITEM,
+                        EOF_ITEM
+                }),
+                new Test("{{block \"foo\" .}}", new Item[]{
+                        LEFT_DELIM_ITEM,
+                        BLOCK_ITEM,
+                        SPACE_ITEM,
+                        makeItem(ItemType.STRING, "\"foo\""),
+                        SPACE_ITEM,
+                        DOT_ITEM,
+                        RIGHT_DELIM_ITEM,
+                        EOF_ITEM
                 })
         };
 
@@ -74,8 +98,8 @@ class LexerTest {
             for (Item item : test.items) {
                 Item tgt = lexer.nextItem();
                 assertNotNull(tgt, String.format("Input: '%s', Expected item type: '%s'", test.input, item.getType()));
-                assertEquals(item.getType(), tgt.getType(), String.format("Input: '%s', Expected item type: '%s', got: '%s'", test.input, item.getType(), item.getType()));
-                assertEquals(item.getValue(), tgt.getValue(), String.format("Input: '%s', Expected item value: '%s', got: '%s'", test.input, item.getValue(), item.getValue()));
+                assertEquals(item.getType(), tgt.getType(), String.format("Input: '%s', Expected item type: '%s', got: '%s'", test.input, item.getType(), tgt.getType()));
+                assertEquals(item.getValue(), tgt.getValue(), String.format("Input: '%s', Expected item value: '%s', got: '%s'", test.input, item.getValue(), tgt.getValue()));
             }
         }
     }

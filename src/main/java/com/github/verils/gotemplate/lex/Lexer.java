@@ -1,8 +1,9 @@
 package com.github.verils.gotemplate.lex;
 
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 public class Lexer {
 
@@ -10,6 +11,21 @@ public class Lexer {
     private static final String DEFAULT_RIGHT_DELIM = "}}";
     private static final String DEFAULT_LEFT_COMMENT = "/*";
     private static final String DEFAULT_RIGHT_COMMENT = "*/";
+
+    private static final Map<String, ItemType> KEY = new LinkedHashMap<>();
+
+    static {
+        KEY.put(".", ItemType.DOT);
+        KEY.put("block", ItemType.BLOCK);
+        KEY.put("define", ItemType.DEFINE);
+        KEY.put("else", ItemType.ELSE);
+        KEY.put("end", ItemType.END);
+        KEY.put("if", ItemType.IF);
+        KEY.put("nil", ItemType.NIL);
+        KEY.put("range", ItemType.RANGE);
+        KEY.put("template", ItemType.TEMPLATE);
+        KEY.put("with", ItemType.WITH);
+    }
 
     private final String input;
 
@@ -119,44 +135,35 @@ public class Lexer {
             return;
         }
 
-        char ch = input.charAt(start);
-        end++;
+        end = start + 1;
 
-        switch (ch) {
-            case ' ':
-            case '\t':
-            case '\r':
-            case '\n':
-                parseSpace();
-                break;
-            case '+':
-            case '-':
-            case '0':
-            case '1':
-            case '2':
-            case '3':
-            case '4':
-            case '5':
-            case '6':
-            case '7':
-            case '8':
-            case '9':
-                addItem(ItemType.NUMBER);
-                break;
-            case '(':
-                addItem(ItemType.LEFT_PAREN);
-                parenDepth++;
-                break;
-            case ')':
-                addItem(ItemType.RIGHT_PAREN);
-                parenDepth--;
-                break;
-            default:
-                addItem(ItemType.CHAR);
+        char ch = input.charAt(start);
+        if (Char.isSpace(ch)) {
+            parseSpace();
+            return;
+        } else if (ch == '"') {
+            parseQuote();
+            return;
+        } else if (ch == '+' || ch == '-' || Char.isNumeric(ch)) {
+            parseNumber();
+            return;
+        } else if (ch == '.') {
+            parseDot();
+            return;
+        } else if (Char.isAlphabetic(ch)) {
+            parseIdentifier();
+            return;
+        } else if (ch == '(') {
+            addItem(ItemType.LEFT_PAREN);
+            parenDepth++;
+        } else if (ch == ')') {
+            addItem(ItemType.RIGHT_PAREN);
+            parenDepth--;
+        } else {
+            addItem(ItemType.CHAR);
         }
 
         start = end;
-
         parseAction();
     }
 
@@ -171,6 +178,95 @@ public class Lexer {
     private void parseSpace() {
         addItem(ItemType.SPACE);
         start = end;
+
+        parseAction();
+    }
+
+    private void parseQuote() {
+        end = start + 1;
+        while (true) {
+            char ch = input.charAt(end);
+            end++;
+            if (ch == '"') {
+                break;
+            }
+        }
+
+        addItem(ItemType.STRING);
+        start = end;
+
+        parseAction();
+    }
+
+    private void parseNumber() {
+        addItem(ItemType.NUMBER);
+        start = end;
+
+        parseAction();
+    }
+
+    private void parseDot() {
+        char ch = input.charAt(end);
+        if (ch < '0' || '9' < ch) {
+            parseField();
+        }
+    }
+
+    private void parseField() {
+        if (atTerminator()) {
+            addItem(ItemType.DOT);
+            start = end;
+
+            parseAction();
+        }
+    }
+
+    private void parseIdentifier() {
+        StringBuilder sb = new StringBuilder();
+
+        end = start;
+        while (true) {
+            char ch = input.charAt(end);
+            if (!Char.isAlphabetic(ch)) {
+                break;
+            }
+
+            sb.append(ch);
+            end++;
+        }
+
+        String word = sb.toString();
+
+        if (KEY.containsKey(word)) {
+            addItem(KEY.get(word));
+        } else if (word.charAt(0) == '.') {
+            addItem(ItemType.FIELD);
+        } else if ("true".equals(word) || "false".equals(word)) {
+            addItem(ItemType.BOOL);
+        } else {
+            addItem(ItemType.IDENTIFIER);
+        }
+
+        start = end;
+
+        parseAction();
+    }
+
+    private boolean atTerminator() {
+        char ch = input.charAt(end);
+        if (Char.isSpace(ch) ||
+                ch == '\0' ||
+                ch == '.' ||
+                ch == ',' ||
+                ch == '|' ||
+                ch == ':' ||
+                ch == '(' ||
+                ch == ')') {
+            return true;
+        }
+
+        int n = input.indexOf(rightDelim, end);
+        return n == end;
     }
 
     private void addItem(ItemType type) {
@@ -185,7 +281,4 @@ public class Lexer {
         return null;
     }
 
-    public List<Item> getItems() {
-        return Collections.emptyList();
-    }
 }
