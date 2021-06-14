@@ -11,8 +11,13 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 class LexerTest {
 
     private static final Item EOF_ITEM = makeItem(ItemType.EOF, "");
+
     private static final Item LEFT_DELIM_ITEM = makeItem(ItemType.LEFT_DELIM, "{{");
     private static final Item RIGHT_DELIM_ITEM = makeItem(ItemType.RIGHT_DELIM, "}}");
+
+    private static final Item LEFT_PAREN_ITEM = makeItem(ItemType.LEFT_PAREN, "(");
+    private static final Item RIGHT_PAREN_ITEM = makeItem(ItemType.RIGHT_PAREN, ")");
+
     public static final Item SPACE_ITEM = makeItem(ItemType.SPACE, " ");
 
     @BeforeEach
@@ -37,6 +42,12 @@ class LexerTest {
                         makeItem(ItemType.TEXT, "now is the time"),
                         EOF_ITEM
                 }),
+                new Test("hello-{{/* this is a comment */}}-world", new Item[]{
+                        makeItem(ItemType.TEXT, "hello-"),
+                        makeItem(ItemType.COMMENT, "/* this is a comment */"),
+                        makeItem(ItemType.TEXT, "-world"),
+                        EOF_ITEM
+                }),
                 new Test("{{,@% }}", new Item[]{
                         LEFT_DELIM_ITEM,
                         makeItem(ItemType.CHAR, ","),
@@ -46,10 +57,14 @@ class LexerTest {
                         RIGHT_DELIM_ITEM,
                         EOF_ITEM
                 }),
-                new Test("hello-{{/* this is a comment */}}-world", new Item[]{
-                        makeItem(ItemType.TEXT, "hello-"),
-                        makeItem(ItemType.COMMENT, "/* this is a comment */"),
-                        makeItem(ItemType.TEXT, "-world"),
+                new Test("{{((3))}}", new Item[]{
+                        LEFT_DELIM_ITEM,
+                        LEFT_PAREN_ITEM,
+                        LEFT_PAREN_ITEM,
+                        makeItem(ItemType.NUMBER, "3"),
+                        RIGHT_PAREN_ITEM,
+                        RIGHT_PAREN_ITEM,
+                        RIGHT_DELIM_ITEM,
                         EOF_ITEM
                 })
         };
@@ -59,7 +74,8 @@ class LexerTest {
             for (Item item : test.items) {
                 Item tgt = lexer.nextItem();
                 assertNotNull(tgt, String.format("Input: '%s', Expected item type: '%s'", test.input, item.getType()));
-                assertEquals(item.getType(), tgt.getType(), "Input: '" + test.input + "'");
+                assertEquals(item.getType(), tgt.getType(), String.format("Input: '%s', Expected item type: '%s', got: '%s'", test.input, item.getType(), item.getType()));
+                assertEquals(item.getValue(), tgt.getValue(), String.format("Input: '%s', Expected item value: '%s', got: '%s'", test.input, item.getValue(), item.getValue()));
             }
         }
     }

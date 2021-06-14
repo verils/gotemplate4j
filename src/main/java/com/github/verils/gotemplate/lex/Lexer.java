@@ -24,6 +24,8 @@ public class Lexer {
     private int start = 0;
     private int end = 0;
 
+    private int parenDepth = 0;
+
 
     private final List<Item> items = new ArrayList<>(32);
     private int index;
@@ -63,6 +65,7 @@ public class Lexer {
             addItem(ItemType.TEXT);
         }
 
+        start = end;
         addItem(ItemType.EOF);
     }
 
@@ -80,7 +83,7 @@ public class Lexer {
                 throw new SyntaxException("Unclosed delim");
             }
             end = n + rightDelim.length();
-            start = n;
+            start = end;
 
             parseText();
 
@@ -99,6 +102,7 @@ public class Lexer {
         if (n < 0) {
             throw new SyntaxException("Unclosed comment");
         }
+
         end = n + rightComment.length();
         addItem(ItemType.COMMENT);
         start = end;
@@ -124,6 +128,28 @@ public class Lexer {
             case '\r':
             case '\n':
                 parseSpace();
+                break;
+            case '+':
+            case '-':
+            case '0':
+            case '1':
+            case '2':
+            case '3':
+            case '4':
+            case '5':
+            case '6':
+            case '7':
+            case '8':
+            case '9':
+                addItem(ItemType.NUMBER);
+                break;
+            case '(':
+                addItem(ItemType.LEFT_PAREN);
+                parenDepth++;
+                break;
+            case ')':
+                addItem(ItemType.RIGHT_PAREN);
+                parenDepth--;
                 break;
             default:
                 addItem(ItemType.CHAR);

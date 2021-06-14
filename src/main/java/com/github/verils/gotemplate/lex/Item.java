@@ -12,8 +12,11 @@ public class Item {
         this.pos = pos;
     }
 
-
     public ItemType getType() {
         return type;
+    }
+
+    public String getValue() {
+        return val;
     }
 }
