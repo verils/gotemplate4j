@@ -1,5 +1,7 @@
 package com.github.verils.gotemplate.lex;
 
+import java.util.stream.IntStream;
+
 final class Char {
 
     static final char EOF = (char) -1;
@@ -22,6 +24,15 @@ final class Char {
 
     static boolean isAlphabetic(char ch) {
         return ch == UNDERSCORE || Character.isLetterOrDigit(ch);
+    }
+
+    static boolean isValid(char ch, char... valid) {
+        for (char c : valid) {
+            if (c == ch) {
+                return true;
+            }
+        }
+        return false;
     }
 
     static boolean isValid(char ch, CharSequence valid) {

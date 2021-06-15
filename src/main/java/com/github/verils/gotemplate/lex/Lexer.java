@@ -4,13 +4,9 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Predicate;
 
 public class Lexer {
-
-    private static final int DECIMAL_SCALE = 10;
-    private static final int HEX_SCALE = 16;
-    private static final int OCTET_SCALE = 8;
-    private static final int BINARY_SCALE = 2;
 
     private static final String DEFAULT_LEFT_DELIM = "{{";
     private static final String DEFAULT_RIGHT_DELIM = "}}";
@@ -151,6 +147,9 @@ public class Lexer {
         } else if (ch == '`') {
             parseRawQuote();
             return;
+        } else if (ch == '\'') {
+            parseChar();
+            return;
         } else if (ch == '.') {
             parseDot();
             return;
@@ -197,12 +196,12 @@ public class Lexer {
             if (ch == '\\') {
                 ch = nextChar();
 
-                if (ch != Char.EOF && ch != Char.NEW_LINE) {
+                if (!Char.isValid(ch, Char.EOF, Char.NEW_LINE)) {
                     continue;
                 }
             }
 
-            if (ch == Char.EOF || ch == Char.NEW_LINE) {
+            if (Char.isValid(ch, Char.EOF, Char.NEW_LINE)) {
                 throw new SyntaxException("unclosed quote");
             }
 
@@ -221,7 +220,7 @@ public class Lexer {
         while (true) {
             char ch = nextChar();
             if (ch == Char.EOF) {
-                throw new SyntaxException("unclosed quote");
+                throw new SyntaxException("unclosed raw quote");
             }
 
             if (ch == '`') {
@@ -235,20 +234,60 @@ public class Lexer {
         parseInsideAction();
     }
 
+    private void parseChar() {
+        while (true) {
+            char ch = nextChar();
+            if (ch == '\\') {
+                ch = nextChar();
+
+                if (!Char.isValid(ch, Char.EOF, Char.NEW_LINE)) {
+                    continue;
+                }
+            }
+
+            if (Char.isValid(ch, Char.EOF, Char.NEW_LINE)) {
+                throw new SyntaxException("unclosed character constant");
+            }
+
+            if (ch == '\'') {
+                break;
+            }
+        }
+
+        addItem(ItemType.CHAR_CONSTANT);
+        updateStart();
+
+        parseInsideAction();
+    }
+
     private void parseDot() {
         char ch = getChar();
         if (ch < '0' || '9' < ch) {
             parseField();
+            return;
         }
+
+        parseIdentifier();
     }
 
     private void parseField() {
-        if (atTerminator()) {
+        if (atWordTerminator()) {
             addItem(ItemType.DOT);
             updateStart();
 
             parseInsideAction();
+            return;
         }
+
+        char ch = goUntil(c -> !Char.isAlphabetic(c));
+        if (!atWordTerminator()) {
+            throw new SyntaxException("bad character: " + ch);
+        }
+
+        addItem(ItemType.FIELD);
+        updateStart();
+
+        parseInsideAction();
     }
 
     private void parseNumber() {
@@ -352,10 +391,15 @@ public class Lexer {
         }
     }
 
-    private char goUntilNot(String until) {
+    private char goUntilNot(String valid) {
+        Predicate<Character> predicate = c -> !Char.isValid(c, valid);
+        return goUntil(predicate);
+    }
+
+    private char goUntil(Predicate<Character> predicate) {
         while (true) {
             char ch = nextChar();
-            if (!Char.isValid(ch, until)) {
+            if (predicate.test(ch)) {
                 pos--;
                 return ch;
             }
@@ -374,7 +418,7 @@ public class Lexer {
         return ch;
     }
 
-    private boolean atTerminator() {
+    private boolean atWordTerminator() {
         char ch = getChar();
         if (Char.isSpace(ch) || Char.isValid(ch, Char.EOF + ".,|:()")) {
             return true;

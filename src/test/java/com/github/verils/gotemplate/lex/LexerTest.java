@@ -11,10 +11,12 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 class LexerTest {
 
 
-    private static final Item DOT_ITEM = mkItem(ItemType.DOT, ".");
     private static final Item BLOCK_ITEM = mkItem(ItemType.BLOCK, "block");
+    private static final Item DOT_ITEM = mkItem(ItemType.DOT, ".");
     private static final Item EOF_ITEM = mkItem(ItemType.EOF, "");
     private static final Item FOR_ITEM = mkItem(ItemType.IDENTIFIER, "for");
+    private static final Item NIL_ITEM = mkItem(ItemType.NIL, "nil");
+    private static final Item SPACE_ITEM = mkItem(ItemType.SPACE, " ");
 
     private static final Item LEFT_DELIM_ITEM = mkItem(ItemType.LEFT_DELIM, "{{");
     private static final Item RIGHT_DELIM_ITEM = mkItem(ItemType.RIGHT_DELIM, "}}");
@@ -22,7 +24,6 @@ class LexerTest {
     private static final Item LEFT_PAREN_ITEM = mkItem(ItemType.LEFT_PAREN, "(");
     private static final Item RIGHT_PAREN_ITEM = mkItem(ItemType.RIGHT_PAREN, ")");
 
-    public static final Item SPACE_ITEM = mkItem(ItemType.SPACE, " ");
 
     @BeforeEach
     void setUp() {
@@ -137,6 +138,72 @@ class LexerTest {
                         mkItem(ItemType.NUMBER, "0x1.e_fp4"),
                         SPACE_ITEM,
                         mkItem(ItemType.NUMBER, "0X1.E_FP4"),
+                        RIGHT_DELIM_ITEM,
+                        EOF_ITEM
+                }),
+                new Test("{{'a' '\\n' '\\'' '\\\\' '\\u00FF' '\\xFF' '本'}}", new Item[]{
+                        LEFT_DELIM_ITEM,
+                        mkItem(ItemType.CHAR_CONSTANT, "'a'"),
+                        SPACE_ITEM,
+                        mkItem(ItemType.CHAR_CONSTANT, "'\\n'"),
+                        SPACE_ITEM,
+                        mkItem(ItemType.CHAR_CONSTANT, "'\\''"),
+                        SPACE_ITEM,
+                        mkItem(ItemType.CHAR_CONSTANT, "'\\\\'"),
+                        SPACE_ITEM,
+                        mkItem(ItemType.CHAR_CONSTANT, "'\\u00FF'"),
+                        SPACE_ITEM,
+                        mkItem(ItemType.CHAR_CONSTANT, "'\\xFF'"),
+                        SPACE_ITEM,
+                        mkItem(ItemType.CHAR_CONSTANT, "'本'"),
+                        RIGHT_DELIM_ITEM,
+                        EOF_ITEM
+                }),
+                new Test("{{true false}}", new Item[]{
+                        LEFT_DELIM_ITEM,
+                        mkItem(ItemType.BOOL, "true"),
+                        SPACE_ITEM,
+                        mkItem(ItemType.BOOL, "false"),
+                        RIGHT_DELIM_ITEM,
+                        EOF_ITEM
+                }),
+                new Test("{{.}}", new Item[]{
+                        LEFT_DELIM_ITEM,
+                        DOT_ITEM,
+                        RIGHT_DELIM_ITEM,
+                        EOF_ITEM
+                }),
+                new Test("{{nil}}", new Item[]{
+                        LEFT_DELIM_ITEM,
+                        NIL_ITEM,
+                        RIGHT_DELIM_ITEM,
+                        EOF_ITEM
+                }),
+                new Test("{{.x . .2 .x.y.z}}", new Item[]{
+                        LEFT_DELIM_ITEM,
+                        mkItem(ItemType.FIELD, ".x"),
+                        SPACE_ITEM,
+                        DOT_ITEM,
+                        SPACE_ITEM,
+                        mkItem(ItemType.FIELD, ".2"),
+                        SPACE_ITEM,
+                        mkItem(ItemType.FIELD, ".x"),
+                        mkItem(ItemType.FIELD, ".y"),
+                        mkItem(ItemType.FIELD, ".z"),
+                        RIGHT_DELIM_ITEM,
+                        EOF_ITEM
+                }),
+                new Test("{{range if else end with}}", new Item[]{
+                        LEFT_DELIM_ITEM,
+                        mkItem(ItemType.RANGE, "range"),
+                        SPACE_ITEM,
+                        mkItem(ItemType.IF, "if"),
+                        SPACE_ITEM,
+                        mkItem(ItemType.ELSE, "else"),
+                        SPACE_ITEM,
+                        mkItem(ItemType.END, "end"),
+                        SPACE_ITEM,
+                        mkItem(ItemType.WITH, "with"),
                         RIGHT_DELIM_ITEM,
                         EOF_ITEM
                 })
