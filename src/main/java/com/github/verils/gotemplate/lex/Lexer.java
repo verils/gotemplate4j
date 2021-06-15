@@ -65,20 +65,30 @@ public class Lexer {
     }
 
     private void parseText() {
-        int n = input.indexOf(leftDelim, start);
+        int n = input.indexOf(leftDelim, pos);
         boolean hasLeftDelim = n >= 0;
         if (hasLeftDelim) {
             pos = n;
+
+            boolean atLeftTrimMarker = atLeftTrimMarker();
+            if (atLeftTrimMarker) {
+                String text = getValue();
+                int rtrimLength = rtrimLength(text);
+                pos -= rtrimLength;
+            }
+
             if (pos > start) {
                 addItem(ItemType.TEXT);
             }
+
+            pos = n;
             updateStart();
 
             parseLeftDelim();
             return;
         }
 
-        if (input.length() > start) {
+        if (input.length() > pos) {
             pos = input.length();
             addItem(ItemType.TEXT);
         }
@@ -88,7 +98,11 @@ public class Lexer {
     }
 
     private void parseLeftDelim() {
-        int n = input.indexOf(leftComment, start);
+        boolean atLeftTrimMarker = atLeftTrimMarker();
+        pos += leftDelim.length();
+
+        int parseStart = atLeftTrimMarker ? pos + 2 : pos;
+        int n = input.indexOf(leftComment, parseStart);
         boolean hasComment = n >= 0;
         if (hasComment) {
             pos = n;
@@ -96,7 +110,7 @@ public class Lexer {
 
             parseComment();
 
-            n = input.indexOf(rightDelim, start);
+            n = input.indexOf(rightDelim, pos);
             if (n < 0) {
                 throw new SyntaxException("Unclosed delim");
             }
@@ -108,8 +122,9 @@ public class Lexer {
             return;
         }
 
-        pos += leftDelim.length();
         addItem(ItemType.LEFT_DELIM);
+
+        pos = parseStart;
         updateStart();
 
         parseInsideAction();
@@ -127,12 +142,9 @@ public class Lexer {
     }
 
     private void parseInsideAction() {
-        int n = input.indexOf(rightDelim, start);
-        if (n < 0) {
-            throw new SyntaxException("Unclosed delim");
-        }
-
-        if (start == n) {
+        boolean atRightTrimMarker = atRightTrimMarker();
+        boolean atRightDelim = atRightDelim();
+        if (atRightTrimMarker || atRightDelim) {
             parseRightDelim();
             return;
         }
@@ -141,11 +153,20 @@ public class Lexer {
         if (Char.isSpace(ch)) {
             parseSpace();
             return;
+        } else if (ch == ':') {
+            parseDeclare();
+            return;
+        } else if (ch == '|') {
+            parsePipe();
+            return;
         } else if (ch == '"') {
             parseQuote();
             return;
         } else if (ch == '`') {
             parseRawQuote();
+            return;
+        } else if (ch == '$') {
+            parseVariable();
             return;
         } else if (ch == '\'') {
             parseChar();
@@ -172,19 +193,52 @@ public class Lexer {
         }
 
         updateStart();
+
         parseInsideAction();
     }
 
     private void parseRightDelim() {
+        boolean atRightTrimMarker = atRightTrimMarker();
+        if (atRightTrimMarker) {
+            pos += 2;
+            updateStart();
+        }
+
         pos = start + rightDelim.length();
         addItem(ItemType.RIGHT_DELIM);
         updateStart();
+
+        if (atRightTrimMarker) {
+            while (Char.isSpace(nextChar())) {
+            }
+            pos--;
+            updateStart();
+        }
 
         parseText();
     }
 
     private void parseSpace() {
         addItem(ItemType.SPACE);
+        updateStart();
+
+        parseInsideAction();
+    }
+
+    private void parseDeclare() {
+        char ch = nextChar();
+        if (ch != '=') {
+            throw new SyntaxException("expected :=");
+        }
+
+        addItem(ItemType.DECLARE);
+        updateStart();
+
+        parseInsideAction();
+    }
+
+    private void parsePipe() {
+        addItem(ItemType.PIPE);
         updateStart();
 
         parseInsideAction();
@@ -229,6 +283,26 @@ public class Lexer {
         }
 
         addItem(ItemType.STRING);
+        updateStart();
+
+        parseInsideAction();
+    }
+
+    private void parseVariable() {
+        if (atWordTerminator()) {
+            addItem(ItemType.VARIABLE);
+            updateStart();
+
+            parseInsideAction();
+            return;
+        }
+
+        char ch = goUntil(c -> !Char.isAlphabetic(c));
+        if (!atWordTerminator()) {
+            throw new SyntaxException("bad character: " + ch);
+        }
+
+        addItem(ItemType.VARIABLE);
         updateStart();
 
         parseInsideAction();
@@ -345,7 +419,7 @@ public class Lexer {
             pos++;
 
             goIf("+-");
-            ch = goUntilNot(DECIMAL_DIGITS);
+            goUntilNot(DECIMAL_DIGITS);
         }
 
         goIf("i");
@@ -418,18 +492,49 @@ public class Lexer {
         return ch;
     }
 
+    private boolean atLeftTrimMarker() {
+        int n = pos + leftDelim.length() + 2;
+        if (n > input.length()) {
+            return false;
+        }
+        return (leftDelim + "- ").equals(input.substring(pos, n));
+    }
+
+    private boolean atRightTrimMarker() {
+        int n = pos + leftDelim.length() + 2;
+        if (n > input.length()) {
+            return false;
+        }
+        return (" -" + rightDelim).equals(input.substring(pos, n));
+    }
+
+    private boolean atRightDelim() {
+        int n = input.indexOf(rightDelim, pos);
+        return n == pos;
+    }
+
     private boolean atWordTerminator() {
         char ch = getChar();
         if (Char.isSpace(ch) || Char.isValid(ch, Char.EOF + ".,|:()")) {
             return true;
         }
-
-        int n = input.indexOf(rightDelim, pos);
-        return n == pos;
+        return atRightDelim();
     }
 
     private String getValue() {
         return input.substring(start, pos);
+    }
+
+    private int rtrimLength(String text) {
+        int len = 0;
+        for (int i = text.length() - 1; i >= 0; i--) {
+            char ch = text.charAt(i);
+            if (!Char.isSpace(ch)) {
+                break;
+            }
+            len++;
+        }
+        return len;
     }
 
     private void addItem(ItemType type) {

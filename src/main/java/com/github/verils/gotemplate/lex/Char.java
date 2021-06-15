@@ -1,7 +1,5 @@
 package com.github.verils.gotemplate.lex;
 
-import java.util.stream.IntStream;
-
 final class Char {
 
     static final char EOF = (char) -1;

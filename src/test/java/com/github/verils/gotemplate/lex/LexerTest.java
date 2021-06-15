@@ -16,6 +16,7 @@ class LexerTest {
     private static final Item EOF_ITEM = mkItem(ItemType.EOF, "");
     private static final Item FOR_ITEM = mkItem(ItemType.IDENTIFIER, "for");
     private static final Item NIL_ITEM = mkItem(ItemType.NIL, "nil");
+    private static final Item PIPE_ITEM = mkItem(ItemType.PIPE, "|");
     private static final Item SPACE_ITEM = mkItem(ItemType.SPACE, " ");
 
     private static final Item LEFT_DELIM_ITEM = mkItem(ItemType.LEFT_DELIM, "{{");
@@ -205,6 +206,105 @@ class LexerTest {
                         SPACE_ITEM,
                         mkItem(ItemType.WITH, "with"),
                         RIGHT_DELIM_ITEM,
+                        EOF_ITEM
+                }),
+                new Test("{{$c := printf $ $hello $23 $ $var.Field .Method}}", new Item[]{
+                        LEFT_DELIM_ITEM,
+                        mkItem(ItemType.VARIABLE, "$c"),
+                        SPACE_ITEM,
+                        mkItem(ItemType.DECLARE, ":="),
+                        SPACE_ITEM,
+                        mkItem(ItemType.IDENTIFIER, "printf"),
+                        SPACE_ITEM,
+                        mkItem(ItemType.VARIABLE, "$"),
+                        SPACE_ITEM,
+                        mkItem(ItemType.VARIABLE, "$hello"),
+                        SPACE_ITEM,
+                        mkItem(ItemType.VARIABLE, "$23"),
+                        SPACE_ITEM,
+                        mkItem(ItemType.VARIABLE, "$"),
+                        SPACE_ITEM,
+                        mkItem(ItemType.VARIABLE, "$var"),
+                        mkItem(ItemType.FIELD, ".Field"),
+                        SPACE_ITEM,
+                        mkItem(ItemType.FIELD, ".Method"),
+                        RIGHT_DELIM_ITEM,
+                        EOF_ITEM
+                }),
+                new Test("{{$x 23}}", new Item[]{
+                        LEFT_DELIM_ITEM,
+                        mkItem(ItemType.VARIABLE, "$x"),
+                        SPACE_ITEM,
+                        mkItem(ItemType.NUMBER, "23"),
+                        RIGHT_DELIM_ITEM,
+                        EOF_ITEM
+                }),
+                new Test("intro {{echo hi 1.2 |noargs|args 1 \"hi\"}} outro", new Item[]{
+                        mkItem(ItemType.TEXT, "intro "),
+                        LEFT_DELIM_ITEM,
+                        mkItem(ItemType.IDENTIFIER, "echo"),
+                        SPACE_ITEM,
+                        mkItem(ItemType.IDENTIFIER, "hi"),
+                        SPACE_ITEM,
+                        mkItem(ItemType.NUMBER, "1.2"),
+                        SPACE_ITEM,
+                        PIPE_ITEM,
+                        mkItem(ItemType.IDENTIFIER, "noargs"),
+                        PIPE_ITEM,
+                        mkItem(ItemType.IDENTIFIER, "args"),
+                        SPACE_ITEM,
+                        mkItem(ItemType.NUMBER, "1"),
+                        SPACE_ITEM,
+                        mkItem(ItemType.STRING, "\"hi\""),
+                        RIGHT_DELIM_ITEM,
+                        mkItem(ItemType.TEXT, " outro"),
+                        EOF_ITEM
+                }),
+                new Test("{{$v := 3}}", new Item[]{
+                        LEFT_DELIM_ITEM,
+                        mkItem(ItemType.VARIABLE, "$v"),
+                        SPACE_ITEM,
+                        mkItem(ItemType.DECLARE, ":="),
+                        SPACE_ITEM,
+                        mkItem(ItemType.NUMBER, "3"),
+                        RIGHT_DELIM_ITEM,
+                        EOF_ITEM
+                }),
+                new Test("{{$v , $w := 3}}", new Item[]{
+                        LEFT_DELIM_ITEM,
+                        mkItem(ItemType.VARIABLE, "$v"),
+                        SPACE_ITEM,
+                        mkItem(ItemType.CHAR, ","),
+                        SPACE_ITEM,
+                        mkItem(ItemType.VARIABLE, "$w"),
+                        SPACE_ITEM,
+                        mkItem(ItemType.DECLARE, ":="),
+                        SPACE_ITEM,
+                        mkItem(ItemType.NUMBER, "3"),
+                        RIGHT_DELIM_ITEM,
+                        EOF_ITEM
+                }),
+                new Test("{{(.X).Y}}", new Item[]{
+                        LEFT_DELIM_ITEM,
+                        LEFT_PAREN_ITEM,
+                        mkItem(ItemType.FIELD, ".X"),
+                        RIGHT_PAREN_ITEM,
+                        mkItem(ItemType.FIELD, ".Y"),
+                        RIGHT_DELIM_ITEM,
+                        EOF_ITEM
+                }),
+                new Test("hello- {{- 3 -}} -world", new Item[]{
+                        mkItem(ItemType.TEXT, "hello-"),
+                        LEFT_DELIM_ITEM,
+                        mkItem(ItemType.NUMBER, "3"),
+                        RIGHT_DELIM_ITEM,
+                        mkItem(ItemType.TEXT, "-world"),
+                        EOF_ITEM
+                }),
+                new Test("hello- {{- /* hello */ -}} -world", new Item[]{
+                        mkItem(ItemType.TEXT, "hello-"),
+                        mkItem(ItemType.COMMENT, "/* hello */"),
+                        mkItem(ItemType.TEXT, " -world"),
                         EOF_ITEM
                 })
         };
