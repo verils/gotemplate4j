@@ -365,6 +365,14 @@ class LexerTest {
                 new Test("hello-{.}}-world", new Item[]{
                         mkItem(ItemType.TEXT, "hello-{.}}-world"),
                         EOF_ITEM
+                }),
+
+                // Additional cases
+                new Test("{{$v : 3}}", new Item[]{
+                        LEFT_DELIM_ITEM,
+                        mkItem(ItemType.VARIABLE, "$v"),
+                        SPACE_ITEM,
+                        mkItem(ItemType.ERROR, "expected :="),
                 })
         };
 

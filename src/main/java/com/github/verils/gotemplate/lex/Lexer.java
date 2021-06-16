@@ -237,7 +237,7 @@ public class Lexer {
     private State parseDeclare() {
         char ch = nextChar();
         if (ch != '=') {
-            throw new SyntaxException("expected :=");
+            return () -> parseError("expected :=");
         }
 
         addItem(ItemType.DECLARE);
@@ -306,7 +306,7 @@ public class Lexer {
 
         char ch = goUntil(c -> !Char.isAlphabetic(c));
         if (!atWordTerminator()) {
-            throw new SyntaxException("bad character: " + ch);
+            return () -> parseError("bad character: " + ch);
         }
 
         addItem(ItemType.VARIABLE);
@@ -360,7 +360,7 @@ public class Lexer {
 
         char ch = goUntil(c -> !Char.isAlphabetic(c));
         if (!atWordTerminator()) {
-            throw new SyntaxException("bad character: " + ch);
+            return () -> parseError("bad character: " + ch);
         }
 
         addItem(ItemType.FIELD);
@@ -419,8 +419,8 @@ public class Lexer {
         return this::parseInsideAction;
     }
 
-    private State parseError(String s) {
-        addErrorItem(s);
+    private State parseError(String error) {
+        addErrorItem(error);
         return null;
     }
 
