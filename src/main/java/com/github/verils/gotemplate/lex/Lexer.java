@@ -109,16 +109,6 @@ public class Lexer {
             updateStart();
 
             parseComment();
-
-            n = input.indexOf(rightDelim, pos);
-            if (n < 0) {
-                throw new SyntaxException("Unclosed delim");
-            }
-            pos = n + rightDelim.length();
-            updateStart();
-
-            parseText();
-
             return;
         }
 
@@ -131,26 +121,54 @@ public class Lexer {
     }
 
     private void parseComment() {
-        int n = input.indexOf(rightComment, start);
+        int parseStart = pos + leftComment.length();
+        int n = input.indexOf(rightComment, parseStart);
         if (n < 0) {
-            throw new SyntaxException("Unclosed comment");
+            addErrorItem("unclosed comment");
+            return;
         }
 
         pos = n + rightComment.length();
+
+        boolean atRightTrimMarker = atRightTrimMarker();
+        boolean atRightDelim = atRightDelim();
+        if (!atRightTrimMarker && !atRightDelim) {
+            addErrorItem("comment closed leaving delim still open");
+            return;
+        }
+
         addItem(ItemType.COMMENT);
+
+        if (atRightTrimMarker) {
+            pos += 2 + rightDelim.length();
+        }
+        if (atRightDelim) {
+            pos += rightDelim.length();
+        }
+
         updateStart();
+
+        parseText();
     }
 
     private void parseInsideAction() {
         boolean atRightTrimMarker = atRightTrimMarker();
         boolean atRightDelim = atRightDelim();
         if (atRightTrimMarker || atRightDelim) {
+            if (parenDepth != 0) {
+                addErrorItem("unclosed left paren");
+                return;
+            }
+
             parseRightDelim();
             return;
         }
 
         char ch = nextChar();
-        if (Char.isSpace(ch)) {
+        if (ch == Char.EOF) {
+            addErrorItem("unclosed action");
+            return;
+        } else if (Char.isSpace(ch)) {
             parseSpace();
             return;
         } else if (ch == ':') {
@@ -188,8 +206,11 @@ public class Lexer {
         } else if (ch == ')') {
             addItem(ItemType.RIGHT_PAREN);
             parenDepth--;
-        } else {
+        } else if (Char.isAscii(ch) && Char.isVisible(ch)) {
             addItem(ItemType.CHAR);
+        } else {
+            addErrorItem("bad character in action: " + ch);
+            return;
         }
 
         updateStart();
@@ -249,14 +270,14 @@ public class Lexer {
             char ch = nextChar();
             if (ch == '\\') {
                 ch = nextChar();
-
                 if (!Char.isValid(ch, Char.EOF, Char.NEW_LINE)) {
                     continue;
                 }
             }
 
             if (Char.isValid(ch, Char.EOF, Char.NEW_LINE)) {
-                throw new SyntaxException("unclosed quote");
+                addErrorItem("unclosed quote");
+                return;
             }
 
             if (ch == '"') {
@@ -274,7 +295,8 @@ public class Lexer {
         while (true) {
             char ch = nextChar();
             if (ch == Char.EOF) {
-                throw new SyntaxException("unclosed raw quote");
+                addErrorItem("unclosed raw quote");
+                return;
             }
 
             if (ch == '`') {
@@ -320,7 +342,8 @@ public class Lexer {
             }
 
             if (Char.isValid(ch, Char.EOF, Char.NEW_LINE)) {
-                throw new SyntaxException("unclosed character constant");
+                addErrorItem("unclosed character constant");
+                return;
             }
 
             if (ch == '\'') {
@@ -369,7 +392,9 @@ public class Lexer {
 
         char ch = getChar();
         if (Char.isAlphabetic(ch)) {
-            throw new SyntaxException("bad number: " + getValue());
+            pos++;
+            addErrorItem("bad number: " + getValue());
+            return;
         }
 
         if (Char.isValid(ch, "+-")) {
@@ -427,11 +452,14 @@ public class Lexer {
 
     private void parseIdentifier() {
         while (true) {
-            char ch = getChar();
-            if (!Char.isAlphabetic(ch)) {
+            char ch = nextChar();
+            if (ch == Char.EOF) {
                 break;
             }
-            pos++;
+            if (!Char.isAlphabetic(ch)) {
+                pos--;
+                break;
+            }
         }
         String word = getValue();
 
@@ -481,6 +509,10 @@ public class Lexer {
     }
 
     private char nextChar() {
+        if (pos >= input.length()) {
+            return Char.EOF;
+        }
+
         char ch = input.charAt(pos);
         pos++;
         return ch;
@@ -540,6 +572,10 @@ public class Lexer {
     private void addItem(ItemType type) {
         String value = getValue();
         items.add(new Item(type, value, start));
+    }
+
+    private void addErrorItem(String error) {
+        items.add(new Item(ItemType.ERROR, error, start));
     }
 
     public Item nextItem() {

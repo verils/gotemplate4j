@@ -17,6 +17,7 @@ class LexerTest {
     private static final Item FOR_ITEM = mkItem(ItemType.IDENTIFIER, "for");
     private static final Item NIL_ITEM = mkItem(ItemType.NIL, "nil");
     private static final Item PIPE_ITEM = mkItem(ItemType.PIPE, "|");
+    private static final Item RANGE_ITEM = mkItem(ItemType.RANGE, "range");
     private static final Item SPACE_ITEM = mkItem(ItemType.SPACE, " ");
 
     private static final Item LEFT_DELIM_ITEM = mkItem(ItemType.LEFT_DELIM, "{{");
@@ -305,6 +306,64 @@ class LexerTest {
                         mkItem(ItemType.TEXT, "hello-"),
                         mkItem(ItemType.COMMENT, "/* hello */"),
                         mkItem(ItemType.TEXT, " -world"),
+                        EOF_ITEM
+                }),
+                new Test("#{{\1}}", new Item[]{
+                        mkItem(ItemType.TEXT, "#"),
+                        LEFT_DELIM_ITEM,
+                        mkItem(ItemType.ERROR, "bad character in action: \1"),
+                }),
+                new Test("{{", new Item[]{
+                        LEFT_DELIM_ITEM,
+                        mkItem(ItemType.ERROR, "unclosed action"),
+                }),
+                new Test("{{range", new Item[]{
+                        LEFT_DELIM_ITEM,
+                        RANGE_ITEM,
+                        mkItem(ItemType.ERROR, "unclosed action"),
+                }),
+                new Test("{{\"\n\"}}", new Item[]{
+                        LEFT_DELIM_ITEM,
+                        mkItem(ItemType.ERROR, "unclosed quote"),
+                }),
+                new Test("{{`xx}}", new Item[]{
+                        LEFT_DELIM_ITEM,
+                        mkItem(ItemType.ERROR, "unclosed raw quote"),
+                }),
+                new Test("{{'\n}}", new Item[]{
+                        LEFT_DELIM_ITEM,
+                        mkItem(ItemType.ERROR, "unclosed character constant"),
+                }),
+                new Test("{{3k}}", new Item[]{
+                        LEFT_DELIM_ITEM,
+                        mkItem(ItemType.ERROR, "bad number: 3k"),
+                }),
+                new Test("{{(3}}", new Item[]{
+                        LEFT_DELIM_ITEM,
+                        LEFT_PAREN_ITEM,
+                        mkItem(ItemType.NUMBER, "3"),
+                        mkItem(ItemType.ERROR, "unclosed left paren"),
+                }),
+                new Test("{{|||||}}", new Item[]{
+                        LEFT_DELIM_ITEM,
+                        PIPE_ITEM,
+                        PIPE_ITEM,
+                        PIPE_ITEM,
+                        PIPE_ITEM,
+                        PIPE_ITEM,
+                        RIGHT_DELIM_ITEM,
+                        EOF_ITEM
+                }),
+                new Test("hello-{{/*/}}-world", new Item[]{
+                        mkItem(ItemType.TEXT, "hello-"),
+                        mkItem(ItemType.ERROR, "unclosed comment"),
+                }),
+                new Test("hello-{{/* */ }}-world", new Item[]{
+                        mkItem(ItemType.TEXT, "hello-"),
+                        mkItem(ItemType.ERROR, "comment closed leaving delim still open"),
+                }),
+                new Test("hello-{.}}-world", new Item[]{
+                        mkItem(ItemType.TEXT, "hello-{.}}-world"),
                         EOF_ITEM
                 })
         };

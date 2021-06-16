@@ -16,6 +16,17 @@ final class Char {
         return ch == SPACE || ch == TAB || ch == RETURN || ch == NEW_LINE;
     }
 
+    public static boolean isAscii(char ch) {
+        return ch < 0x7F;
+    }
+
+    public static boolean isVisible(char ch) {
+        Character.UnicodeBlock block = Character.UnicodeBlock.of(ch);
+        return !Character.isISOControl(ch)
+                && block != null
+                && block != Character.UnicodeBlock.SPECIALS;
+    }
+
     static boolean isNumeric(char ch) {
         return '0' <= ch && ch <= '9';
     }
