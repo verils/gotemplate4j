@@ -61,10 +61,13 @@ public class Lexer {
         this.leftComment = DEFAULT_LEFT_COMMENT;
         this.rightComment = DEFAULT_RIGHT_COMMENT;
 
-        parseText();
+        State state = parseText();
+        while (state != null) {
+            state = state.exec();
+        }
     }
 
-    private void parseText() {
+    private State parseText() {
         int n = input.indexOf(leftDelim, pos);
         boolean hasLeftDelim = n >= 0;
         if (hasLeftDelim) {
@@ -84,8 +87,7 @@ public class Lexer {
             pos = n;
             updateStart();
 
-            parseLeftDelim();
-            return;
+            return this::parseLeftDelim;
         }
 
         if (input.length() > pos) {
@@ -95,9 +97,11 @@ public class Lexer {
 
         updateStart();
         addItem(ItemType.EOF);
+
+        return null;
     }
 
-    private void parseLeftDelim() {
+    private State parseLeftDelim() {
         boolean atLeftTrimMarker = atLeftTrimMarker();
         pos += leftDelim.length();
 
@@ -108,8 +112,7 @@ public class Lexer {
             pos = n;
             updateStart();
 
-            parseComment();
-            return;
+            return this::parseComment;
         }
 
         addItem(ItemType.LEFT_DELIM);
@@ -117,15 +120,14 @@ public class Lexer {
         pos = parseStart;
         updateStart();
 
-        parseInsideAction();
+        return this::parseInsideAction;
     }
 
-    private void parseComment() {
+    private State parseComment() {
         int parseStart = pos + leftComment.length();
         int n = input.indexOf(rightComment, parseStart);
         if (n < 0) {
-            addErrorItem("unclosed comment");
-            return;
+            return parseError("unclosed comment");
         }
 
         pos = n + rightComment.length();
@@ -133,8 +135,7 @@ public class Lexer {
         boolean atRightTrimMarker = atRightTrimMarker();
         boolean atRightDelim = atRightDelim();
         if (!atRightTrimMarker && !atRightDelim) {
-            addErrorItem("comment closed leaving delim still open");
-            return;
+            return parseError("comment closed leaving delim still open");
         }
 
         addItem(ItemType.COMMENT);
@@ -148,58 +149,45 @@ public class Lexer {
 
         updateStart();
 
-        parseText();
+        return this::parseText;
     }
 
-    private void parseInsideAction() {
+    private State parseInsideAction() {
         boolean atRightTrimMarker = atRightTrimMarker();
         boolean atRightDelim = atRightDelim();
         if (atRightTrimMarker || atRightDelim) {
             if (parenDepth != 0) {
-                addErrorItem("unclosed left paren");
-                return;
+                return parseError("unclosed left paren");
             }
 
-            parseRightDelim();
-            return;
+            return this::parseRightDelim;
         }
 
         char ch = nextChar();
         if (ch == Char.EOF) {
-            addErrorItem("unclosed action");
-            return;
+            return parseError("unclosed action");
         } else if (Char.isSpace(ch)) {
-            parseSpace();
-            return;
+            return this::parseSpace;
         } else if (ch == ':') {
-            parseDeclare();
-            return;
+            return this::parseDeclare;
         } else if (ch == '|') {
-            parsePipe();
-            return;
+            return this::parsePipe;
         } else if (ch == '"') {
-            parseQuote();
-            return;
+            return this::parseQuote;
         } else if (ch == '`') {
-            parseRawQuote();
-            return;
+            return this::parseRawQuote;
         } else if (ch == '$') {
-            parseVariable();
-            return;
+            return this::parseVariable;
         } else if (ch == '\'') {
-            parseChar();
-            return;
+            return this::parseChar;
         } else if (ch == '.') {
-            parseDot();
-            return;
+            return this::parseDot;
         } else if (Char.isValid(ch, "+-") || Char.isNumeric(ch)) {
             resetPos();
-            parseNumber();
-            return;
+            return this::parseNumber;
         } else if (Char.isAlphabetic(ch)) {
             resetPos();
-            parseIdentifier();
-            return;
+            return this::parseIdentifier;
         } else if (ch == '(') {
             addItem(ItemType.LEFT_PAREN);
             parenDepth++;
@@ -209,16 +197,16 @@ public class Lexer {
         } else if (Char.isAscii(ch) && Char.isVisible(ch)) {
             addItem(ItemType.CHAR);
         } else {
-            addErrorItem("bad character in action: " + ch);
-            return;
+            return parseError("bad character in action: " + ch);
         }
 
         updateStart();
 
-        parseInsideAction();
+        return this::parseInsideAction;
     }
 
-    private void parseRightDelim() {
+    @SuppressWarnings("StatementWithEmptyBody")
+    private State parseRightDelim() {
         boolean atRightTrimMarker = atRightTrimMarker();
         if (atRightTrimMarker) {
             pos += 2;
@@ -236,17 +224,17 @@ public class Lexer {
             updateStart();
         }
 
-        parseText();
+        return this::parseText;
     }
 
-    private void parseSpace() {
+    private State parseSpace() {
         addItem(ItemType.SPACE);
         updateStart();
 
-        parseInsideAction();
+        return this::parseInsideAction;
     }
 
-    private void parseDeclare() {
+    private State parseDeclare() {
         char ch = nextChar();
         if (ch != '=') {
             throw new SyntaxException("expected :=");
@@ -255,17 +243,17 @@ public class Lexer {
         addItem(ItemType.DECLARE);
         updateStart();
 
-        parseInsideAction();
+        return this::parseInsideAction;
     }
 
-    private void parsePipe() {
+    private State parsePipe() {
         addItem(ItemType.PIPE);
         updateStart();
 
-        parseInsideAction();
+        return this::parseInsideAction;
     }
 
-    private void parseQuote() {
+    private State parseQuote() {
         while (true) {
             char ch = nextChar();
             if (ch == '\\') {
@@ -276,8 +264,7 @@ public class Lexer {
             }
 
             if (Char.isValid(ch, Char.EOF, Char.NEW_LINE)) {
-                addErrorItem("unclosed quote");
-                return;
+                return parseError("unclosed quote");
             }
 
             if (ch == '"') {
@@ -288,15 +275,14 @@ public class Lexer {
         addItem(ItemType.STRING);
         updateStart();
 
-        parseInsideAction();
+        return this::parseInsideAction;
     }
 
-    private void parseRawQuote() {
+    private State parseRawQuote() {
         while (true) {
             char ch = nextChar();
             if (ch == Char.EOF) {
-                addErrorItem("unclosed raw quote");
-                return;
+                return parseError("unclosed raw quote");
             }
 
             if (ch == '`') {
@@ -307,16 +293,15 @@ public class Lexer {
         addItem(ItemType.STRING);
         updateStart();
 
-        parseInsideAction();
+        return this::parseInsideAction;
     }
 
-    private void parseVariable() {
+    private State parseVariable() {
         if (atWordTerminator()) {
             addItem(ItemType.VARIABLE);
             updateStart();
 
-            parseInsideAction();
-            return;
+            return this::parseInsideAction;
         }
 
         char ch = goUntil(c -> !Char.isAlphabetic(c));
@@ -327,10 +312,10 @@ public class Lexer {
         addItem(ItemType.VARIABLE);
         updateStart();
 
-        parseInsideAction();
+        return this::parseInsideAction;
     }
 
-    private void parseChar() {
+    private State parseChar() {
         while (true) {
             char ch = nextChar();
             if (ch == '\\') {
@@ -342,8 +327,7 @@ public class Lexer {
             }
 
             if (Char.isValid(ch, Char.EOF, Char.NEW_LINE)) {
-                addErrorItem("unclosed character constant");
-                return;
+                return parseError("unclosed character constant");
             }
 
             if (ch == '\'') {
@@ -354,26 +338,24 @@ public class Lexer {
         addItem(ItemType.CHAR_CONSTANT);
         updateStart();
 
-        parseInsideAction();
+        return this::parseInsideAction;
     }
 
-    private void parseDot() {
+    private State parseDot() {
         char ch = getChar();
         if (ch < '0' || '9' < ch) {
-            parseField();
-            return;
+            return this::parseField;
         }
 
-        parseIdentifier();
+        return this::parseIdentifier;
     }
 
-    private void parseField() {
+    private State parseField() {
         if (atWordTerminator()) {
             addItem(ItemType.DOT);
             updateStart();
 
-            parseInsideAction();
-            return;
+            return this::parseInsideAction;
         }
 
         char ch = goUntil(c -> !Char.isAlphabetic(c));
@@ -384,17 +366,16 @@ public class Lexer {
         addItem(ItemType.FIELD);
         updateStart();
 
-        parseInsideAction();
+        return this::parseInsideAction;
     }
 
-    private void parseNumber() {
+    private State parseNumber() {
         lookForNumber();
 
         char ch = getChar();
         if (Char.isAlphabetic(ch)) {
             pos++;
-            addErrorItem("bad number: " + getValue());
-            return;
+            return parseError("bad number: " + getValue());
         }
 
         if (Char.isValid(ch, "+-")) {
@@ -407,7 +388,40 @@ public class Lexer {
 
         updateStart();
 
-        parseInsideAction();
+        return this::parseInsideAction;
+    }
+
+    private State parseIdentifier() {
+        while (true) {
+            char ch = nextChar();
+            if (ch == Char.EOF) {
+                break;
+            }
+            if (!Char.isAlphabetic(ch)) {
+                pos--;
+                break;
+            }
+        }
+        String word = getValue();
+
+        if (KEY.containsKey(word)) {
+            addItem(KEY.get(word));
+        } else if (word.charAt(0) == '.') {
+            addItem(ItemType.FIELD);
+        } else if ("true".equals(word) || "false".equals(word)) {
+            addItem(ItemType.BOOL);
+        } else {
+            addItem(ItemType.IDENTIFIER);
+        }
+
+        updateStart();
+
+        return this::parseInsideAction;
+    }
+
+    private State parseError(String s) {
+        addErrorItem(s);
+        return null;
     }
 
     private void lookForNumber() {
@@ -448,34 +462,6 @@ public class Lexer {
         }
 
         goIf("i");
-    }
-
-    private void parseIdentifier() {
-        while (true) {
-            char ch = nextChar();
-            if (ch == Char.EOF) {
-                break;
-            }
-            if (!Char.isAlphabetic(ch)) {
-                pos--;
-                break;
-            }
-        }
-        String word = getValue();
-
-        if (KEY.containsKey(word)) {
-            addItem(KEY.get(word));
-        } else if (word.charAt(0) == '.') {
-            addItem(ItemType.FIELD);
-        } else if ("true".equals(word) || "false".equals(word)) {
-            addItem(ItemType.BOOL);
-        } else {
-            addItem(ItemType.IDENTIFIER);
-        }
-
-        updateStart();
-
-        parseInsideAction();
     }
 
     private void updateStart() {
@@ -585,4 +571,8 @@ public class Lexer {
         return null;
     }
 
+    private interface State {
+
+        State exec();
+    }
 }
