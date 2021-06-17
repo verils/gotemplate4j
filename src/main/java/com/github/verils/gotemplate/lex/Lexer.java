@@ -14,7 +14,6 @@ public class Lexer {
     private static final String DEFAULT_RIGHT_COMMENT = "*/";
 
     private static final Map<String, ItemType> KEY = new LinkedHashMap<>();
-    private static final String DECIMAL_DIGITS = "0123456789_";
 
     static {
         KEY.put(".", ItemType.DOT);
@@ -30,6 +29,7 @@ public class Lexer {
     }
 
     private final String input;
+    private final boolean keepComments;
 
     private final String leftDelim;
     private final String rightDelim;
@@ -49,11 +49,16 @@ public class Lexer {
     private int index;
 
     public Lexer(String input) {
+        this(input, false);
+    }
+
+    public Lexer(String input, boolean keepComments) {
         if (input == null) {
             throw new NullPointerException();
         }
 
         this.input = input;
+        this.keepComments = keepComments;
 
         this.leftDelim = DEFAULT_LEFT_DELIM;
         this.rightDelim = DEFAULT_RIGHT_DELIM;
@@ -61,6 +66,10 @@ public class Lexer {
         this.leftComment = DEFAULT_LEFT_COMMENT;
         this.rightComment = DEFAULT_RIGHT_COMMENT;
 
+        parse();
+    }
+
+    private void parse() {
         State state = parseText();
         while (state != null) {
             state = state.exec();
@@ -138,7 +147,9 @@ public class Lexer {
             return parseError("comment closed leaving delim still open");
         }
 
-        addItem(ItemType.COMMENT);
+        if (keepComments) {
+            addItem(ItemType.COMMENT);
+        }
 
         if (atRightTrimMarker) {
             pos += 2 + rightDelim.length();
@@ -427,17 +438,17 @@ public class Lexer {
     private void lookForNumber() {
         goIf("+-");
 
-        String digits = DECIMAL_DIGITS;
+        String digits = Char.DECIMAL_DIGITS;
 
         char ch = nextChar();
         if (ch == '0') {
             ch = nextChar();
             if (Char.isValid(ch, "xX")) {
-                digits = "0123456789abcdefABCDEF_";
+                digits = Char.HEX_DIGITS;
             } else if (Char.isValid(ch, "oO")) {
-                digits = "01234567_";
+                digits = Char.OCTET_DIGITS;
             } else if (Char.isValid(ch, "bB")) {
-                digits = "01_";
+                digits = Char.BINARY_DIGITS;
             }
         }
 
@@ -451,14 +462,14 @@ public class Lexer {
             pos++;
 
             goIf("+-");
-            ch = goUntilNot(DECIMAL_DIGITS);
+            ch = goUntilNot(Char.DECIMAL_DIGITS);
         }
 
         if (digits.length() == 16 + 6 + 1 && Char.isValid(ch, "pP")) {
             pos++;
 
             goIf("+-");
-            goUntilNot(DECIMAL_DIGITS);
+            goUntilNot(Char.DECIMAL_DIGITS);
         }
 
         goIf("i");

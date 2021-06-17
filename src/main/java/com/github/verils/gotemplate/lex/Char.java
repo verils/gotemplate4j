@@ -9,6 +9,11 @@ final class Char {
     static final char NEW_LINE = '\n';
     static final char UNDERSCORE = '_';
 
+    static final String DECIMAL_DIGITS = "0123456789_";
+    static final String HEX_DIGITS = "0123456789abcdefABCDEF_";
+    static final String OCTET_DIGITS = "01234567_";
+    static final String BINARY_DIGITS = "01_";
+
     private Char() {
     }
 
@@ -16,11 +21,11 @@ final class Char {
         return ch == SPACE || ch == TAB || ch == RETURN || ch == NEW_LINE;
     }
 
-    public static boolean isAscii(char ch) {
+    static boolean isAscii(char ch) {
         return ch < 0x7F;
     }
 
-    public static boolean isVisible(char ch) {
+    static boolean isVisible(char ch) {
         Character.UnicodeBlock block = Character.UnicodeBlock.of(ch);
         return !Character.isISOControl(ch)
                 && block != null

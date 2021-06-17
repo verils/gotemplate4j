@@ -368,6 +368,10 @@ class LexerTest {
                 }),
 
                 // Additional cases
+                new Test("{{/* this is a comment */}}", new Item[]{
+                        mkItem(ItemType.COMMENT, "/* this is a comment */"),
+                        EOF_ITEM
+                }),
                 new Test("{{$v : 3}}", new Item[]{
                         LEFT_DELIM_ITEM,
                         mkItem(ItemType.VARIABLE, "$v"),
@@ -377,7 +381,7 @@ class LexerTest {
         };
 
         for (Test test : tests) {
-            Lexer lexer = new Lexer(test.input);
+            Lexer lexer = new Lexer(test.input, true);
             for (Item item : test.items) {
                 Item tgt = lexer.nextItem();
                 assertNotNull(tgt, String.format("Input: '%s', Expected item type: '%s'", test.input, item.getType()));
