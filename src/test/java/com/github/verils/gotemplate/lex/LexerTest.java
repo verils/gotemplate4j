@@ -384,9 +384,9 @@ class LexerTest {
             Lexer lexer = new Lexer(test.input, true);
             for (Item item : test.items) {
                 Item tgt = lexer.nextItem();
-                assertNotNull(tgt, String.format("Input: '%s', Expected item type: '%s'", test.input, item.getType()));
-                assertEquals(item.getType(), tgt.getType(), String.format("Input: '%s', Expected item value: '%s', value: '%s'", test.input, item.getValue(), tgt.getValue()));
-                assertEquals(item.getValue(), tgt.getValue(), String.format("Input: '%s'", test.input));
+                assertNotNull(tgt, String.format("Input: '%s', Expected item type: '%s'", test.input, item.type()));
+                assertEquals(item.type(), tgt.type(), String.format("Input: '%s', Expected item value: '%s', value: '%s'", test.input, item.value(), tgt.value()));
+                assertEquals(item.value(), tgt.value(), String.format("Input: '%s'", test.input));
             }
         }
     }

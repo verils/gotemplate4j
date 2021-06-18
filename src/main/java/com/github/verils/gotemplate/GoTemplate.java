@@ -1,29 +1,31 @@
 package com.github.verils.gotemplate;
 
-import com.github.verils.gotemplate.lex.Lexer;
-import com.github.verils.gotemplate.tree.Tree;
+import com.github.verils.gotemplate.parse.Node;
+import com.github.verils.gotemplate.parse.Parser;
 
 public class GoTemplate {
 
     private final String template;
 
-    private final Tree tree;
+    private final Node root;
 
     public GoTemplate(String template) {
         this.template = template;
-        this.tree = parse(template);
-    }
 
-    private Tree parse(String template) {
-        Tree tree = new Tree();
-        tree.parse(template);
-        return tree;
+        this.root = new Parser().parse(template);
     }
 
 
-    public String exec(Object data) {
+    public String execute(Object data) {
+        StringBuilder sb = new StringBuilder();
 
-        return "null";
+        Visitor visitor = new Visitor(sb);
+        visitor.traverse(root, data);
+
+        return sb.toString();
     }
 
+    public String getTemplate() {
+        return template;
+    }
 }

@@ -49,7 +49,7 @@ class GoTemplateTest {
 
         GoTemplate goTemplate = new GoTemplate(letter);
 
-        String text1 = goTemplate.exec(recipients[0]);
+        String text1 = goTemplate.execute(recipients[0]);
         assertNotNull(text1);
         assertFalse(text1.contains("{{.Name}}"));
         assertEquals("\n" +
@@ -61,7 +61,7 @@ class GoTemplateTest {
                 "Best wishes,\n" +
                 "Josie\n", text1);
 
-        String text2 = goTemplate.exec(recipients[1]);
+        String text2 = goTemplate.execute(recipients[1]);
         assertNotNull(text2);
         assertFalse(text2.contains("{{.Name}}"));
         assertEquals("\n" +
@@ -73,7 +73,7 @@ class GoTemplateTest {
                 "Best wishes,\n" +
                 "Josie\n", text2);
 
-        String text3 = goTemplate.exec(recipients[2]);
+        String text3 = goTemplate.execute(recipients[2]);
         assertNotNull(text3);
         assertFalse(text3.contains("{{.Name}}"));
         assertEquals("\n" +

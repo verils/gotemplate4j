@@ -575,11 +575,66 @@ public class Lexer {
         items.add(new Item(ItemType.ERROR, error, start));
     }
 
+
+    /**
+     * 获取下一个元素
+     *
+     * @return 下一个元素。第一次执行返回第一个元素，超出最后一个元素后返回null
+     */
     public Item nextItem() {
         if (index < items.size()) {
             return items.get(index++);
         }
         return null;
+    }
+
+
+    /**
+     * 获取下一个非空白元素
+     *
+     * @return 下一个元素。第一次执行返回第一个元素，超出最后一个元素后返回null
+     */
+    public Item nextNonSpaceItem() {
+        while (true) {
+            Item item = nextItem();
+            if (item == null) {
+                return null;
+            }
+            if (item.type() != ItemType.SPACE) {
+                return item;
+            }
+        }
+    }
+
+
+    /**
+     * 获取上一个元素
+     *
+     * @return 上一个元素。第一次执行返回null，超出最后一个元素后执行返回最后的元素
+     */
+    public Item prevItem() {
+        if (index > 0) {
+            return items.get(--index);
+        }
+        return null;
+    }
+
+
+    /**
+     * 获取上一个非空白元素
+     *
+     * @return 上一个元素。第一次执行返回null，超出最后一个元素后执行返回最后的元素
+     */
+    public Item prevNonSpaceItem() {
+        while (true) {
+            Item item = prevItem();
+            if (item == null) {
+                return null;
+            }
+            if (item.type() != ItemType.SPACE) {
+                return item;
+            }
+        }
     }
 
     private interface State {

@@ -12,11 +12,15 @@ public class Item {
         this.pos = pos;
     }
 
-    public ItemType getType() {
+    public ItemType type() {
         return type;
     }
 
-    public String getValue() {
+    public String value() {
         return val;
+    }
+
+    public int pos() {
+        return pos;
     }
 }
