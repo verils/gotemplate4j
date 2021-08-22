@@ -4,6 +4,9 @@ import lombok.Data;
 import lombok.var;
 import org.junit.jupiter.api.Test;
 
+import java.util.LinkedHashMap;
+import java.util.Map;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 class ParserTest {
@@ -26,8 +29,16 @@ class ParserTest {
                 new Test(" \t\n", " \t\n", false, null),
                 new Test("some text", "some text", false, null),
                 new Test("{{}}", "{{}}", true, "missing value for command"),
-                new Test("{{.X}}", "{{.X}}", false, null)
+                new Test("{{.X}}", "{{.X}}", false, null),
+                new Test("{{printf}}", "{{printf}}", false, null),
+                new Test("{{$}}", "{{$}}", false, null),
+                new Test("{{with $x := 3}}{{$x 23}}{{end}}", "{{with $x := 3}}{{$x 23}}{{end}}", false, null)
         };
+
+
+        Map<String, Object> functions = new LinkedHashMap<>();
+        functions.put("printf", null);
+        functions.put("contains", null);
 
 
         for (Test test : tests) {
@@ -35,7 +46,7 @@ class ParserTest {
             Exception ex = null;
 
             try {
-                node = new Parser().parse(test.input);
+                node = new Parser(test.input, functions).getRoot();
             } catch (Exception e) {
                 ex = e;
             }

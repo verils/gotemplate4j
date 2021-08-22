@@ -1,7 +1,5 @@
 package com.github.verils.gotemplate.parse;
 
-import java.util.List;
-
 public class FieldNode implements Node {
 
     private final String[] identifiers;

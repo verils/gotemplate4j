@@ -12,7 +12,7 @@ public class GoTemplate {
     public GoTemplate(String template) {
         this.template = template;
 
-        this.root = new Parser().parse(template);
+        this.root = new Parser(template).getRoot();
     }
 
 

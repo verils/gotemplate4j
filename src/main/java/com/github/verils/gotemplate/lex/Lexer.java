@@ -577,20 +577,52 @@ public class Lexer {
 
 
     /**
-     * 获取下一个元素
+     * 获取下一个元素，但不移动查找标记
      *
      * @return 下一个元素。第一次执行返回第一个元素，超出最后一个元素后返回null
      */
-    public Item nextItem() {
+    private Item peekItem() {
         if (index < items.size()) {
-            return items.get(index++);
+            return items.get(index);
         }
         return null;
     }
 
+    /**
+     * 获取下一个元素，并将查找标记后移一位，直到最后一个元素
+     *
+     * @return 下一个元素。第一次执行返回第一个元素，超出最后一个元素后返回null
+     */
+    public Item nextItem() {
+        Item item = peekItem();
+        if (item != null) {
+            index++;
+        }
+        return item;
+    }
 
     /**
-     * 获取下一个非空白元素
+     * 获取下一个非空白元素，但不移动查找标记
+     *
+     * @return 下一个元素。第一次执行返回第一个元素，超出最后一个元素后返回null
+     */
+    public Item peekNonSpaceItem() {
+        int count = 0;
+        while (true) {
+            Item item = nextItem();
+            count++;
+            if (item == null) {
+                return null;
+            }
+            if (item.type() != ItemType.SPACE) {
+                index -= count;
+                return item;
+            }
+        }
+    }
+
+    /**
+     * 获取下一个非空白元素，并将查找标记后移到这个元素后，直到最后一个元素
      *
      * @return 下一个元素。第一次执行返回第一个元素，超出最后一个元素后返回null
      */
