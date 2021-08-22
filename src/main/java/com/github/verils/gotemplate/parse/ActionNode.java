@@ -14,6 +14,7 @@ public class ActionNode implements Node {
 
     @Override
     public String toString() {
-        return "{{" + pipeNode + "}}";
+        String pipe = pipeNode != null ? pipeNode.toString() : "";
+        return "{{" + pipe + "}}";
     }
 }

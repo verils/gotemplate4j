@@ -12,7 +12,7 @@ import static org.junit.jupiter.api.Assertions.*;
 class ParserTest {
 
     @Test
-    void testNumber() {
+    void test() {
         @Data
         class Test {
             private final String input;
@@ -42,22 +42,14 @@ class ParserTest {
 
 
         for (Test test : tests) {
-            Node node = null;
-            Exception ex = null;
-
             try {
-                node = new Parser(test.input, functions).getRoot();
-            } catch (Exception e) {
-                ex = e;
-            }
-
-            boolean hasError = ex != null;
-            if (!hasError) {
+                Parser parser = new Parser(test.input, functions);
+                Node node = parser.getRoot();
                 assertNotNull(node);
                 assertTrue(node instanceof ListNode);
                 assertEquals(test.getResult(), node.toString());
-            } else {
-                assertEquals(test.errorMessage, ex.getMessage());
+            } catch (Exception e) {
+                assertEquals(test.errorMessage, e.getMessage());
             }
         }
     }

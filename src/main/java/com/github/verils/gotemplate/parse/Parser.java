@@ -2,16 +2,14 @@ package com.github.verils.gotemplate.parse;
 
 import com.github.verils.gotemplate.lex.Item;
 import com.github.verils.gotemplate.lex.Lexer;
+import com.github.verils.gotemplate.lex.LexerViewer;
 
-import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
 
 public class Parser {
 
     private static final Map<String, Object> DEFAULT_FUNCTIONS = null;
 
-    private final String input;
     private final Map<String, Object> functions;
 
     private final Node root;
@@ -20,26 +18,19 @@ public class Parser {
         this(input, DEFAULT_FUNCTIONS);
     }
 
+
     public Parser(String input, Map<String, Object> functions) {
-        this.input = input;
         this.functions = functions;
 
-        this.root = parse();
-    }
-
-    private Node parse() {
-        Lexer lexer = new Lexer(input);
-        List<Item> buffer = new LinkedList<>();
-
         ListNode node = new ListNode();
-        parse(node, lexer);
-
-        return node;
+        LexerViewer lexerViewer = new Lexer(input).getViewer();
+        parse(node, lexerViewer);
+        this.root = node;
     }
 
-    private void parse(ListNode listNode, Lexer lexer) {
+    private void parse(ListNode listNode, LexerViewer lexerViewer) {
         while (true) {
-            Item item = lexer.nextItem();
+            Item item = lexerViewer.getNextItemAndMove();
             switch (item.type()) {
                 case EOF:
                     return;
@@ -48,44 +39,46 @@ public class Parser {
                     listNode.append(textNode);
                     return;
                 case LEFT_DELIM:
-                    parseAction(listNode, lexer);
+                    parseAction(listNode, lexerViewer);
                     return;
             }
         }
     }
 
-    private void parseAction(ListNode listNode, Lexer lexer) {
-        Item item = lexer.nextNonSpaceItem();
-        lexer.prevNonSpaceItem();
+    private void parseAction(ListNode listNode, LexerViewer lexerViewer) {
+        Item item = lexerViewer.getNextNonSpaceItemAndMove();
+        lexerViewer.getPrevNonSpaceItemAndMove();
 
         switch (item.type()) {
             case WITH:
-                parseWith(listNode, lexer);
+                parseWith(listNode, lexerViewer);
                 return;
+            default:
+
         }
 
 
         ActionNode actionNode = new ActionNode();
-        parsePipe(actionNode, lexer);
+        parsePipe(actionNode, lexerViewer);
         listNode.append(actionNode);
     }
 
-    private void parseWith(ListNode listNode, Lexer lexer) {
+    private void parseWith(ListNode listNode, LexerViewer lexerViewer) {
         WithNode withNode = new WithNode();
 
-        parseBranch(withNode, lexer);
+        parseBranch(withNode, lexerViewer);
 
         listNode.append(withNode);
     }
 
-    private void parseBranch(WithNode withNode, Lexer lexer) {
+    private void parseBranch(WithNode withNode, LexerViewer lexer) {
         parsePipe(withNode, lexer);
     }
 
-    private void parsePipe(ActionNode actionNode, Lexer lexer) {
+    private void parsePipe(ActionNode actionNode, LexerViewer lexerViewer) {
         PipeNode pipeNode = new PipeNode("command");
 
-        Item item = lexer.nextItem();
+        Item item = lexerViewer.getNextItemAndMove();
         switch (item.type()) {
             case RIGHT_DELIM:
                 pipeNode.check();
@@ -102,19 +95,19 @@ public class Parser {
             case STRING:
             case VARIABLE:
             case LEFT_PAREN:
-                lexer.prevItem();
-                parseCommand(pipeNode, lexer);
+                lexerViewer.getPrevItemAndMove();
+                parseCommand(pipeNode, lexerViewer);
                 break;
         }
 
         actionNode.setPipeNode(pipeNode);
     }
 
-    private void parsePipe(WithNode withNode, Lexer lexer) {
+    private void parsePipe(WithNode withNode, LexerViewer lexerViewer) {
         PipeNode pipeNode = new PipeNode("with");
 
-        Item item = lexer.peekNonSpaceItem();
-        lexer.prevNonSpaceItem();
+        Item item = lexerViewer.getNextNonSpaceItem();
+        lexerViewer.getPrevNonSpaceItemAndMove();
 
         switch (item.type()) {
             case RIGHT_DELIM:
@@ -132,18 +125,18 @@ public class Parser {
             case STRING:
             case VARIABLE:
             case LEFT_PAREN:
-                lexer.prevItem();
-                parseCommand(pipeNode, lexer);
+                lexerViewer.getPrevItemAndMove();
+                parseCommand(pipeNode, lexerViewer);
                 break;
         }
 
         withNode.setPipeNode(pipeNode);
     }
 
-    private void parseCommand(PipeNode pipeNode, Lexer lexer) {
+    private void parseCommand(PipeNode pipeNode, LexerViewer lexerViewer) {
         CommandNode commandNode = new CommandNode();
 
-        Item item = lexer.nextItem();
+        Item item = lexerViewer.getNextItemAndMove();
         switch (item.type()) {
             case IDENTIFIER:
                 if (!hasFunction(item.value())) {
