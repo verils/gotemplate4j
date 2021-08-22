@@ -93,7 +93,7 @@ public class Lexer {
             }
 
             pos = n;
-            updateStart();
+            moveStartToPos();
 
             return this::parseLeftDelim;
         }
@@ -103,7 +103,7 @@ public class Lexer {
             addItem(ItemType.TEXT);
         }
 
-        updateStart();
+        moveStartToPos();
         addItem(ItemType.EOF);
 
         return null;
@@ -118,7 +118,7 @@ public class Lexer {
         boolean hasComment = n >= 0;
         if (hasComment) {
             pos = n;
-            updateStart();
+            moveStartToPos();
 
             return this::parseComment;
         }
@@ -126,7 +126,7 @@ public class Lexer {
         addItem(ItemType.LEFT_DELIM);
 
         pos = parseStart;
-        updateStart();
+        moveStartToPos();
 
         return this::parseInsideAction;
     }
@@ -157,7 +157,7 @@ public class Lexer {
             pos += rightDelim.length();
         }
 
-        updateStart();
+        moveStartToPos();
 
         return this::parseText;
     }
@@ -193,10 +193,10 @@ public class Lexer {
         } else if (ch == '.') {
             return this::parseDot;
         } else if (Char.isValid(ch, "+-") || Char.isNumeric(ch)) {
-            resetPos();
+            movePosToStart();
             return this::parseNumber;
         } else if (Char.isAlphabetic(ch)) {
-            resetPos();
+            movePosToStart();
             return this::parseIdentifier;
         } else if (ch == '(') {
             addItem(ItemType.LEFT_PAREN);
@@ -210,7 +210,7 @@ public class Lexer {
             return parseError("bad character in action: " + ch);
         }
 
-        updateStart();
+        moveStartToPos();
 
         return this::parseInsideAction;
     }
@@ -220,18 +220,18 @@ public class Lexer {
         boolean atRightTrimMarker = atRightTrimMarker();
         if (atRightTrimMarker) {
             pos += 2;
-            updateStart();
+            moveStartToPos();
         }
 
         pos = start + rightDelim.length();
         addItem(ItemType.RIGHT_DELIM);
-        updateStart();
+        moveStartToPos();
 
         if (atRightTrimMarker) {
             while (Char.isSpace(nextChar())) {
             }
             pos--;
-            updateStart();
+            moveStartToPos();
         }
 
         return this::parseText;
@@ -239,7 +239,7 @@ public class Lexer {
 
     private State parseSpace() {
         addItem(ItemType.SPACE);
-        updateStart();
+        moveStartToPos();
 
         return this::parseInsideAction;
     }
@@ -251,14 +251,14 @@ public class Lexer {
         }
 
         addItem(ItemType.DECLARE);
-        updateStart();
+        moveStartToPos();
 
         return this::parseInsideAction;
     }
 
     private State parsePipe() {
         addItem(ItemType.PIPE);
-        updateStart();
+        moveStartToPos();
 
         return this::parseInsideAction;
     }
@@ -283,7 +283,7 @@ public class Lexer {
         }
 
         addItem(ItemType.STRING);
-        updateStart();
+        moveStartToPos();
 
         return this::parseInsideAction;
     }
@@ -301,7 +301,7 @@ public class Lexer {
         }
 
         addItem(ItemType.STRING);
-        updateStart();
+        moveStartToPos();
 
         return this::parseInsideAction;
     }
@@ -309,7 +309,7 @@ public class Lexer {
     private State parseVariable() {
         if (atWordTerminator()) {
             addItem(ItemType.VARIABLE);
-            updateStart();
+            moveStartToPos();
 
             return this::parseInsideAction;
         }
@@ -320,7 +320,7 @@ public class Lexer {
         }
 
         addItem(ItemType.VARIABLE);
-        updateStart();
+        moveStartToPos();
 
         return this::parseInsideAction;
     }
@@ -346,7 +346,7 @@ public class Lexer {
         }
 
         addItem(ItemType.CHAR_CONSTANT);
-        updateStart();
+        moveStartToPos();
 
         return this::parseInsideAction;
     }
@@ -363,7 +363,7 @@ public class Lexer {
     private State parseField() {
         if (atWordTerminator()) {
             addItem(ItemType.DOT);
-            updateStart();
+            moveStartToPos();
 
             return this::parseInsideAction;
         }
@@ -374,7 +374,7 @@ public class Lexer {
         }
 
         addItem(ItemType.FIELD);
-        updateStart();
+        moveStartToPos();
 
         return this::parseInsideAction;
     }
@@ -396,7 +396,7 @@ public class Lexer {
             addItem(ItemType.NUMBER);
         }
 
-        updateStart();
+        moveStartToPos();
 
         return this::parseInsideAction;
     }
@@ -424,7 +424,7 @@ public class Lexer {
             addItem(ItemType.IDENTIFIER);
         }
 
-        updateStart();
+        moveStartToPos();
 
         return this::parseInsideAction;
     }
@@ -474,11 +474,11 @@ public class Lexer {
         goIf("i");
     }
 
-    private void updateStart() {
+    private void moveStartToPos() {
         start = pos;
     }
 
-    private void resetPos() {
+    private void movePosToStart() {
         pos = start;
     }
 

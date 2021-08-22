@@ -8,10 +8,15 @@ import java.util.stream.Collectors;
 public class PipeNode implements Node {
 
     private final String context;
+    private final List<VariableNode> variables = new LinkedList<>();
     private final List<CommandNode> commands = new LinkedList<>();
 
     public PipeNode(String context) {
         this.context = context;
+    }
+
+    public void append(VariableNode variableNode) {
+        variables.add(variableNode);
     }
 
     public void append(CommandNode commandNode) {
@@ -20,12 +25,15 @@ public class PipeNode implements Node {
 
     public void check() {
         if (commands.isEmpty()) {
-            throw new TemplateParseException("missing value for " + context);
+            throw new ParseException("missing value for " + context);
         }
     }
 
     @Override
     public String toString() {
-        return commands.stream().map(Objects::toString).collect(Collectors.joining( " | "));
+        String variableString = !variables.isEmpty() ?
+                variables.stream().map(Objects::toString).collect(Collectors.joining(", ")) + " := " :
+                "";
+        return variableString + commands.stream().map(Objects::toString).collect(Collectors.joining(" | "));
     }
 }

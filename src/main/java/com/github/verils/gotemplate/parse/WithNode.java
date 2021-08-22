@@ -14,8 +14,18 @@ public class WithNode implements Node {
         this.pipeNode = pipeNode;
     }
 
+    public void setIfListNode(ListNode listNode) {
+        this.ifListNode = listNode;
+    }
+
     @Override
     public String toString() {
-        return "";
+        StringBuilder sb = new StringBuilder();
+        sb.append("{{with ").append(pipeNode).append("}}").append(ifListNode);
+        if (elseListNode != null) {
+            sb.append("{{else}}").append(elseListNode);
+        }
+        sb.append("{{end}}");
+        return sb.toString();
     }
 }

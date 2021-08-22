@@ -23,4 +23,18 @@ public class Item {
     public int pos() {
         return pos;
     }
+
+    @Override
+    public String toString() {
+        switch (type) {
+            case EOF:
+                return "EOF";
+            case ERROR:
+                return val;
+            case KEYWORD:
+                return '<' + val + '>';
+            default:
+                return val;
+        }
+    }
 }
