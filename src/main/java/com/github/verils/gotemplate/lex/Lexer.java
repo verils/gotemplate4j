@@ -581,7 +581,7 @@ public class Lexer {
      *
      * @return 下一个元素。第一次执行返回第一个元素，超出最后一个元素后返回null
      */
-    private Item peekItem() {
+    private Item getItem() {
         if (index < items.size()) {
             return items.get(index);
         }
@@ -594,7 +594,7 @@ public class Lexer {
      * @return 下一个元素。第一次执行返回第一个元素，超出最后一个元素后返回null
      */
     public Item nextItem() {
-        Item item = peekItem();
+        Item item = getItem();
         if (item != null) {
             index++;
         }
@@ -606,7 +606,7 @@ public class Lexer {
      *
      * @return 下一个元素。第一次执行返回第一个元素，超出最后一个元素后返回null
      */
-    public Item peekNonSpaceItem() {
+    public Item getNonSpaceItem() {
         int count = 0;
         while (true) {
             Item item = nextItem();

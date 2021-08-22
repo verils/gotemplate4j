@@ -32,14 +32,33 @@ final class Char {
                 && block != Character.UnicodeBlock.SPECIALS;
     }
 
+    /**
+     * 是否是数字0-9
+     *
+     * @param ch 字符
+     * @return 满足定义则返回true
+     */
     static boolean isNumeric(char ch) {
         return '0' <= ch && ch <= '9';
     }
 
+    /**
+     * 是否是下划线'_'或Unicode定义的Letter
+     *
+     * @param ch 字符
+     * @return 满足定义则返回true
+     */
     static boolean isAlphabetic(char ch) {
         return ch == UNDERSCORE || Character.isLetterOrDigit(ch);
     }
 
+    /**
+     * 检查字符是否是合法字符列表里定义的
+     *
+     * @param ch    字符
+     * @param valid 合法字符列表
+     * @return 如果字符在合法字符列表里就返回true
+     */
     static boolean isValid(char ch, char... valid) {
         for (char c : valid) {
             if (c == ch) {
@@ -49,6 +68,13 @@ final class Char {
         return false;
     }
 
+    /**
+     * 检查字符是否是合法字符串里定义的
+     *
+     * @param ch    字符
+     * @param valid 合法字符串
+     * @return 如果字符在合法字符串里就返回true
+     */
     static boolean isValid(char ch, CharSequence valid) {
         return valid.chars().anyMatch(c -> c == ch);
     }
