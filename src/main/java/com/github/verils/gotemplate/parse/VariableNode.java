@@ -8,6 +8,10 @@ public class VariableNode implements Node {
         this.identifiers = value.split("\\.");
     }
 
+    public String getIdentifier(int index) {
+        return identifiers[index];
+    }
+
     @Override
     public String toString() {
         return String.join(".", identifiers);

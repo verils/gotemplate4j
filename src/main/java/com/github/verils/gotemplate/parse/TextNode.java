@@ -10,6 +10,6 @@ public class TextNode implements Node {
 
     @Override
     public String toString() {
-        return String.format("%s", text);
+        return text;
     }
 }

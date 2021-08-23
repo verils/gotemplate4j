@@ -38,14 +38,12 @@ public class Lexer {
     private final String rightComment;
 
     /* 解析过程种的标记位 */
-
     private int start = 0;
     private int pos = 0;
-
     private int parenDepth = 0;
 
-
     private final List<Item> items = new ArrayList<>(32);
+
 
     public Lexer(String input) {
         this(input, false);
@@ -575,7 +573,7 @@ public class Lexer {
     }
 
     public LexerViewer getViewer() {
-        return new LexerViewer(items.toArray(new Item[0]));
+        return new LexerViewer(input,items.toArray(new Item[0]));
     }
 
 

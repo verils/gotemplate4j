@@ -384,7 +384,7 @@ class LexerTest {
             Lexer lexer = new Lexer(test.input, true);
             LexerViewer lexerViewer = lexer.getViewer();
             for (Item item : test.items) {
-                Item tgt = lexerViewer.getNextItemAndMove();
+                Item tgt = lexerViewer.nextItem();
                 assertNotNull(tgt, String.format("Input: '%s', Expected item type: '%s'", test.input, item.type()));
                 assertEquals(item.type(), tgt.type(), String.format("Input: '%s', Expected item value: '%s', value: '%s'", test.input, item.value(), tgt.value()));
                 assertEquals(item.value(), tgt.value(), String.format("Input: '%s'", test.input));

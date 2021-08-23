@@ -32,7 +32,8 @@ class ParserTest {
                 new Test("{{.X}}", "{{.X}}", false, null),
                 new Test("{{printf}}", "{{printf}}", false, null),
                 new Test("{{$}}", "{{$}}", false, null),
-                new Test("{{with $x := 3}}{{$x 23}}{{end}}", "{{with $x := 3}}{{$x 23}}{{end}}", false, null)
+                new Test("{{with $x := 3}}{{$x 23}}{{end}}", "{{with $x := 3}}{{$x 23}}{{end}}", false, null),
+                new Test("{{$.I}}", "{{$.I}}", false, null)
         };
 
 
@@ -49,7 +50,8 @@ class ParserTest {
                 assertTrue(node instanceof ListNode);
                 assertEquals(test.getResult(), node.toString());
             } catch (Exception e) {
-                assertEquals(test.errorMessage, e.getMessage());
+                e.printStackTrace();
+                assertEquals(test.errorMessage, String.format("Got error for input '%s' caused by: %s", test.input, e.getMessage()));
             }
         }
     }
