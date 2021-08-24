@@ -58,6 +58,7 @@ public class Parser {
         Item item = lexerViewer.nextItem();
         switch (item.type()) {
             case IF:
+                parseIf(listNode, lexerViewer);
                 return;
             case ELSE:
                 return;
@@ -81,6 +82,16 @@ public class Parser {
         listNode.append(actionNode);
     }
 
+    private void parseIf(ListNode listNode, LexerViewer lexerViewer) {
+        IfNode ifNode = new IfNode();
+
+        parsePipe(ifNode, lexerViewer);
+        parseIfList(ifNode, lexerViewer);
+//        parseElseList(ifNode, lexerViewer);
+
+        listNode.append(ifNode);
+    }
+
     private void parseWith(ListNode listNode, LexerViewer lexerViewer) {
         WithNode withNode = new WithNode();
 
@@ -88,7 +99,7 @@ public class Parser {
         lexerViewer.prevItem();
 
         parsePipe(withNode, lexerViewer);
-        parseList(withNode, lexerViewer);
+        parseIfList(withNode, lexerViewer);
 //        parseElseList(withNode, lexerViewer);
 
         listNode.append(withNode);
@@ -96,17 +107,23 @@ public class Parser {
 
     private void parsePipe(ActionNode actionNode, LexerViewer lexerViewer) {
         PipeNode pipeNode = new PipeNode("command");
-        parsePipe(pipeNode, lexerViewer);
+        parsePipe(pipeNode, lexerViewer, ItemType.RIGHT_DELIM);
         actionNode.setPipeNode(pipeNode);
+    }
+
+    private void parsePipe(IfNode ifNode, LexerViewer lexerViewer) {
+        PipeNode pipeNode = new PipeNode("if");
+        parsePipe(pipeNode, lexerViewer, ItemType.RIGHT_DELIM);
+        ifNode.setPipeNode(pipeNode);
     }
 
     private void parsePipe(WithNode withNode, LexerViewer lexerViewer) {
         PipeNode pipeNode = new PipeNode("with");
-        parsePipe(pipeNode, lexerViewer);
+        parsePipe(pipeNode, lexerViewer, ItemType.RIGHT_DELIM);
         withNode.setPipeNode(pipeNode);
     }
 
-    private void parsePipe(PipeNode pipeNode, LexerViewer lexerViewer) {
+    private void parsePipe(PipeNode pipeNode, LexerViewer lexerViewer, ItemType end) {
         Item item = lexerViewer.lookNextNonSpaceItem();
         if (item.type() == ItemType.VARIABLE) {
             lexerViewer.nextNonSpaceItem();
@@ -126,12 +143,12 @@ public class Parser {
             }
         }
 
-        loop:
         while (true) {
             item = lexerViewer.nextNonSpaceItem();
+            if (item.type() == end) {
+                break;
+            }
             switch (item.type()) {
-                case RIGHT_DELIM:
-                    break loop;
                 case BOOL:
                 case CHAR_CONSTANT:
                 case COMPLEX:
@@ -198,6 +215,13 @@ public class Parser {
                 case RAW_STRING:
                     node = new StringNode(item.value());
                     break;
+                case LEFT_PAREN:
+                    PipeNode nestedPipeNode = new PipeNode("parenthesized pipeline");
+                    parsePipe(nestedPipeNode, lexerViewer, ItemType.RIGHT_PAREN);
+                    node = nestedPipeNode;
+                    break;
+                default:
+                    lexerViewer.prevItem();
             }
 
             if (node != null) {
@@ -217,9 +241,6 @@ public class Parser {
                         node = chainNode;
                     }
                 }
-            }
-
-            if (node != null) {
                 commandNode.append(node);
             }
 
@@ -243,7 +264,13 @@ public class Parser {
         pipeNode.append(commandNode);
     }
 
-    private void parseList(WithNode withNode, LexerViewer lexerViewer) {
+    private void parseIfList(IfNode ifNode, LexerViewer lexerViewer) {
+        ListNode listNode = new ListNode();
+        parse(listNode, lexerViewer);
+        ifNode.setIfListNode(listNode);
+    }
+
+    private void parseIfList(WithNode withNode, LexerViewer lexerViewer) {
         ListNode listNode = new ListNode();
         parse(listNode, lexerViewer);
         withNode.setIfListNode(listNode);
