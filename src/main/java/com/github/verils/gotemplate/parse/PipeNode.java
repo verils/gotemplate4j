@@ -23,6 +23,10 @@ public class PipeNode implements Node {
         commands.add(commandNode);
     }
 
+    public String getContext() {
+        return context;
+    }
+
     public void check() {
         if (commands.isEmpty()) {
             throw new ParseException("missing value for " + context);

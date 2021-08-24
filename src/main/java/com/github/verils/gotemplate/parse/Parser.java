@@ -85,10 +85,13 @@ public class Parser {
     private void parseIf(ListNode listNode, LexerViewer lexerViewer) {
         IfNode ifNode = new IfNode();
 
-        parsePipe(ifNode, lexerViewer);
-        parseIfList(ifNode, lexerViewer);
-//        parseElseList(ifNode, lexerViewer);
+        lexerViewer.nextNonSpaceItem();
+        lexerViewer.prevItem();
 
+        BranchNode branchNode = new BranchNode();
+        parseBranch(branchNode, lexerViewer, "if");
+
+        ifNode.setBranch(branchNode);
         listNode.append(ifNode);
     }
 
@@ -98,11 +101,17 @@ public class Parser {
         lexerViewer.nextNonSpaceItem();
         lexerViewer.prevItem();
 
-        parsePipe(withNode, lexerViewer);
-        parseIfList(withNode, lexerViewer);
-//        parseElseList(withNode, lexerViewer);
+        BranchNode branchNode = new BranchNode();
+        parseBranch(branchNode, lexerViewer, "with");
 
+        withNode.setBranch(branchNode);
         listNode.append(withNode);
+    }
+
+    private void parseBranch(BranchNode branchNode, LexerViewer lexerViewer, String context) {
+        parsePipe(branchNode, lexerViewer, context);
+        parseIfList(branchNode, lexerViewer);
+//        parseElseList(ifNode, lexerViewer);
     }
 
     private void parsePipe(ActionNode actionNode, LexerViewer lexerViewer) {
@@ -111,16 +120,10 @@ public class Parser {
         actionNode.setPipeNode(pipeNode);
     }
 
-    private void parsePipe(IfNode ifNode, LexerViewer lexerViewer) {
-        PipeNode pipeNode = new PipeNode("if");
+    private void parsePipe(BranchNode ifNode, LexerViewer lexerViewer, String context) {
+        PipeNode pipeNode = new PipeNode(context);
         parsePipe(pipeNode, lexerViewer, ItemType.RIGHT_DELIM);
         ifNode.setPipeNode(pipeNode);
-    }
-
-    private void parsePipe(WithNode withNode, LexerViewer lexerViewer) {
-        PipeNode pipeNode = new PipeNode("with");
-        parsePipe(pipeNode, lexerViewer, ItemType.RIGHT_DELIM);
-        withNode.setPipeNode(pipeNode);
     }
 
     private void parsePipe(PipeNode pipeNode, LexerViewer lexerViewer, ItemType end) {
@@ -264,16 +267,10 @@ public class Parser {
         pipeNode.append(commandNode);
     }
 
-    private void parseIfList(IfNode ifNode, LexerViewer lexerViewer) {
+    private void parseIfList(BranchNode branchNode, LexerViewer lexerViewer) {
         ListNode listNode = new ListNode();
         parse(listNode, lexerViewer);
-        ifNode.setIfListNode(listNode);
-    }
-
-    private void parseIfList(WithNode withNode, LexerViewer lexerViewer) {
-        ListNode listNode = new ListNode();
-        parse(listNode, lexerViewer);
-        withNode.setIfListNode(listNode);
+        branchNode.setIfListNode(listNode);
     }
 
     private Node findVariable(String value) {
