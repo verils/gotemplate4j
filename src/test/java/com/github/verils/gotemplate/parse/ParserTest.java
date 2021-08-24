@@ -40,7 +40,8 @@ class ParserTest {
                 new Test("pipeline with decl", "{{$x := .X|.Y}}", "{{$x := .X | .Y}}", false, null),
                 new Test("nested pipeline", "{{.X (.Y .Z) (.A | .B .C) (.E)}}", "{{.X (.Y .Z) (.A | .B .C) (.E)}}", false, null),
                 new Test("field applied to parentheses", "{{(.Y .Z).Field}}", "{{(.Y .Z).Field}}", false, null),
-                new Test("simple if", "{{if .X}}hello{{end}}", "{{if .X}}\"hello\"{{end}}", false, null)
+                new Test("simple if", "{{if .X}}hello{{end}}", "{{if .X}}\"hello\"{{end}}", false, null),
+                new Test("if with else", "{{if .X}}true{{else}}false{{end}}", "{{if .X}}\"true\"{{else}}\"false\"{{end}}", false, null)
         };
 
 
@@ -55,7 +56,7 @@ class ParserTest {
                 Node node = parser.getRoot();
                 assertNotNull(node);
                 assertTrue(node instanceof ListNode);
-                assertEquals(test.getResult(), node.toString(), String.format("%s: expected %s got %s", test.name, test.result, test.input));
+                assertEquals(test.getResult(), node.toString(), String.format("%s: expected %s got %s", test.name, test.result, node));
             } catch (Exception e) {
                 e.printStackTrace();
                 assertEquals(test.errorMessage, String.format("Got error for input '%s' caused by: %s", test.input, e.getMessage()));

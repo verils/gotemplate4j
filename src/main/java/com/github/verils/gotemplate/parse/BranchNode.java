@@ -10,6 +10,10 @@ public class BranchNode implements Node {
         this.pipeNode = pipeNode;
     }
 
+    public ListNode getIfListNode() {
+        return ifListNode;
+    }
+
     public void setIfListNode(ListNode listNode) {
         this.ifListNode = listNode;
     }
