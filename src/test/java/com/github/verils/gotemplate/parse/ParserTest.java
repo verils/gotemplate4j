@@ -33,7 +33,8 @@ class ParserTest {
                 new Test("{{printf}}", "{{printf}}", false, null),
                 new Test("{{$}}", "{{$}}", false, null),
                 new Test("{{with $x := 3}}{{$x 23}}{{end}}", "{{with $x := 3}}{{$x 23}}{{end}}", false, null),
-                new Test("{{$.I}}", "{{$.I}}", false, null)
+                new Test("{{$.I}}", "{{$.I}}", false, null),
+                new Test("{{printf `%d` 23}}", "{{printf `%d` 23}}", false, null)
         };
 
 

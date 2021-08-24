@@ -194,6 +194,10 @@ public class Parser {
 
                     node = numberNode;
                     break;
+                case STRING:
+                case RAW_STRING:
+                    node = new StringNode(item.value());
+                    break;
             }
 
             if (node != null) {
@@ -260,7 +264,6 @@ public class Parser {
 
 
     public Node getRoot() {
-
         return root;
     }
 }
