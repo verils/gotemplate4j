@@ -4,6 +4,6 @@ public class EndNode implements Node {
 
     @Override
     public String toString() {
-        return "";
+        return "{{end}}";
     }
 }

@@ -18,6 +18,10 @@ public class BranchNode implements Node {
         this.ifListNode = listNode;
     }
 
+    public ListNode getElseListNode() {
+        return elseListNode;
+    }
+
     public void setElseListNode(ListNode elseListNode) {
         this.elseListNode = elseListNode;
     }
