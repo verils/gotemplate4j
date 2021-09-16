@@ -55,7 +55,7 @@ public class Parser {
                     parseAction(listNode, lexerViewer);
                     break;
                 default:
-                    throw new ParseException(String.format("unexpected %s in input", item));
+                    throw new ParseException(String.format("unexpected '%s' in input: '%s'", item, lexerViewer.getInput()));
             }
 
             Node lastNode = listNode.getLast();
@@ -75,6 +75,7 @@ public class Parser {
                 parseIf(listNode, lexerViewer);
                 break;
             case RANGE:
+                parseRange(listNode, lexerViewer);
                 break;
             case TEMPLATE:
                 break;
@@ -105,6 +106,19 @@ public class Parser {
 
         ifNode.setBranch(branchNode);
         listNode.append(ifNode);
+    }
+
+    private void parseRange(ListNode listNode, LexerViewer lexerViewer) {
+        lexerViewer.nextNonSpaceItem();
+        lexerViewer.prevItem();
+
+        RangeNode rangeNode = new RangeNode();
+
+        BranchNode branchNode = new BranchNode();
+        parseBranch(branchNode, lexerViewer, "range", true);
+
+        rangeNode.setBranch(branchNode);
+        listNode.append(rangeNode);
     }
 
     private void parseWith(ListNode listNode, LexerViewer lexerViewer) {
@@ -200,22 +214,9 @@ public class Parser {
 
     private void parsePipe(PipeNode pipeNode, LexerViewer lexerViewer, ItemType end) {
         Item item = lexerViewer.lookNextNonSpaceItem();
+
         if (item.type() == ItemType.VARIABLE) {
-            lexerViewer.nextNonSpaceItem();
-            Item nextItem = lexerViewer.lookNextNonSpaceItem();
-            switch (nextItem.type()) {
-                case ASSIGN:
-                case DECLARE:
-                    lexerViewer.nextNonSpaceItem();
-                    pipeNode.append(new VariableNode(item.value()));
-                    variables.add(item.value());
-                    break;
-                case CHAR:
-                    break;
-                default:
-                    lexerViewer.prevNonSpaceItem();
-                    break;
-            }
+            parseVariable(pipeNode, lexerViewer, item);
         }
 
         while (true) {
@@ -241,8 +242,45 @@ public class Parser {
                     break;
                 case ERROR:
                 default:
-                    throw new ParseException(String.format("unexpected %s in with", item));
+                    throw new ParseException(String.format("unexpected %s in %s", item, pipeNode.getContext()));
             }
+        }
+    }
+
+    private void parseVariable(PipeNode pipeNode, LexerViewer lexerViewer, Item variableItem) {
+        lexerViewer.nextNonSpaceItem();
+        Item nextItem = lexerViewer.lookNextNonSpaceItem();
+        switch (nextItem.type()) {
+            case ASSIGN:
+            case DECLARE:
+                lexerViewer.nextNonSpaceItem();
+                pipeNode.append(new VariableNode(variableItem.value()));
+                variables.add(variableItem.value());
+                break;
+            case CHAR:
+                if (",".equals(nextItem.value())) {
+                    lexerViewer.nextNonSpaceItem();
+                    pipeNode.append(new VariableNode(variableItem.value()));
+                    variables.add(variableItem.value());
+                    if ("range".equals(pipeNode.getContext()) && pipeNode.getVariableCount() < 2) {
+                        nextItem = lexerViewer.lookNextNonSpaceItem();
+                        switch (nextItem.type()) {
+                            case VARIABLE:
+                            case RIGHT_DELIM:
+                            case RIGHT_PAREN:
+                                if (variableItem.type() == ItemType.VARIABLE) {
+                                    parseVariable(pipeNode, lexerViewer, nextItem);
+                                }
+                                break;
+                            default:
+                                throw new ParseException("");
+                        }
+                    }
+                }
+                break;
+            default:
+                lexerViewer.prevNonSpaceItem();
+                break;
         }
     }
 
@@ -260,6 +298,9 @@ public class Parser {
                         throw new ParseException(String.format("function %s not defined", item.value()));
                     }
                     node = new IdentifierNode(item.value());
+                    break;
+                case DOT:
+                    node = new DotNode();
                     break;
                 case VARIABLE:
                     node = findVariable(item.value());

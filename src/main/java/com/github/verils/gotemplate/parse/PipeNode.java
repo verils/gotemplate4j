@@ -15,16 +15,20 @@ public class PipeNode implements Node {
         this.context = context;
     }
 
+    public String getContext() {
+        return context;
+    }
+
     public void append(VariableNode variableNode) {
         variables.add(variableNode);
     }
 
-    public void append(CommandNode commandNode) {
-        commands.add(commandNode);
+    public int getVariableCount() {
+        return variables.size();
     }
 
-    public String getContext() {
-        return context;
+    public void append(CommandNode commandNode) {
+        commands.add(commandNode);
     }
 
     public void check() {

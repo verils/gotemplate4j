@@ -12,11 +12,13 @@ public class ListNode implements Node {
     }
 
     public Node getLast() {
-        return nodes.get(nodes.size() - 1);
+        return !nodes.isEmpty() ? nodes.get(nodes.size() - 1) : null;
     }
 
     public void removeLast() {
-        nodes.remove(nodes.size() - 1);
+        if (!nodes.isEmpty()) {
+            nodes.remove(nodes.size() - 1);
+        }
     }
 
     @Override

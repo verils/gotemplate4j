@@ -39,7 +39,11 @@ public class BranchNode implements Node {
         }
 
         StringBuilder sb = new StringBuilder();
-        sb.append("{{").append(name).append(' ').append(pipeNode).append("}}").append(ifListNode);
+        sb.append("{{").append(name).append(' ').append(pipeNode).append("}}");
+        if (ifListNode != null) {
+            // 避免直接输出字符串"null"
+            sb.append(ifListNode);
+        }
         if (elseListNode != null) {
             sb.append("{{else}}").append(elseListNode);
         }
