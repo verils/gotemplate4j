@@ -57,6 +57,7 @@ class ParserTest {
                 new Test("template with arg", "{{template `x` .Y}}", "{{template \"x\" .Y}}", false, null),
                 new Test("with", "{{with .X}}hello{{end}}", "{{with .X}}\"hello\"{{end}}", false, null),
                 new Test("with with else", "{{with .X}}hello{{else}}goodbye{{end}}", "{{with .X}}\"hello\"{{else}}\"goodbye\"{{end}}", false, null),
+
                 new Test("trim left", "x \r\n\t{{- 3}}", "\"x\"{{3}}", false, null),
                 new Test("trim right", "{{3 -}}\n\n\ty", "{{3}}\"y\"", false, null),
                 new Test("trim left and right", "x \r\n\t{{- 3 -}}\n\n\ty", "\"x\"{{3}}\"y\"", false, null),
@@ -65,6 +66,15 @@ class ParserTest {
                 new Test("comment trim right", "{{/* hi */ -}}\n\n\ty", "\"y\"", false, null),
                 new Test("comment trim left and right", "x \r\n\t{{- /* */ -}}\n\n\ty", "\"x\"\"y\"", false, null),
 //                new Test("block definition", "{{block \"foo\" .}}hello{{end}}", "{{template \"foo\" .}}", false, null),
+
+                new Test("newline in assignment", "{{ $x \n := \n 1 \n }}", "{{$x := 1}}", false, null),
+                new Test("newline in empty action", "{{\n}}", "{{\n}}", true, null),
+                new Test("newline in pipeline", "{{\n\"x\"\n|\nprintf\n}}", "{{\"x\" | printf}}", false, null),
+                new Test("newline in comment", "{{/*\nhello\n*/}}", "", false, null),
+                new Test("newline in comment", "{{-\n/*\nhello\n*/\n-}}", "", false, null),
+
+                new Test("unclosed action", "hello{{range", "", true, null),
+                new Test("unmatched end", "{{end}}", "", true, null),
         };
 
 
@@ -81,8 +91,11 @@ class ParserTest {
                 assertTrue(node instanceof ListNode);
                 assertEquals(test.getResult(), node.toString(), String.format("%s: expected %s got %s", test.name, test.result, node));
             } catch (Exception e) {
-                e.printStackTrace();
-                assertEquals(test.errorMessage, String.format("Got error for input '%s' caused by: %s", test.input, e.getMessage()));
+                if (!test.error) {
+                    System.out.printf("%s: got error: %s%n", test.name, e.getMessage());
+                    e.printStackTrace();
+                }
+                assertTrue(test.error);
             }
         }
     }

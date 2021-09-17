@@ -13,6 +13,14 @@ public class Lexer {
     private static final String DEFAULT_LEFT_COMMENT = "/*";
     private static final String DEFAULT_RIGHT_COMMENT = "*/";
 
+    private static final char TRIM_MARKER = '-';
+    private static final int TRIM_MARKER_LENGTH = 2;
+
+    private static final int AT_RIGHT_DELIM_STATUS_UNREACHED = 0;
+    private static final int AT_RIGHT_DELIM_STATUS_REACHED_WITHOUT_TRIM_MARKER = 1;
+    private static final int AT_RIGHT_DELIM_STATUS_REACHED_WITH_TRIM_MARKER = 2;
+
+
     private static final Map<String, ItemType> KEY = new LinkedHashMap<>();
 
     static {
@@ -81,9 +89,7 @@ public class Lexer {
 
             boolean atLeftTrimMarker = atLeftTrimMarker();
             if (atLeftTrimMarker) {
-                String text = getValue();
-                int rtrimLength = rtrimLength(text);
-                pos -= rtrimLength;
+                pos -= ltrimLength();
             }
 
             if (pos > start) {
@@ -138,9 +144,8 @@ public class Lexer {
 
         pos = n + rightComment.length();
 
-        boolean atRightTrimMarker = atRightTrimMarker();
-        boolean atRightDelim = atRightDelim();
-        if (!atRightTrimMarker && !atRightDelim) {
+        int atRightDelimStatus = atRightDelimStatus();
+        if (atRightDelimStatus == AT_RIGHT_DELIM_STATUS_UNREACHED) {
             return parseError("comment closed leaving delim still open");
         }
 
@@ -148,24 +153,21 @@ public class Lexer {
             addItem(ItemType.COMMENT);
         }
 
-        if (atRightTrimMarker) {
-            pos += 2 + rightDelim.length();
-            int ltrimLength = ltrimLength();
-            pos += ltrimLength;
+        if (atRightDelimStatus == AT_RIGHT_DELIM_STATUS_REACHED_WITH_TRIM_MARKER) {
+            pos += TRIM_MARKER_LENGTH + rightDelim.length();
+            pos += rtrimLength();
         }
-        if (atRightDelim) {
+        if (atRightDelimStatus == AT_RIGHT_DELIM_STATUS_REACHED_WITHOUT_TRIM_MARKER) {
             pos += rightDelim.length();
         }
-
         moveStartToPos();
 
         return this::parseText;
     }
 
     private State parseInsideAction() {
-        boolean atRightTrimMarker = atRightTrimMarker();
-        boolean atRightDelim = atRightDelim();
-        if (atRightTrimMarker || atRightDelim) {
+        int atRightDelimStatus = atRightDelimStatus();
+        if (atRightDelimStatus != AT_RIGHT_DELIM_STATUS_UNREACHED) {
             if (parenDepth != 0) {
                 return parseError("unclosed left paren");
             }
@@ -521,24 +523,34 @@ public class Lexer {
     }
 
     private boolean atLeftTrimMarker() {
-        int n = pos + leftDelim.length() + 2;
-        if (n > input.length()) {
+        int leftDelimLength = leftDelim.length();
+        if (pos + leftDelimLength + TRIM_MARKER_LENGTH > input.length()) {
             return false;
         }
-        return (leftDelim + "- ").equals(input.substring(pos, n));
+        return input.indexOf(leftDelim, pos) == pos &&
+                TRIM_MARKER == input.charAt(pos + leftDelimLength) &&
+                Char.isSpace(input.charAt(pos + leftDelimLength + 1));
     }
 
     private boolean atRightTrimMarker() {
-        int n = pos + leftDelim.length() + 2;
-        if (n > input.length()) {
+        if (pos + TRIM_MARKER_LENGTH > input.length()) {
             return false;
         }
-        return (" -" + rightDelim).equals(input.substring(pos, n));
+        return Char.isSpace(input.charAt(pos)) && TRIM_MARKER == input.charAt(pos + 1);
     }
 
-    private boolean atRightDelim() {
-        int n = input.indexOf(rightDelim, pos);
-        return n == pos;
+    private int atRightDelimStatus() {
+        if (atRightTrimMarker() && atRightDelim(pos + TRIM_MARKER_LENGTH)) {
+            return AT_RIGHT_DELIM_STATUS_REACHED_WITH_TRIM_MARKER;
+        }
+        if (atRightDelim(pos)) {
+            return AT_RIGHT_DELIM_STATUS_REACHED_WITHOUT_TRIM_MARKER;
+        }
+        return AT_RIGHT_DELIM_STATUS_UNREACHED;
+    }
+
+    private boolean atRightDelim(int checkPos) {
+        return input.indexOf(rightDelim, checkPos) == checkPos;
     }
 
     private boolean atWordTerminator() {
@@ -546,7 +558,7 @@ public class Lexer {
         if (Char.isSpace(ch) || Char.isValid(ch, Char.EOF + ".,|:()")) {
             return true;
         }
-        return atRightDelim();
+        return atRightDelimStatus() != AT_RIGHT_DELIM_STATUS_UNREACHED;
     }
 
     private String getValue() {
@@ -555,6 +567,17 @@ public class Lexer {
 
     private int ltrimLength() {
         int i = pos;
+        for (; i > 0; i--) {
+            char ch = input.charAt(i - 1);
+            if (!Char.isSpace(ch)) {
+                break;
+            }
+        }
+        return pos - i;
+    }
+
+    private int rtrimLength() {
+        int i = pos;
         for (; i < input.length(); i++) {
             char ch = input.charAt(i);
             if (!Char.isSpace(ch)) {
@@ -562,17 +585,6 @@ public class Lexer {
             }
         }
         return i - pos;
-    }
-
-    private int rtrimLength(String text) {
-        int i = text.length() - 1;
-        for (; i >= 0; i--) {
-            char ch = text.charAt(i);
-            if (!Char.isSpace(ch)) {
-                break;
-            }
-        }
-        return text.length() - i - 1;
     }
 
     private void addItem(ItemType type) {

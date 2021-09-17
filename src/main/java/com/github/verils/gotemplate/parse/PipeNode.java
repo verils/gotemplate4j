@@ -31,10 +31,8 @@ public class PipeNode implements Node {
         commands.add(commandNode);
     }
 
-    public void check() {
-        if (commands.isEmpty()) {
-            throw new ParseException("missing value for " + context);
-        }
+    public List<CommandNode> getCommands() {
+        return commands;
     }
 
     @Override

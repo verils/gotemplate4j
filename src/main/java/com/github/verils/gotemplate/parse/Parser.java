@@ -89,6 +89,7 @@ public class Parser {
                 parseEnd(listNode, lexerViewer);
                 break;
             default:
+                lexerViewer.prevItem();
                 parsePipe(listNode, lexerViewer);
         }
     }
@@ -206,8 +207,6 @@ public class Parser {
     }
 
     private void parsePipe(ListNode listNode, LexerViewer lexerViewer) {
-        lexerViewer.prevNonSpaceItem();
-
         ActionNode actionNode = new ActionNode();
         parsePipe(actionNode, lexerViewer);
         listNode.append(actionNode);
@@ -241,6 +240,9 @@ public class Parser {
         while (true) {
             item = lexerViewer.nextNonSpaceItem();
             if (item.type() == end) {
+                if (pipeNode.getCommands().isEmpty()) {
+                    throw new ParseException("missing value for " + pipeNode.getContext());
+                }
                 break;
             }
             switch (item.type()) {
