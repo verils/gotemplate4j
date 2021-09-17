@@ -1,9 +1,6 @@
 package com.github.verils.gotemplate.parse;
 
-import com.github.verils.gotemplate.lex.Item;
-import com.github.verils.gotemplate.lex.ItemType;
-import com.github.verils.gotemplate.lex.Lexer;
-import com.github.verils.gotemplate.lex.LexerViewer;
+import com.github.verils.gotemplate.lex.*;
 
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -78,6 +75,7 @@ public class Parser {
                 parseRange(listNode, lexerViewer);
                 break;
             case TEMPLATE:
+                parseTemplate(listNode, lexerViewer);
                 break;
             case BLOCK:
                 break;
@@ -121,6 +119,21 @@ public class Parser {
         listNode.append(rangeNode);
     }
 
+    private void parseTemplate(ListNode listNode, LexerViewer lexerViewer) {
+        Item item = lexerViewer.nextNonSpaceItem();
+
+        String templateName = StringUtils.unquote(item.value());
+        TemplateNode templateNode = new TemplateNode(templateName);
+
+        item = lexerViewer.nextNonSpaceItem();
+        if (item.type() != ItemType.RIGHT_DELIM) {
+            lexerViewer.prevItem();
+            parsePipe(templateNode, lexerViewer);
+        }
+
+        listNode.append(templateNode);
+    }
+
     private void parseWith(ListNode listNode, LexerViewer lexerViewer) {
         lexerViewer.nextNonSpaceItem();
         lexerViewer.prevItem();
@@ -155,14 +168,6 @@ public class Parser {
             throw new ParseException(String.format("unexpected %s in end", item));
         }
         listNode.append(new EndNode());
-    }
-
-    private void parsePipe(ListNode listNode, LexerViewer lexerViewer) {
-        lexerViewer.prevNonSpaceItem();
-
-        ActionNode actionNode = new ActionNode();
-        parsePipe(actionNode, lexerViewer);
-        listNode.append(actionNode);
     }
 
     private void parseBranch(BranchNode branchNode, LexerViewer lexerViewer, String context, boolean allowElseIf) {
@@ -200,6 +205,14 @@ public class Parser {
         }
     }
 
+    private void parsePipe(ListNode listNode, LexerViewer lexerViewer) {
+        lexerViewer.prevNonSpaceItem();
+
+        ActionNode actionNode = new ActionNode();
+        parsePipe(actionNode, lexerViewer);
+        listNode.append(actionNode);
+    }
+
     private void parsePipe(ActionNode actionNode, LexerViewer lexerViewer) {
         PipeNode pipeNode = new PipeNode("command");
         parsePipe(pipeNode, lexerViewer, ItemType.RIGHT_DELIM);
@@ -210,6 +223,12 @@ public class Parser {
         PipeNode pipeNode = new PipeNode(context);
         parsePipe(pipeNode, lexerViewer, ItemType.RIGHT_DELIM);
         branchNode.setPipeNode(pipeNode);
+    }
+
+    private void parsePipe(TemplateNode templateNode, LexerViewer lexerViewer) {
+        PipeNode pipeNode = new PipeNode("template clause");
+        parsePipe(pipeNode, lexerViewer, ItemType.RIGHT_DELIM);
+        templateNode.setPipeNode(pipeNode);
     }
 
     private void parsePipe(PipeNode pipeNode, LexerViewer lexerViewer, ItemType end) {
@@ -302,6 +321,9 @@ public class Parser {
                 case DOT:
                     node = new DotNode();
                     break;
+                case NIL:
+                    node = new NilNode();
+                    break;
                 case VARIABLE:
                     node = findVariable(item.value());
                     break;
@@ -309,21 +331,25 @@ public class Parser {
                     node = new FieldNode(item.value());
                     break;
                 case BOOL:
+                    node = new BoolNode(item.value());
                     break;
                 case CHAR_CONSTANT:
                 case COMPLEX:
                 case NUMBER:
                     lexerViewer.prevItem();
-                    Item item1 = lexerViewer.nextItem();
-                    String value = item1.value();
+                    Item nextItem = lexerViewer.nextItem();
+                    String value = nextItem.value();
 
                     NumberNode numberNode = new NumberNode(value);
 
-                    if (value.endsWith("i")) {
-
-                    }
-
-                    int i = Integer.parseInt(value);
+//                    if (value.endsWith("i")) {
+//                        String numberString = value.substring(0, value.length() - 1);
+//                        double number = Double.parseDouble(numberString);
+//                    } else {
+//                        numberNode
+//                    }
+//
+//                    int i = Integer.parseInt(value);
 
                     node = numberNode;
                     break;

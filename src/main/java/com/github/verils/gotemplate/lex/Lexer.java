@@ -150,6 +150,8 @@ public class Lexer {
 
         if (atRightTrimMarker) {
             pos += 2 + rightDelim.length();
+            int ltrimLength = ltrimLength();
+            pos += ltrimLength;
         }
         if (atRightDelim) {
             pos += rightDelim.length();
@@ -551,16 +553,26 @@ public class Lexer {
         return input.substring(start, pos);
     }
 
+    private int ltrimLength() {
+        int i = pos;
+        for (; i < input.length(); i++) {
+            char ch = input.charAt(i);
+            if (!Char.isSpace(ch)) {
+                break;
+            }
+        }
+        return i - pos;
+    }
+
     private int rtrimLength(String text) {
-        int len = 0;
-        for (int i = text.length() - 1; i >= 0; i--) {
+        int i = text.length() - 1;
+        for (; i >= 0; i--) {
             char ch = text.charAt(i);
             if (!Char.isSpace(ch)) {
                 break;
             }
-            len++;
         }
-        return len;
+        return text.length() - i - 1;
     }
 
     private void addItem(ItemType type) {
@@ -573,7 +585,7 @@ public class Lexer {
     }
 
     public LexerViewer getViewer() {
-        return new LexerViewer(input,items.toArray(new Item[0]));
+        return new LexerViewer(input, items.toArray(new Item[0]));
     }
 
 

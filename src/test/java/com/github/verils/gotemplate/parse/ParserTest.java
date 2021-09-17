@@ -51,7 +51,20 @@ class ParserTest {
                 new Test("range over pipeline", "{{range .X|.M}}true{{else}}false{{end}}", "{{range .X | .M}}\"true\"{{else}}\"false\"{{end}}", false, null),
                 new Test("range []int", "{{range .SI}}{{.}}{{end}}", "{{range .SI}}{{.}}{{end}}", false, null),
                 new Test("range 1 var", "{{range $x := .SI}}{{.}}{{end}}", "{{range $x := .SI}}{{.}}{{end}}", false, null),
-                new Test("range 2 var", "{{range $x, $y := .SI}}{{.}}{{end}}", "{{range $x, $y := .SI}}{{.}}{{end}}", false, null)
+                new Test("range 2 var", "{{range $x, $y := .SI}}{{.}}{{end}}", "{{range $x, $y := .SI}}{{.}}{{end}}", false, null),
+                new Test("constants", "{{range .SI 1 -3.2i true false 'a' nil}}{{end}}", "{{range .SI 1 -3.2i true false 'a' nil}}{{end}}", false, null),
+                new Test("template", "{{template `x`}}", "{{template \"x\"}}", false, null),
+                new Test("template with arg", "{{template `x` .Y}}", "{{template \"x\" .Y}}", false, null),
+                new Test("with", "{{with .X}}hello{{end}}", "{{with .X}}\"hello\"{{end}}", false, null),
+                new Test("with with else", "{{with .X}}hello{{else}}goodbye{{end}}", "{{with .X}}\"hello\"{{else}}\"goodbye\"{{end}}", false, null),
+                new Test("trim left", "x \r\n\t{{- 3}}", "\"x\"{{3}}", false, null),
+                new Test("trim right", "{{3 -}}\n\n\ty", "{{3}}\"y\"", false, null),
+                new Test("trim left and right", "x \r\n\t{{- 3 -}}\n\n\ty", "\"x\"{{3}}\"y\"", false, null),
+                new Test("trim with extra spaces", "x\n{{-  3   -}}\ny", "\"x\"{{3}}\"y\"", false, null),
+                new Test("comment trim left", "x \r\n\t{{- /* hi */}}", "\"x\"", false, null),
+                new Test("comment trim right", "{{/* hi */ -}}\n\n\ty", "\"y\"", false, null),
+                new Test("comment trim left and right", "x \r\n\t{{- /* */ -}}\n\n\ty", "\"x\"\"y\"", false, null),
+//                new Test("block definition", "{{block \"foo\" .}}hello{{end}}", "{{template \"foo\" .}}", false, null),
         };
 
 
