@@ -11,6 +11,10 @@ public class CommandNode implements Node {
         arguments.add(node);
     }
 
+    public int getArgumentCount() {
+        return arguments.size();
+    }
+
     public Node getLastArgument() {
         return arguments.get(arguments.size() - 1);
     }

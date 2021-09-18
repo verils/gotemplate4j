@@ -2,22 +2,23 @@ package com.github.verils.gotemplate.parse;
 
 import com.github.verils.gotemplate.lex.*;
 
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
- * 文档介绍：<a href="https://pkg.go.dev/text/template#pkg-overview">Template</a>
+ * Document of go template：<a href="https://pkg.go.dev/text/template#pkg-overview">Template</a>
  */
 public class Parser {
 
     private static final Map<String, Object> DEFAULT_FUNCTIONS = new LinkedHashMap<>();
 
-    private final Set<String> variables = new HashSet<>();
     private final Map<String, Object> functions;
 
     private final Node root;
+
+    /**
+     * List contains the variables in a branch node
+     */
+    private List<String> variables = new ArrayList<>();
 
     public Parser(String input) {
         this(input, DEFAULT_FUNCTIONS);
@@ -90,7 +91,11 @@ public class Parser {
                 break;
             default:
                 lexerViewer.prevItem();
-                parsePipe(listNode, lexerViewer);
+
+                // Just action
+                ActionNode actionNode = new ActionNode();
+                parsePipe(actionNode, lexerViewer);
+                listNode.append(actionNode);
         }
     }
 
@@ -172,6 +177,8 @@ public class Parser {
     }
 
     private void parseBranch(BranchNode branchNode, LexerViewer lexerViewer, String context, boolean allowElseIf) {
+        int variableCount = variables.size();
+
         parsePipe(branchNode, lexerViewer, context);
         parseIfList(branchNode, lexerViewer);
 
@@ -204,12 +211,8 @@ public class Parser {
         } else {
             throw new ParseException("expected end, found " + lastNode);
         }
-    }
 
-    private void parsePipe(ListNode listNode, LexerViewer lexerViewer) {
-        ActionNode actionNode = new ActionNode();
-        parsePipe(actionNode, lexerViewer);
-        listNode.append(actionNode);
+        variables = variables.subList(0, variableCount);
     }
 
     private void parsePipe(ActionNode actionNode, LexerViewer lexerViewer) {
@@ -258,7 +261,7 @@ public class Parser {
                 case STRING:
                 case VARIABLE:
                 case LEFT_PAREN:
-                    lexerViewer.prevNonSpaceItem();
+                    lexerViewer.prevItem();
                     parseCommand(pipeNode, lexerViewer);
                     break;
                 case ERROR:
@@ -403,6 +406,10 @@ public class Parser {
             }
 
             break;
+        }
+
+        if (commandNode.getArgumentCount() == 0) {
+            throw new ParseException("empty command");
         }
 
         pipeNode.append(commandNode);

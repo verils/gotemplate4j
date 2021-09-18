@@ -75,6 +75,25 @@ class ParserTest {
 
                 new Test("unclosed action", "hello{{range", "", true, null),
                 new Test("unmatched end", "{{end}}", "", true, null),
+                new Test("unmatched else", "{{else}}", "", true, null),
+                new Test("unmatched else after if", "{{if .X}}hello{{end}}{{else}}", "", true, null),
+                new Test("multiple else", "{{if .X}}1{{else}}2{{else}}3{{end}}", "", true, null),
+                new Test("missing end", "hello{{range .x}}", "", true, null),
+                new Test("missing end after else", "hello{{range .x}}{{else}}", "", true, null),
+                new Test("undefined function", "hello{{undefined}}", "", true, null),
+                new Test("undefined variable", "{{$x}}", "", true, null),
+                new Test("variable undefined after end", "{{with $x := 4}}{{end}}{{$x}}", "", true, null),
+                new Test("variable undefined in template", "{{template $v}}", "", true, null),
+                new Test("declare with field", "{{with $x.Y := 4}}{{end}}", "", true, null),
+                new Test("template with field ref", "{{template .X}}", "", true, null),
+                new Test("template with var", "{{template $v}}", "", true, null),
+                new Test("invalid punctuation", "{{printf 3, 4}}", "", true, null),
+                new Test("multidecl outside range", "{{with $v, $u := 3}}{{end}}", "", true, null),
+                new Test("too many decls in range", "{{range $u, $v, $w := 3}}{{end}}", "", true, null),
+                new Test("dot applied to parentheses", "{{printf (printf .).}}", "", true, null),
+                new Test("adjacent args", "{{printf 3`x`}}", "", true, null),
+                new Test("adjacent args with .", "{{printf `x`.}}", "", true, null),
+                new Test("extra end after if", "{{if .X}}a{{else if .Y}}b{{end}}{{end}}", "", true, null),
         };
 
 
