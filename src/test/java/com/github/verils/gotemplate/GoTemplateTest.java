@@ -1,7 +1,5 @@
 package com.github.verils.gotemplate;
 
-import lombok.Data;
-import lombok.var;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -34,14 +32,19 @@ class GoTemplateTest {
                 "Best wishes,\n" +
                 "Josie\n";
 
-        @Data
         class Recipient {
             private final String name;
             private final String gift;
             private final boolean attended;
+
+            public Recipient(String name, String gift, boolean attended) {
+                this.name = name;
+                this.gift = gift;
+                this.attended = attended;
+            }
         }
 
-        var recipients = new Recipient[]{
+        Recipient[] recipients = new Recipient[]{
                 new Recipient("Aunt Mildred", "bone china tea set", true),
                 new Recipient("Uncle John", "moleskin pants", false),
                 new Recipient("Cousin Rodney", "", false)
