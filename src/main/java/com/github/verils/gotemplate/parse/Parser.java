@@ -16,7 +16,7 @@ public class Parser {
     private final Node root;
 
     /**
-     * List contains the variables in a branch node
+     * A list which contains all the variables in a branch context
      */
     private List<String> variables = new ArrayList<>();
 
@@ -29,13 +29,27 @@ public class Parser {
         this.variables.add("$");
         this.functions = functions;
 
-        ListNode listNode = new ListNode();
+
+        // Parse the template text, build a list node as the root node
+        ListNode rootListNode = new ListNode();
         LexerViewer lexerViewer = new Lexer(input).getViewer();
-        parse(listNode, lexerViewer);
-        this.root = listNode;
+        parseList(rootListNode, lexerViewer);
+
+        // Can not have ELSE and END node as the last in root list node
+        Node lastNode = rootListNode.getLast();
+        if (lastNode instanceof ElseNode) {
+            throw new ParseException("unexpected " + rootListNode);
+        }
+        if (lastNode instanceof EndNode) {
+            throw new ParseException("unexpected " + rootListNode);
+        }
+
+        this.root = rootListNode;
     }
 
-    private void parse(ListNode listNode, LexerViewer lexerViewer) {
+
+    private void parseList(ListNode listNode, LexerViewer lexerViewer) {
+        loop:
         while (true) {
             Item item = lexerViewer.nextItem();
             switch (item.type()) {
@@ -51,24 +65,36 @@ public class Parser {
                     break;
                 case LEFT_DELIM:
                     parseAction(listNode, lexerViewer);
+
+                    // Stop parsing for list in current context, keep the last node, let the method caller handles it
+                    Node lastNode = listNode.getLast();
+                    if (lastNode instanceof ElseNode) {
+                        break loop;
+                    }
+                    if (lastNode instanceof EndNode) {
+                        break loop;
+                    }
+
                     break;
                 default:
-                    throw new ParseException(String.format("unexpected '%s' in input: '%s'", item, lexerViewer.getInput()));
-            }
-
-            Node lastNode = listNode.getLast();
-            if (lastNode instanceof ElseNode) {
-                throw new ParseException("unexpected " + listNode);
-            }
-            if (lastNode instanceof EndNode) {
-                throw new ParseException("unexpected " + listNode);
+                    throw new ParseException(String.format("unexpected %s in input", item));
             }
         }
     }
 
+
     private void parseAction(ListNode listNode, LexerViewer lexerViewer) {
         Item item = lexerViewer.nextNonSpaceItem();
         switch (item.type()) {
+            case BLOCK:
+                parseBlock(listNode, lexerViewer);
+                break;
+            case ELSE:
+                parseElse(listNode, lexerViewer);
+                break;
+            case END:
+                parseEnd(listNode, lexerViewer);
+                break;
             case IF:
                 parseIf(listNode, lexerViewer);
                 break;
@@ -78,25 +104,73 @@ public class Parser {
             case TEMPLATE:
                 parseTemplate(listNode, lexerViewer);
                 break;
-            case BLOCK:
-                break;
             case WITH:
                 parseWith(listNode, lexerViewer);
-                break;
-            case ELSE:
-                parseElse(listNode, lexerViewer);
-                break;
-            case END:
-                parseEnd(listNode, lexerViewer);
                 break;
             default:
                 lexerViewer.prevItem();
 
                 // Just action
                 ActionNode actionNode = new ActionNode();
-                parsePipe(actionNode, lexerViewer);
+
+                PipeNode pipeNode = new PipeNode("command");
+                parsePipe(pipeNode, lexerViewer, ItemType.RIGHT_DELIM);
+                actionNode.setPipeNode(pipeNode);
+
                 listNode.append(actionNode);
         }
+    }
+
+
+    private void parseBlock(ListNode listNode, LexerViewer lexerViewer) {
+        String context = "block clause";
+
+        Item item = lexerViewer.nextNonSpaceItem();
+        if (item.type() != ItemType.STRING && item.type() != ItemType.RAW_STRING) {
+            throw new ParseException(String.format("unexpected '%s' in %s", item.value(), context));
+        }
+
+        String templateName = StringUtils.unquote(item.value());
+        TemplateNode templateNode = new TemplateNode(templateName);
+
+        PipeNode pipeNode = new PipeNode(context);
+        parsePipe(pipeNode, lexerViewer, ItemType.RIGHT_DELIM);
+        templateNode.setPipeNode(pipeNode);
+
+
+        ListNode blockListNode = new ListNode();
+        parseList(blockListNode, lexerViewer);
+
+        Node lastNode = blockListNode.getLast();
+        if (lastNode instanceof ElseNode) {
+            throw new ParseException(String.format("unexpected '%s' in block clause", lastNode));
+        }
+
+
+        listNode.append(templateNode);
+    }
+
+    private void parseElse(ListNode listNode, LexerViewer lexerViewer) {
+        Item item = lexerViewer.nextNonSpaceItem();
+        switch (item.type()) {
+            case IF:
+                lexerViewer.prevItem();
+                listNode.append(new ElseNode());
+                break;
+            case RIGHT_DELIM:
+                listNode.append(new ElseNode());
+                break;
+            default:
+                throw new ParseException(String.format("unexpected %s in end", item));
+        }
+    }
+
+    private void parseEnd(ListNode listNode, LexerViewer lexerViewer) {
+        Item item = lexerViewer.nextNonSpaceItem();
+        if (item.type() != ItemType.RIGHT_DELIM) {
+            throw new ParseException(String.format("unexpected %s in end", item));
+        }
+        listNode.append(new EndNode());
     }
 
     private void parseIf(ListNode listNode, LexerViewer lexerViewer) {
@@ -126,7 +200,12 @@ public class Parser {
     }
 
     private void parseTemplate(ListNode listNode, LexerViewer lexerViewer) {
+        String context = "template clause";
+
         Item item = lexerViewer.nextNonSpaceItem();
+        if (item.type() != ItemType.STRING && item.type() != ItemType.RAW_STRING) {
+            throw new ParseException(String.format("unexpected '%s' in %s", item.value(), context));
+        }
 
         String templateName = StringUtils.unquote(item.value());
         TemplateNode templateNode = new TemplateNode(templateName);
@@ -134,7 +213,10 @@ public class Parser {
         item = lexerViewer.nextNonSpaceItem();
         if (item.type() != ItemType.RIGHT_DELIM) {
             lexerViewer.prevItem();
-            parsePipe(templateNode, lexerViewer);
+
+            PipeNode pipeNode = new PipeNode(context);
+            parsePipe(pipeNode, lexerViewer, ItemType.RIGHT_DELIM);
+            templateNode.setPipeNode(pipeNode);
         }
 
         listNode.append(templateNode);
@@ -153,38 +235,22 @@ public class Parser {
         listNode.append(withNode);
     }
 
-    private void parseElse(ListNode listNode, LexerViewer lexerViewer) {
-        Item item = lexerViewer.nextNonSpaceItem();
-        switch (item.type()) {
-            case IF:
-                lexerViewer.prevItem();
-                listNode.append(new ElseNode());
-                break;
-            case RIGHT_DELIM:
-                listNode.append(new ElseNode());
-                break;
-            default:
-                throw new ParseException(String.format("unexpected %s in end", item));
-        }
-    }
-
-    private void parseEnd(ListNode listNode, LexerViewer lexerViewer) {
-        Item item = lexerViewer.nextNonSpaceItem();
-        if (item.type() != ItemType.RIGHT_DELIM) {
-            throw new ParseException(String.format("unexpected %s in end", item));
-        }
-        listNode.append(new EndNode());
-    }
-
     private void parseBranch(BranchNode branchNode, LexerViewer lexerViewer, String context, boolean allowElseIf) {
         int variableCount = variables.size();
 
-        parsePipe(branchNode, lexerViewer, context);
-        parseIfList(branchNode, lexerViewer);
+        // Parse pipeline, the executable part
+        PipeNode pipeNode = new PipeNode(context);
+        parsePipe(pipeNode, lexerViewer, ItemType.RIGHT_DELIM);
+        branchNode.setPipeNode(pipeNode);
 
+        // Parse 'if' clause
+        ListNode ifListNode = new ListNode();
+        parseList(ifListNode, lexerViewer);
+        branchNode.setIfListNode(ifListNode);
+
+        // Parse if 'else' clause exists
         ListNode listNode = branchNode.getIfListNode();
         Node lastNode = listNode.getLast();
-
         if (lastNode instanceof ElseNode) {
             listNode.removeLast();
 
@@ -196,15 +262,19 @@ public class Parser {
                     ListNode elseListNode = new ListNode();
                     parseIf(elseListNode, lexerViewer);
                     branchNode.setElseListNode(elseListNode);
+
                     return;
                 }
             }
 
-            parseElseList(branchNode, lexerViewer);
+            ListNode elseListNode = new ListNode();
+            parseList(elseListNode, lexerViewer);
+            branchNode.setElseListNode(elseListNode);
 
             listNode = branchNode.getElseListNode();
         }
 
+        // Check if the branch is closed accurately
         lastNode = listNode.getLast();
         if (lastNode instanceof EndNode) {
             listNode.removeLast();
@@ -213,24 +283,6 @@ public class Parser {
         }
 
         variables = variables.subList(0, variableCount);
-    }
-
-    private void parsePipe(ActionNode actionNode, LexerViewer lexerViewer) {
-        PipeNode pipeNode = new PipeNode("command");
-        parsePipe(pipeNode, lexerViewer, ItemType.RIGHT_DELIM);
-        actionNode.setPipeNode(pipeNode);
-    }
-
-    private void parsePipe(BranchNode branchNode, LexerViewer lexerViewer, String context) {
-        PipeNode pipeNode = new PipeNode(context);
-        parsePipe(pipeNode, lexerViewer, ItemType.RIGHT_DELIM);
-        branchNode.setPipeNode(pipeNode);
-    }
-
-    private void parsePipe(TemplateNode templateNode, LexerViewer lexerViewer) {
-        PipeNode pipeNode = new PipeNode("template clause");
-        parsePipe(pipeNode, lexerViewer, ItemType.RIGHT_DELIM);
-        templateNode.setPipeNode(pipeNode);
     }
 
     private void parsePipe(PipeNode pipeNode, LexerViewer lexerViewer, ItemType end) {
@@ -415,49 +467,6 @@ public class Parser {
         pipeNode.append(commandNode);
     }
 
-    private void parseIfList(BranchNode branchNode, LexerViewer lexerViewer) {
-        ListNode listNode = new ListNode();
-        parseList(listNode, lexerViewer);
-        branchNode.setIfListNode(listNode);
-    }
-
-    private void parseElseList(BranchNode branchNode, LexerViewer lexerViewer) {
-        ListNode listNode = new ListNode();
-        parseList(listNode, lexerViewer);
-        branchNode.setElseListNode(listNode);
-    }
-
-    private void parseList(ListNode listNode, LexerViewer lexerViewer) {
-        while (true) {
-            Item item = lexerViewer.nextItem();
-            switch (item.type()) {
-                case EOF:
-                    return;
-                case TEXT:
-                    TextNode textNode = new TextNode(item.value());
-                    listNode.append(textNode);
-                    break;
-                case COMMENT:
-                    CommentNode commentNode = new CommentNode(item.value());
-                    listNode.append(commentNode);
-                    break;
-                case LEFT_DELIM:
-                    parseAction(listNode, lexerViewer);
-                    break;
-                default:
-                    throw new ParseException(String.format("unexpected %s in input", item));
-            }
-
-            Node lastNode = listNode.getLast();
-            if (lastNode instanceof ElseNode) {
-                break;
-            }
-            if (lastNode instanceof EndNode) {
-                break;
-            }
-        }
-    }
-
     private Node findVariable(String value) {
         VariableNode variableNode = new VariableNode(value);
         String name = variableNode.getIdentifier(0);
@@ -472,6 +481,11 @@ public class Parser {
     }
 
 
+    /**
+     * Get the root node, it is always a ListNode
+     *
+     * @return The root node which is always a ListNode
+     */
     public Node getRoot() {
         return root;
     }
