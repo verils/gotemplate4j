@@ -99,6 +99,35 @@ class ParserTest {
                 new Test("adjacent args", "{{printf 3`x`}}", "", true, null),
                 new Test("adjacent args with .", "{{printf `x`.}}", "", true, null),
                 new Test("extra end after if", "{{if .X}}a{{else if .Y}}b{{end}}{{end}}", "", true, null),
+
+                new Test("bug0a", "{{$x := 0}}{{$x}}", "", true, null),
+                new Test("bug0b", "{{$x += 1}}{{$x}}", "", true, null),
+                new Test("bug0c", "{{$x ! 2}}{{$x}}", "", true, null),
+                new Test("bug0d", "{{$x % 3}}{{$x}}", "", true, null),
+
+                new Test("bug0e", "{{range $x := $y := 3}}{{end}}", "", true, null),
+
+                new Test("bug1a", "{{$x:=.}}{{$x!2}}", "", true, null),
+                new Test("bug1b", "{{$x:=.}}{{$x+2}}", "", true, null),
+//                new Test("bug1c", "{{$x:=.}}{{$x +2}}", "", true, null),
+
+//                new Test("dot after integer", "{{1.E}}", "", true, null),
+//                new Test("dot after float", "{{0.1.E}}", "", true, null),
+//                new Test("dot after boolean", "dot after boolean", "", true, null),
+//                new Test("dot after char", "{{'a'.any}}", "", true, null),
+//                new Test("dot after string", "{{\"hello\".guys}}", "", true, null),
+//                new Test("dot after dot", "{{..E}}", "", true, null),
+//                new Test("dot after nil", "{{nil.E}}", "", true, null),
+
+//                new Test("wrong pipeline dot", "{{12|.}}", "", true, null),
+//                new Test("wrong pipeline number", "{{.|12|printf}}", "", true, null),
+//                new Test("wrong pipeline string", "{{.|printf|\"error\"}}", "", true, null),
+//                new Test("wrong pipeline char", "{{12|printf|'e'}}", "", true, null),
+//                new Test("wrong pipeline boolean", "{{.|true}}", "", true, null),
+//                new Test("wrong pipeline nil", "{{'c'|nil}}", "", true, null),
+//                new Test("empty pipeline", "{{printf \"%d\" ( ) }}", "", true, null),
+
+                new Test("block definition", "{{block \"foo\"}}hello{{end}}", "", true, null),
         };
 
 
