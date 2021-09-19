@@ -1,7 +1,5 @@
 package com.github.verils.gotemplate.parse;
 
-import lombok.Data;
-import lombok.var;
 import org.junit.jupiter.api.Test;
 
 import java.util.LinkedHashMap;
@@ -13,7 +11,6 @@ class ParserTest {
 
     @Test
     void test() {
-        @Data
         class Test {
             private final String name;
 
@@ -22,9 +19,17 @@ class ParserTest {
 
             private final boolean error;
             private final String errorMessage;
+
+            public Test(String name, String input, String result, boolean error, String errorMessage) {
+                this.name = name;
+                this.input = input;
+                this.result = result;
+                this.error = error;
+                this.errorMessage = errorMessage;
+            }
         }
 
-        var tests = new Test[]{
+        Test[] tests = {
                 new Test("empty", "", "", false, null),
                 new Test("comment", "{{/*\n\n\n*/}}", "", false, null),
                 new Test("spaces", " \t\n", "\" \t\n\"", false, null),
@@ -65,7 +70,7 @@ class ParserTest {
                 new Test("comment trim left", "x \r\n\t{{- /* hi */}}", "\"x\"", false, null),
                 new Test("comment trim right", "{{/* hi */ -}}\n\n\ty", "\"y\"", false, null),
                 new Test("comment trim left and right", "x \r\n\t{{- /* */ -}}\n\n\ty", "\"x\"\"y\"", false, null),
-//                new Test("block definition", "{{block \"foo\" .}}hello{{end}}", "{{template \"foo\" .}}", false, null),
+                new Test("block definition", "{{block \"foo\" .}}hello{{end}}", "{{template \"foo\" .}}", false, null),
 
                 new Test("newline in assignment", "{{ $x \n := \n 1 \n }}", "{{$x := 1}}", false, null),
                 new Test("newline in empty action", "{{\n}}", "{{\n}}", true, null),
@@ -108,7 +113,7 @@ class ParserTest {
                 Node node = parser.getRoot();
                 assertNotNull(node);
                 assertTrue(node instanceof ListNode);
-                assertEquals(test.getResult(), node.toString(), String.format("%s: expected %s got %s", test.name, test.result, node));
+                assertEquals(test.result, node.toString(), String.format("%s: expected %s got %s", test.name, test.result, node));
             } catch (Exception e) {
                 if (!test.error) {
                     System.out.printf("%s: got error: %s%n", test.name, e.getMessage());

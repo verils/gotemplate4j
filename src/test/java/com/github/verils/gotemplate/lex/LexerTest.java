@@ -1,7 +1,5 @@
 package com.github.verils.gotemplate.lex;
 
-import lombok.Data;
-import lombok.var;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -33,13 +31,17 @@ class LexerTest {
 
     @Test
     void test() {
-        @Data
         class Test {
             private final String input;
             private final Item[] items;
+
+            public Test(String input, Item[] items) {
+                this.input = input;
+                this.items = items;
+            }
         }
 
-        var tests = new Test[]{
+        Test[] tests = new Test[]{
                 new Test("", new Item[]{mkItem(ItemType.EOF, "")}),
                 new Test(" \t\n", new Item[]{
                         mkItem(ItemType.TEXT, " \t\n"),
