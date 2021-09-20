@@ -138,8 +138,9 @@ class ParserTest {
 
         for (Test test : tests) {
             try {
-                Parser parser = new Parser(test.input, functions);
-                Node node = parser.getRoot();
+                Parser parser = new Parser(functions);
+                parser.parse(test.name, test.input);
+                Node node = parser.getNode(test.name);
                 assertNotNull(node);
                 assertTrue(node instanceof ListNode);
                 assertEquals(test.result, node.toString(), String.format("%s: expected %s got %s", test.name, test.result, node));

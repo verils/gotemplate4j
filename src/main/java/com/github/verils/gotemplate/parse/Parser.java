@@ -2,10 +2,7 @@ package com.github.verils.gotemplate.parse;
 
 import com.github.verils.gotemplate.lex.*;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Document of go template：<a href="https://pkg.go.dev/text/template#pkg-overview">Template</a>
@@ -14,28 +11,36 @@ public class Parser {
 
     private static final Map<String, Object> DEFAULT_FUNCTIONS = new LinkedHashMap<>();
 
+    static {
+        DEFAULT_FUNCTIONS.put("println", new Object());
+    }
+
     private final Map<String, Object> functions;
 
-    private final Node root;
+    private final Map<String, Node> nodeMap = new HashMap<>();
 
     /**
      * A list which contains all the variables in a branch context
      */
     private List<String> variables = new ArrayList<>();
 
-    public Parser(String input) {
-        this(input, DEFAULT_FUNCTIONS);
+    public Parser() {
+        this(Collections.emptyMap());
+    }
+
+    public Parser(Map<String, Object> functions) {
+        this.variables.add("$");
+
+        LinkedHashMap<String, Object> map = new LinkedHashMap<>(DEFAULT_FUNCTIONS);
+        map.putAll(functions);
+        this.functions = map;
     }
 
 
-    public Parser(String input, Map<String, Object> functions) {
-        this.variables.add("$");
-        this.functions = functions;
-
-
+    public void parse(String name, String template) {
         // Parse the template text, build a list node as the root node
         ListNode rootListNode = new ListNode();
-        LexerViewer lexerViewer = new Lexer(input).getViewer();
+        LexerViewer lexerViewer = new Lexer(template).getViewer();
         parseList(rootListNode, lexerViewer);
 
         // Can not have ELSE and END node as the last in root list node
@@ -47,9 +52,8 @@ public class Parser {
             throw new ParseException("unexpected " + rootListNode);
         }
 
-        this.root = rootListNode;
+        nodeMap.put(name, rootListNode);
     }
-
 
     private void parseList(ListNode listNode, LexerViewer lexerViewer) {
         loop:
@@ -472,12 +476,7 @@ public class Parser {
     }
 
 
-    /**
-     * Get the root node, it is always a ListNode
-     *
-     * @return The root node which is always a ListNode
-     */
-    public Node getRoot() {
-        return root;
+    public Node getNode(String name) {
+        return nodeMap.get(name);
     }
 }

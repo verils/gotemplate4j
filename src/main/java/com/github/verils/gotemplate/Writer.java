@@ -34,6 +34,8 @@ public class Writer {
             // Ignore comment
         } else if (node instanceof IfNode) {
             writeIf((IfNode) node, data, beanInfo);
+        } else if (node instanceof TemplateNode) {
+            writeTemplate((TemplateNode) node, data);
         } else if (node instanceof TextNode) {
             writeText((TextNode) node, data);
         } else if (node instanceof WithNode) {
@@ -78,6 +80,10 @@ public class Writer {
         } else if (withNode.getElseListNode() != null) {
             writeNode(withNode.getElseListNode(), data, beanInfo);
         }
+    }
+
+    private void writeTemplate(TemplateNode node, Object data) {
+
     }
 
     private Object executePipe(PipeNode pipeNode, Object data, BeanInfo beanInfo) {

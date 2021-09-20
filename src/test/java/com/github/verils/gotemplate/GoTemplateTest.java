@@ -1,21 +1,18 @@
 package com.github.verils.gotemplate;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 class GoTemplateTest {
-
-    @BeforeEach
-    void setUp() {
-    }
 
     @Test
     void test() {
@@ -62,7 +59,8 @@ class GoTemplateTest {
                 new Recipient("Cousin Rodney", "", false)
         };
 
-        GoTemplate goTemplate = new GoTemplate(letter);
+        GoTemplate goTemplate = new GoTemplate("letter");
+        goTemplate.parse(letter);
 
         String text1 = goTemplate.execute(recipients[0]);
         assertNotNull(text1);
@@ -111,4 +109,24 @@ class GoTemplateTest {
     }
 
 
+    @Test
+    void testBlock() {
+        String master = "Names:{{block \"list\" .}}{{\"\\n\"}}{{range .}}{{println \"-\" .}}{{end}}{{end}}";
+        String overlayTemplate = "{{define \"list\"}} {{join . \", \"}}{{end}} ";
+
+        String[] guardians = {"Gamora", "Groot", "Nebula", "Rocket", "Star-Lord"};
+
+        Map<String, Object> functions = new LinkedHashMap<>();
+
+        GoTemplate goTemplate = new GoTemplate("master", functions);
+        goTemplate.parse(master);
+        String text = goTemplate.execute(guardians);
+
+        assertEquals("Names:\n" +
+                "- Gamora\n" +
+                "- Groot\n" +
+                "- Nebula\n" +
+                "- Rocket\n" +
+                "- Star-Lord", text);
+    }
 }
