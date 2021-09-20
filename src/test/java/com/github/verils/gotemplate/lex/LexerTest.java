@@ -307,7 +307,7 @@ class LexerTest {
                 new Test("hello- {{- /* hello */ -}} -world", new Item[]{
                         mkItem(ItemType.TEXT, "hello-"),
                         mkItem(ItemType.COMMENT, "/* hello */"),
-                        mkItem(ItemType.TEXT, " -world"),
+                        mkItem(ItemType.TEXT, "-world"),
                         EOF_ITEM
                 }),
                 new Test("#{{\1}}", new Item[]{
