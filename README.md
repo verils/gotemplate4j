@@ -11,7 +11,7 @@ This repo has not been published to maven central yet, you may clone this repo o
 
 ### Use data object
 
-class Data:
+Class Data:
 ```
 class Data {
     private String greeting;
