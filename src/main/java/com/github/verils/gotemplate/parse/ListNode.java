@@ -1,9 +1,10 @@
 package com.github.verils.gotemplate.parse;
 
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
-public class ListNode implements Node {
+public class ListNode implements Node, Iterable<Node> {
 
     private final List<Node> nodes = new LinkedList<>();
 
@@ -26,5 +27,10 @@ public class ListNode implements Node {
         StringBuilder sb = new StringBuilder();
         nodes.forEach(sb::append);
         return sb.toString();
+    }
+
+    @Override
+    public Iterator<Node> iterator() {
+        return nodes.iterator();
     }
 }

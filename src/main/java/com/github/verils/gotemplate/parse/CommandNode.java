@@ -15,6 +15,10 @@ public class CommandNode implements Node {
         return arguments.size();
     }
 
+    public Node getFirstArgument() {
+        return arguments.get(0);
+    }
+
     public Node getLastArgument() {
         return arguments.get(arguments.size() - 1);
     }

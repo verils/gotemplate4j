@@ -19,8 +19,8 @@ public class GoTemplate {
     public String execute(Object data) {
         StringBuilder sb = new StringBuilder();
 
-        Visitor visitor = new Visitor(sb);
-        visitor.traverse(root, data);
+        Writer writer = new Writer(sb);
+        writer.write(root, data);
 
         return sb.toString();
     }

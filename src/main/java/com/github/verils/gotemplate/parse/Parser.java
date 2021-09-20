@@ -2,7 +2,10 @@ package com.github.verils.gotemplate.parse;
 
 import com.github.verils.gotemplate.lex.*;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Document of go template：<a href="https://pkg.go.dev/text/template#pkg-overview">Template</a>
@@ -178,11 +181,7 @@ public class Parser {
         lexerViewer.prevItem();
 
         IfNode ifNode = new IfNode();
-
-        BranchNode branchNode = new BranchNode();
-        parseBranch(branchNode, lexerViewer, "if", true);
-
-        ifNode.setBranch(branchNode);
+        parseBranch(ifNode, lexerViewer, "if", true);
         listNode.append(ifNode);
     }
 
@@ -191,11 +190,7 @@ public class Parser {
         lexerViewer.prevItem();
 
         RangeNode rangeNode = new RangeNode();
-
-        BranchNode branchNode = new BranchNode();
-        parseBranch(branchNode, lexerViewer, "range", true);
-
-        rangeNode.setBranch(branchNode);
+        parseBranch(rangeNode, lexerViewer, "range", true);
         listNode.append(rangeNode);
     }
 
@@ -227,11 +222,7 @@ public class Parser {
         lexerViewer.prevItem();
 
         WithNode withNode = new WithNode();
-
-        BranchNode branchNode = new BranchNode();
-        parseBranch(branchNode, lexerViewer, "with", false);
-
-        withNode.setBranch(branchNode);
+        parseBranch(withNode, lexerViewer, "with", false);
         listNode.append(withNode);
     }
 

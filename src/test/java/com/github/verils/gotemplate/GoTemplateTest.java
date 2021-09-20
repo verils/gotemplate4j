@@ -42,6 +42,18 @@ class GoTemplateTest {
                 this.gift = gift;
                 this.attended = attended;
             }
+
+            public String getName() {
+                return name;
+            }
+
+            public String getGift() {
+                return gift;
+            }
+
+            public boolean isAttended() {
+                return attended;
+            }
         }
 
         Recipient[] recipients = new Recipient[]{
@@ -59,7 +71,7 @@ class GoTemplateTest {
                 "Dear Aunt Mildred,\n" +
                 "\n" +
                 "It was a pleasure to see you at the wedding.\n" +
-                "Thank you for the lovely {{.}}.\n" +
+                "Thank you for the lovely bone china tea set.\n" +
                 "\n" +
                 "Best wishes,\n" +
                 "Josie\n", text1);
@@ -68,10 +80,10 @@ class GoTemplateTest {
         assertNotNull(text2);
         assertFalse(text2.contains("{{.Name}}"));
         assertEquals("\n" +
-                "Dear Aunt Mildred,\n" +
+                "Dear Uncle John,\n" +
                 "\n" +
                 "It is a shame you couldn't make it to the wedding.\n" +
-                "Thank you for the lovely {{.}}.\n" +
+                "Thank you for the lovely moleskin pants.\n" +
                 "\n" +
                 "Best wishes,\n" +
                 "Josie\n", text2);
@@ -80,10 +92,9 @@ class GoTemplateTest {
         assertNotNull(text3);
         assertFalse(text3.contains("{{.Name}}"));
         assertEquals("\n" +
-                "Dear Aunt Mildred,\n" +
+                "Dear Cousin Rodney,\n" +
                 "\n" +
-                "Thank you for the lovely bone china tea set.\n" +
-                "Thank you for the lovely {{.}}.\n" +
+                "It is a shame you couldn't make it to the wedding.\n" +
                 "\n" +
                 "Best wishes,\n" +
                 "Josie\n", text3);

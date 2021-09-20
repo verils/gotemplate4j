@@ -23,6 +23,10 @@ public class PipeNode implements Node {
         variables.add(variableNode);
     }
 
+    public List<VariableNode> getVariables() {
+        return variables;
+    }
+
     public int getVariableCount() {
         return variables.size();
     }

@@ -1,10 +1,14 @@
 package com.github.verils.gotemplate.parse;
 
-public class BranchNode implements Node {
+public abstract class BranchNode implements Node {
 
     private PipeNode pipeNode;
     private ListNode ifListNode;
     private ListNode elseListNode;
+
+    public PipeNode getPipeNode() {
+        return pipeNode;
+    }
 
     public void setPipeNode(PipeNode pipeNode) {
         this.pipeNode = pipeNode;
