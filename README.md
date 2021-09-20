@@ -16,7 +16,7 @@ class Data:
 class Data {
     private String greeting;
     
-    // Go style naming is supported, and it will be choose in prior, but we sugguest useing java style naming
+    // Go style naming is supported, and it will be choose in prior, but we recommend using java style naming
     private String Greeting;
 }
 ```
@@ -27,7 +27,7 @@ Data data = new Data();
 data.setGreeting("Good day!");
 
 GoTemplate goTemplate = new GoTemplate("{{.Greeting}}");
-String text = goTemplate.exec(data);
+String text = goTemplate.execute(data);
 System.out.println(text); // text = "Good day!"
 ```
 
@@ -38,10 +38,10 @@ You can use data map either
 Map<String, Object> data = new HashMap();
 data.put("Greeting", "Good day!");
 
-// You can also use java style naming
+// You can also use java style naming, it is recommended
 data.put("greeting", "Good day!");
 
 GoTemplate goTemplate = new GoTemplate("{{.Greeting}}");
-String text = goTemplate.exec(data);
+String text = goTemplate.execute(data);
 System.out.println(text); // text = "Good day!"
 ```
