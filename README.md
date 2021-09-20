@@ -11,12 +11,20 @@ This repo has not been published to maven central yet, you may clone this repo o
 
 ### Use data object
 
+class Data:
+```
+class Data {
+    private String greeting;
+    
+    // Go style naming is supported, and it will be choose in prior, but we sugguest useing java style naming
+    private String Greeting;
+}
+```
+
+Usage example:
 ```
 Data data = new Data();
 data.setGreeting("Good day!");
-
-// You can also use java style name, the execution will check golang style name first.
-data.put("greeting", "Good day!");
 
 GoTemplate goTemplate = new GoTemplate("{{.Greeting}}");
 String text = goTemplate.exec(data);
@@ -30,7 +38,7 @@ You can use data map either
 Map<String, Object> data = new HashMap();
 data.put("Greeting", "Good day!");
 
-// You can also use java style name, the execution will check golang style name first.
+// You can also use java style naming
 data.put("greeting", "Good day!");
 
 GoTemplate goTemplate = new GoTemplate("{{.Greeting}}");
