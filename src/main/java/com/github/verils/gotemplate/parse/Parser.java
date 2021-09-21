@@ -14,8 +14,11 @@ public class Parser {
     static {
         DEFAULT_FUNCTIONS.put("println", args -> {
             StringBuilder stringBuilder = new StringBuilder();
-            for (Object arg : args) {
-                stringBuilder.append(arg);
+            for (int i = 0; i < args.length; i++) {
+                stringBuilder.append(args[i]);
+                if (i < args.length - 1) {
+                    stringBuilder.append(' ');
+                }
             }
             stringBuilder.append("\n");
             return stringBuilder.toString();

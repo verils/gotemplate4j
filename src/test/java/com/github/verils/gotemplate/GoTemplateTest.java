@@ -135,6 +135,6 @@ class GoTemplateTest {
                 "- Groot\n" +
                 "- Nebula\n" +
                 "- Rocket\n" +
-                "- Star-Lord", text);
+                "- Star-Lord\n", text);
     }
 }
