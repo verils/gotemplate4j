@@ -1,12 +1,13 @@
 package com.github.verils.gotemplate;
 
-import com.github.verils.gotemplate.lex.StringUtils;
+import com.github.verils.gotemplate.lex.StringEscapeUtils;
 import com.github.verils.gotemplate.parse.*;
 
 import java.beans.BeanInfo;
 import java.beans.IntrospectionException;
 import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
+import java.io.StringWriter;
 import java.lang.reflect.Array;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -303,7 +304,7 @@ public class Writer {
 
     private void printValue(Object value) {
         if (value instanceof String) {
-            String unescaped = StringUtils.unescape((String) value);
+            String unescaped = StringEscapeUtils.unescape((String) value);
             sb.append(unescaped);
         }
     }

@@ -4,11 +4,14 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class StringUtilsTest {
+class StringEscapeUtilsTest {
 
     @Test
     void unescape() {
-        String unescaped = StringUtils.unescape("\\n");
+        String unescaped = StringEscapeUtils.unescape("\\n");
         assertEquals("\n", unescaped);
+
+        unescaped = StringEscapeUtils.unescape("Name:");
+        assertEquals("Name:", unescaped);
     }
 }

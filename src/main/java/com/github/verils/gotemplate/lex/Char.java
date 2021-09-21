@@ -33,31 +33,31 @@ final class Char {
     }
 
     /**
-     * 是否是数字0-9
+     * Is number a single digit in 0-9 ?
      *
-     * @param ch 字符
-     * @return 满足定义则返回true
+     * @param ch Character to be checked
+     * @return true if character is a single digit in 0-9
      */
     static boolean isNumeric(char ch) {
         return '0' <= ch && ch <= '9';
     }
 
     /**
-     * 是否是下划线'_'或Unicode定义的Letter
+     * Is letter of '_' or a unicode letter or unicode digit?
      *
-     * @param ch 字符
-     * @return 满足定义则返回true
+     * @param ch Character to be checked
+     * @return true if letter is '_' or a unicode letter or unicode digit
      */
     static boolean isAlphabetic(char ch) {
         return ch == UNDERSCORE || Character.isLetterOrDigit(ch);
     }
 
     /**
-     * 检查字符是否是合法字符列表里定义的
+     * Check if single character is one of the characters you expect
      *
-     * @param ch    字符
-     * @param valid 合法字符列表
-     * @return 如果字符在合法字符列表里就返回true
+     * @param ch    Character to be checked
+     * @param valid An array including characters which you expect
+     * @return true if ch is what you want
      */
     static boolean isValid(char ch, char... valid) {
         for (char c : valid) {
@@ -69,11 +69,13 @@ final class Char {
     }
 
     /**
-     * 检查字符是否是合法字符串里定义的
+     * Check if single character is one of the characters you expect
+     * <p>
+     * This is same with {@link Char#isValid(char, char...)} but accept a CharSequence to indicate expected characters
      *
-     * @param ch    字符
-     * @param valid 合法字符串
-     * @return 如果字符在合法字符串里就返回true
+     * @param ch    Character to be checked
+     * @param valid A CharSequence including characters which you expect
+     * @return true if ch is what you want
      */
     static boolean isValid(char ch, CharSequence valid) {
         return valid.chars().anyMatch(c -> c == ch);
