@@ -7,7 +7,8 @@ import java.beans.BeanInfo;
 import java.beans.IntrospectionException;
 import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
-import java.io.StringWriter;
+import java.io.IOException;
+import java.io.Writer;
 import java.lang.reflect.Array;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -15,118 +16,116 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
-public class Writer {
+public class Executor {
 
-    private final StringBuilder sb;
     private final Parser parser;
 
-    public Writer(StringBuilder sb, Parser parser) {
-        this.sb = sb;
+    public Executor(Parser parser) {
         this.parser = parser;
     }
 
 
-    public void write(String name, Object data) {
+    public void execute(Writer writer, String name, Object data) throws IOException {
         ListNode listNode = parser.getNodeMap().get(name);
         BeanInfo beanInfo = getBeanInfo(data);
-        writeNode(listNode, data, beanInfo);
+        writeNode(writer, listNode, data, beanInfo);
     }
 
     @SuppressWarnings("StatementWithEmptyBody")
-    public void writeNode(Node node, Object data, BeanInfo beanInfo) {
+    public void writeNode(Writer writer, Node node, Object data, BeanInfo beanInfo) throws IOException {
         if (node instanceof ListNode) {
-            writeList((ListNode) node, data, beanInfo);
+            writeList(writer, (ListNode) node, data, beanInfo);
         } else if (node instanceof ActionNode) {
-            writeAction((ActionNode) node, data, beanInfo);
+            writeAction(writer, (ActionNode) node, data, beanInfo);
         } else if (node instanceof CommentNode) {
             // Ignore comment
         } else if (node instanceof IfNode) {
-            writeIf((IfNode) node, data, beanInfo);
+            writeIf(writer, (IfNode) node, data, beanInfo);
         } else if (node instanceof RangeNode) {
-            writeRange((RangeNode) node, data, beanInfo);
+            writeRange(writer, (RangeNode) node, data, beanInfo);
         } else if (node instanceof TemplateNode) {
-            writeTemplate((TemplateNode) node, data);
+            writeTemplate(writer, (TemplateNode) node, data);
         } else if (node instanceof TextNode) {
-            writeText((TextNode) node);
+            writeText(writer, (TextNode) node);
         } else if (node instanceof WithNode) {
-            writeWith((WithNode) node, data, beanInfo);
+            writeWith(writer, (WithNode) node, data, beanInfo);
         } else {
             throw new ExecutionException(String.format("unknown node: %s", node.toString()));
         }
     }
 
-    private void writeAction(ActionNode actionNode, Object data, BeanInfo beanInfo) {
+    private void writeAction(Writer writer, ActionNode actionNode, Object data, BeanInfo beanInfo) throws IOException {
         PipeNode pipeNode = actionNode.getPipeNode();
         Object value = executePipe(pipeNode, data, beanInfo);
         if (pipeNode.getVariableCount() == 0) {
-            printValue(value);
+            printValue(writer, value);
         }
     }
 
-    private void writeIf(IfNode ifNode, Object data, BeanInfo beanInfo) {
+    private void writeIf(Writer writer, IfNode ifNode, Object data, BeanInfo beanInfo) throws IOException {
         Object value = executePipe(ifNode.getPipeNode(), data, beanInfo);
         if (isTrue(value)) {
-            writeNode(ifNode.getIfListNode(), data, beanInfo);
+            writeNode(writer, ifNode.getIfListNode(), data, beanInfo);
         } else if (ifNode.getElseListNode() != null) {
-            writeNode(ifNode.getElseListNode(), data, beanInfo);
+            writeNode(writer, ifNode.getElseListNode(), data, beanInfo);
         }
     }
 
-    private void writeList(ListNode listNode, Object data, BeanInfo beanInfo) {
+    private void writeList(Writer writer, ListNode listNode, Object data, BeanInfo beanInfo) throws IOException {
         for (Node node : listNode) {
-            writeNode(node, data, beanInfo);
+            writeNode(writer, node, data, beanInfo);
         }
     }
 
-    private void writeRange(RangeNode rangeNode, Object data, BeanInfo beanInfo) {
+    private void writeRange(Writer writer, RangeNode rangeNode, Object data, BeanInfo beanInfo) throws IOException {
         Object arrayOrList = executePipe(rangeNode.getPipeNode(), data, beanInfo);
 
         if (arrayOrList.getClass().isArray()) {
             int length = Array.getLength(arrayOrList);
             for (int i = 0; i < length; i++) {
                 Object value = Array.get(arrayOrList, i);
-                writeRangeValue(rangeNode, value);
+                writeRangeValue(writer, rangeNode, value);
             }
         }
 
         if (arrayOrList instanceof Collection) {
             Collection<?> collection = (Collection<?>) arrayOrList;
             for (Object object : collection) {
-                writeRangeValue(rangeNode, object);
+                writeRangeValue(writer, rangeNode, object);
             }
         }
 
         if (arrayOrList instanceof Map) {
             Map<?, ?> map = (Map<?, ?>) arrayOrList;
             for (Object object : map.values()) {
-                writeRangeValue(rangeNode, object);
+                writeRangeValue(writer, rangeNode, object);
             }
         }
     }
 
-    private void writeRangeValue(RangeNode rangeNode, Object value) {
+    private void writeRangeValue(Writer writer, RangeNode rangeNode, Object value) throws IOException {
         ListNode ifListNode = rangeNode.getIfListNode();
         for (Node node : ifListNode) {
             BeanInfo itemBeanInfo = getBeanInfo(value);
-            writeNode(node, value, itemBeanInfo);
+            writeNode(writer, node, value, itemBeanInfo);
         }
     }
 
-    private void writeText(TextNode textNode) {
-        printText(textNode.getText());
+    private void writeText(Writer writer, TextNode textNode) throws IOException {
+        printText(writer, textNode.getText());
     }
 
-    private void writeWith(WithNode withNode, Object data, BeanInfo beanInfo) {
+    private void writeWith(Writer writer, WithNode withNode, Object data, BeanInfo beanInfo) throws IOException {
         Object value = executePipe(withNode.getPipeNode(), data, beanInfo);
         if (isTrue(value)) {
             BeanInfo valueBeanInfo = getBeanInfo(value);
-            writeNode(withNode.getIfListNode(), value, valueBeanInfo);
+            writeNode(writer, withNode.getIfListNode(), value, valueBeanInfo);
         } else if (withNode.getElseListNode() != null) {
-            writeNode(withNode.getElseListNode(), data, beanInfo);
+            writeNode(writer, withNode.getElseListNode(), data, beanInfo);
         }
     }
 
-    private void writeTemplate(TemplateNode templateNode, Object data) {
+    private void writeTemplate(Writer writer, TemplateNode templateNode, Object data) throws IOException {
         String name = templateNode.getName();
 
         ListNode listNode = parser.getNodeMap().get(name);
@@ -138,7 +137,7 @@ public class Writer {
         Object value = executePipe(templateNode.getPipeNode(), data, beanInfo);
 
         BeanInfo valueBeanInfo = getBeanInfo(value);
-        writeNode(listNode, value, valueBeanInfo);
+        writeNode(writer, listNode, value, valueBeanInfo);
     }
 
     private Object executePipe(PipeNode pipeNode, Object data, BeanInfo beanInfo) {
@@ -298,14 +297,14 @@ public class Writer {
         return false;
     }
 
-    private void printText(String text) {
-        sb.append(text);
+    private void printText(Writer writer, String text) throws IOException {
+        writer.write(text);
     }
 
-    private void printValue(Object value) {
+    private void printValue(Writer writer, Object value) throws IOException {
         if (value instanceof String) {
             String unescaped = StringEscapeUtils.unescape((String) value);
-            sb.append(unescaped);
+            writer.write(unescaped);
         }
     }
 }

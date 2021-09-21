@@ -3,10 +3,7 @@ package com.github.verils.gotemplate;
 import com.github.verils.gotemplate.parse.Function;
 import org.junit.jupiter.api.Test;
 
-import java.io.BufferedReader;
-import java.io.FileNotFoundException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -16,7 +13,7 @@ import static org.junit.jupiter.api.Assertions.*;
 class GoTemplateTest {
 
     @Test
-    void test() {
+    void test() throws IOException {
         String letter = "\n" +
                 "Dear {{.Name}},\n" +
                 "{{if .Attended}}\n" +
@@ -63,7 +60,10 @@ class GoTemplateTest {
         GoTemplate goTemplate = new GoTemplate("letter");
         goTemplate.parse(letter);
 
-        String text1 = goTemplate.execute(recipients[0]);
+        Writer writer = new StringWriter();
+        goTemplate.execute(writer, recipients[0]);
+        String text1 = writer.toString();
+
         assertNotNull(text1);
         assertFalse(text1.contains("{{.Name}}"));
         assertEquals("\n" +
@@ -75,7 +75,11 @@ class GoTemplateTest {
                 "Best wishes,\n" +
                 "Josie\n", text1);
 
-        String text2 = goTemplate.execute(recipients[1]);
+
+        writer = new StringWriter();
+        goTemplate.execute(writer, recipients[1]);
+        String text2 = writer.toString();
+
         assertNotNull(text2);
         assertFalse(text2.contains("{{.Name}}"));
         assertEquals("\n" +
@@ -87,7 +91,11 @@ class GoTemplateTest {
                 "Best wishes,\n" +
                 "Josie\n", text2);
 
-        String text3 = goTemplate.execute(recipients[2]);
+
+        writer = new StringWriter();
+        goTemplate.execute(writer, recipients[1]);
+        String text3 = writer.toString();
+
         assertNotNull(text3);
         assertFalse(text3.contains("{{.Name}}"));
         assertEquals("\n" +
@@ -111,7 +119,7 @@ class GoTemplateTest {
 
 
     @Test
-    void testDefinition() {
+    void testDefinition() throws IOException {
         String masterTemplate = "Names:{{block \"list\" .}}{{\"\\n\"}}{{range .}}{{println \"-\" .}}{{end}}{{end}}";
         String overlayTemplate = "{{define \"list\"}} {{join . \", \"}}{{end}} ";
 
@@ -127,8 +135,10 @@ class GoTemplateTest {
 
         GoTemplate goTemplate = new GoTemplate("master", functions);
         goTemplate.parse(masterTemplate);
-//        goTemplate.parse(overlayTemplate);
-        String text = goTemplate.execute(guardians);
+
+        Writer writer = new StringWriter();
+        goTemplate.execute(writer, guardians);
+        String text = writer.toString();
 
         assertEquals("Names:\n" +
                 "- Gamora\n" +
@@ -136,5 +146,16 @@ class GoTemplateTest {
                 "- Nebula\n" +
                 "- Rocket\n" +
                 "- Star-Lord\n", text);
+
+
+        goTemplate = new GoTemplate("master", functions);
+        goTemplate.parse(masterTemplate);
+        goTemplate.parse(overlayTemplate);
+
+        writer = new StringWriter();
+        goTemplate.execute(writer, guardians);
+        String overlayText = writer.toString();
+
+        assertEquals("Names: Gamora, Groot, Nebula, Rocket, Star-Lord", overlayText);
     }
 }

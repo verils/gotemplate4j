@@ -3,6 +3,8 @@ package com.github.verils.gotemplate;
 import com.github.verils.gotemplate.parse.Function;
 import com.github.verils.gotemplate.parse.Parser;
 
+import java.io.IOException;
+import java.io.Writer;
 import java.util.Map;
 
 public class GoTemplate {
@@ -25,12 +27,9 @@ public class GoTemplate {
         parser.parse(name, template);
     }
 
-    public String execute(Object data) {
-        StringBuilder sb = new StringBuilder();
-
-        Writer writer = new Writer(sb, parser);
-        writer.write(name, data);
-        return sb.toString();
+    public void execute(Writer writer, Object data) throws IOException {
+        Executor executor = new Executor(parser);
+        executor.execute(writer, name, data);
     }
 
 }
