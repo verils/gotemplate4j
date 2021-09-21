@@ -22,11 +22,14 @@ class Data {
 ```
 
 Usage example:
-```
+```java
+GoTemplate goTemplate = new GoTemplate("greeting");
+goTemplate.parse("{{.Greeting}}");
+
+// Prapare data
 Data data = new Data();
 data.setGreeting("Good day!");
 
-GoTemplate goTemplate = new GoTemplate("{{.Greeting}}");
 String text = goTemplate.execute(data);
 System.out.println(text); // text = "Good day!"
 ```
@@ -35,13 +38,15 @@ System.out.println(text); // text = "Good day!"
 You can use data map either
 
 ```
+GoTemplate goTemplate = new GoTemplate("greeting");
+goTemplate.parse("{{.Greeting}}");
+
+// Prapare data
 Map<String, Object> data = new HashMap();
 data.put("Greeting", "Good day!");
-
 // You can also use java style naming, it is recommended
 data.put("greeting", "Good day!");
 
-GoTemplate goTemplate = new GoTemplate("{{.Greeting}}");
 String text = goTemplate.execute(data);
 System.out.println(text); // text = "Good day!"
 ```
