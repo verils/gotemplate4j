@@ -9,29 +9,37 @@ import java.util.*;
  */
 public class Parser {
 
-    private static final Map<String, Object> DEFAULT_FUNCTIONS = new LinkedHashMap<>();
+    public static final Map<String, Function> DEFAULT_FUNCTIONS = new LinkedHashMap<>();
 
     static {
-        DEFAULT_FUNCTIONS.put("println", new Object());
+        DEFAULT_FUNCTIONS.put("println", args -> {
+            StringBuilder stringBuilder = new StringBuilder();
+            for (Object arg : args) {
+                stringBuilder.append(arg);
+            }
+            stringBuilder.append("\n");
+            return stringBuilder.toString();
+        });
     }
 
-    private final Map<String, Object> functions;
 
-    private final Map<String, Node> nodeMap = new HashMap<>();
+    private final Map<String, Function> functions;
+
+    private final Map<String, ListNode> nodeMap = new HashMap<>();
 
     /**
      * A list which contains all the variables in a branch context
      */
-    private List<String> variables = new ArrayList<>();
+    private final List<String> variables = new ArrayList<>();
 
     public Parser() {
         this(Collections.emptyMap());
     }
 
-    public Parser(Map<String, Object> functions) {
+    public Parser(Map<String, Function> functions) {
         this.variables.add("$");
 
-        LinkedHashMap<String, Object> map = new LinkedHashMap<>(DEFAULT_FUNCTIONS);
+        LinkedHashMap<String, Function> map = new LinkedHashMap<>(DEFAULT_FUNCTIONS);
         map.putAll(functions);
         this.functions = map;
     }
@@ -39,22 +47,38 @@ public class Parser {
 
     public void parse(String name, String template) {
         // Parse the template text, build a list node as the root node
-        ListNode rootListNode = new ListNode();
+        ListNode listNode = new ListNode();
         LexerViewer lexerViewer = new Lexer(template).getViewer();
-        parseList(rootListNode, lexerViewer);
+
+
+        parseList(listNode, lexerViewer);
 
         // Can not have ELSE and END node as the last in root list node
-        Node lastNode = rootListNode.getLast();
+        Node lastNode = listNode.getLast();
         if (lastNode instanceof ElseNode) {
-            throw new ParseException("unexpected " + rootListNode);
+            throwUnexpectError("unexpected " + listNode);
         }
         if (lastNode instanceof EndNode) {
-            throw new ParseException("unexpected " + rootListNode);
+            throwUnexpectError("unexpected " + listNode);
         }
 
-        nodeMap.put(name, rootListNode);
+        ListNode aListNode = nodeMap.get(name);
+        if (aListNode != null) {
+            for (Node node : aListNode) {
+                listNode.append(node);
+            }
+        } else {
+            nodeMap.put(name, listNode);
+        }
     }
 
+
+    /**
+     * Parse list node. Must check the last node in the list when this method return
+     *
+     * @param listNode    List node which contains all nodes in this context
+     * @param lexerViewer Lex container
+     */
     private void parseList(ListNode listNode, LexerViewer lexerViewer) {
         loop:
         while (true) {
@@ -71,6 +95,13 @@ public class Parser {
                     listNode.append(commentNode);
                     break;
                 case LEFT_DELIM:
+                    item = lexerViewer.nextNonSpaceItem();
+                    if (item.type() == ItemType.DEFINE) {
+                        parseDefinition(lexerViewer);
+                        continue;
+                    }
+                    lexerViewer.prevItem();
+
                     parseAction(listNode, lexerViewer);
 
                     // Stop parsing for list in current context, keep the last node, let the method caller handles it
@@ -84,7 +115,7 @@ public class Parser {
 
                     break;
                 default:
-                    throw new ParseException(String.format("unexpected %s in input", item));
+                    throwUnexpectError(String.format("unexpected %s in input", item));
             }
         }
     }
@@ -137,25 +168,62 @@ public class Parser {
             throw new ParseException(String.format("unexpected '%s' in %s", item.value(), context));
         }
 
-        String templateName = StringUtils.unquote(item.value());
-        TemplateNode templateNode = new TemplateNode(templateName);
+        String blockTemplateName = StringUtils.unquote(item.value());
+        TemplateNode blockTemplateNode = new TemplateNode(blockTemplateName);
 
         PipeNode pipeNode = new PipeNode(context);
         parsePipe(pipeNode, lexerViewer, ItemType.RIGHT_DELIM);
-        templateNode.setPipeNode(pipeNode);
+        blockTemplateNode.setPipeNode(pipeNode);
 
 
+        // Parse block content as an associate template
         ListNode blockListNode = new ListNode();
         parseList(blockListNode, lexerViewer);
 
         Node lastNode = blockListNode.getLast();
         if (lastNode instanceof ElseNode) {
-            throw new ParseException(String.format("unexpected '%s' in block clause", lastNode));
+            throwUnexpectError(String.format("unexpected '%s' in block clause", lastNode));
+        }
+        if (lastNode instanceof EndNode) {
+            blockListNode.removeLast();
         }
 
+        nodeMap.put(blockTemplateName, blockListNode);
 
-        listNode.append(templateNode);
+
+        listNode.append(blockTemplateNode);
     }
+
+
+    private void parseDefinition(LexerViewer lexerViewer) {
+        String context = "define clause";
+
+        Item item = lexerViewer.nextNonSpaceItem();
+        if (item.type() != ItemType.STRING && item.type() != ItemType.RAW_STRING) {
+            throw new ParseException(String.format("unexpected '%s' in %s", item.value(), context));
+        }
+
+        String definitionTemplateName = StringUtils.unquote(item.value());
+
+        item = lexerViewer.nextNonSpaceItem();
+        if (item.type() != ItemType.RIGHT_DELIM) {
+            throw new ParseException(String.format("unexpected '%s' in %s", item.value(), context));
+        }
+
+        ListNode definitionListNode = new ListNode();
+        parseList(definitionListNode, lexerViewer);
+
+        Node lastNode = definitionListNode.getLast();
+        if (lastNode instanceof EndNode) {
+            definitionListNode.removeLast();
+        } else {
+            throwUnexpectError(String.format("unexpected '%s' in %s", lastNode, context));
+            return;
+        }
+
+        nodeMap.put(definitionTemplateName, definitionListNode);
+    }
+
 
     private void parseElse(ListNode listNode, LexerViewer lexerViewer) {
         Item item = lexerViewer.nextNonSpaceItem();
@@ -168,14 +236,14 @@ public class Parser {
                 listNode.append(new ElseNode());
                 break;
             default:
-                throw new ParseException(String.format("unexpected %s in end", item));
+                throwUnexpectError(String.format("unexpected %s in end", item));
         }
     }
 
     private void parseEnd(ListNode listNode, LexerViewer lexerViewer) {
         Item item = lexerViewer.nextNonSpaceItem();
         if (item.type() != ItemType.RIGHT_DELIM) {
-            throw new ParseException(String.format("unexpected %s in end", item));
+            throwUnexpectError(String.format("unexpected %s in end", item));
         }
         listNode.append(new EndNode());
     }
@@ -274,10 +342,10 @@ public class Parser {
         if (lastNode instanceof EndNode) {
             listNode.removeLast();
         } else {
-            throw new ParseException("expected end, found " + lastNode);
+            throwUnexpectError("expected end, found " + lastNode);
         }
 
-        variables = variables.subList(0, variableCount);
+        variables.subList(variableCount, variables.size()).clear();
     }
 
     private void parsePipe(PipeNode pipeNode, LexerViewer lexerViewer, ItemType end) {
@@ -291,7 +359,7 @@ public class Parser {
             item = lexerViewer.nextNonSpaceItem();
             if (item.type() == end) {
                 if (pipeNode.getCommands().isEmpty()) {
-                    throw new ParseException("missing value for " + pipeNode.getContext());
+                    throwUnexpectError("missing value for " + pipeNode.getContext());
                 }
                 break;
             }
@@ -344,7 +412,7 @@ public class Parser {
                                 }
                                 break;
                             default:
-                                throw new ParseException("");
+                                throwUnexpectError("");
                         }
                     }
                 }
@@ -366,7 +434,7 @@ public class Parser {
             switch (item.type()) {
                 case IDENTIFIER:
                     if (!hasFunction(item.value())) {
-                        throw new ParseException(String.format("function %s not defined", item.value()));
+                        throwUnexpectError(String.format("function %s not defined", item.value()));
                     }
                     node = new IdentifierNode(item.value());
                     break;
@@ -449,14 +517,14 @@ public class Parser {
                 case PIPE:
                     break;
                 default:
-                    throw new ParseException(String.format("unexpected %s in operand", item));
+                    throwUnexpectError(String.format("unexpected %s in operand", item));
             }
 
             break;
         }
 
         if (commandNode.getArgumentCount() == 0) {
-            throw new ParseException("empty command");
+            throwUnexpectError("empty command");
         }
 
         pipeNode.append(commandNode);
@@ -468,15 +536,28 @@ public class Parser {
         if (variables.contains(name)) {
             return variableNode;
         }
-        throw new ParseException(String.format("undefined variable %s", name));
+        throwUnexpectError(String.format("undefined variable %s", name));
+        return null;
     }
 
     private boolean hasFunction(String name) {
         return functions.containsKey(name);
     }
 
+    private void throwUnexpectError(String format) throws ParseException {
+        throw new ParseException(format);
+    }
+
+
+    public Map<String, ListNode> getNodeMap() {
+        return nodeMap;
+    }
 
     public Node getNode(String name) {
         return nodeMap.get(name);
+    }
+
+    public Map<String, Function> getFunctions() {
+        return functions;
     }
 }

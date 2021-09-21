@@ -1,6 +1,6 @@
 package com.github.verils.gotemplate;
 
-import com.github.verils.gotemplate.parse.Node;
+import com.github.verils.gotemplate.parse.Function;
 import com.github.verils.gotemplate.parse.Parser;
 
 import java.util.Map;
@@ -15,7 +15,7 @@ public class GoTemplate {
         this.parser = new Parser();
     }
 
-    public GoTemplate(String name, Map<String, Object> functions) {
+    public GoTemplate(String name, Map<String, Function> functions) {
         this.name = name;
         this.parser = new Parser(functions);
     }
@@ -26,11 +26,10 @@ public class GoTemplate {
     }
 
     public String execute(Object data) {
-        Node node = parser.getNode(name);
-
         StringBuilder sb = new StringBuilder();
-        Writer writer = new Writer(sb);
-        writer.write(node, data);
+
+        Writer writer = new Writer(sb, parser);
+        writer.write(name, data);
         return sb.toString();
     }
 

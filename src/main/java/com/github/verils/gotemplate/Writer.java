@@ -1,27 +1,34 @@
 package com.github.verils.gotemplate;
 
+import com.github.verils.gotemplate.lex.StringUtils;
 import com.github.verils.gotemplate.parse.*;
 
 import java.beans.BeanInfo;
 import java.beans.IntrospectionException;
 import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
+import java.lang.reflect.Array;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 
 public class Writer {
 
     private final StringBuilder sb;
+    private final Parser parser;
 
-    public Writer(StringBuilder sb) {
+    public Writer(StringBuilder sb, Parser parser) {
         this.sb = sb;
+        this.parser = parser;
     }
 
 
-    public void write(Node rootNode, Object data) {
+    public void write(String name, Object data) {
+        ListNode listNode = parser.getNodeMap().get(name);
         BeanInfo beanInfo = getBeanInfo(data);
-        writeNode(rootNode, data, beanInfo);
+        writeNode(listNode, data, beanInfo);
     }
 
     @SuppressWarnings("StatementWithEmptyBody")
@@ -34,10 +41,12 @@ public class Writer {
             // Ignore comment
         } else if (node instanceof IfNode) {
             writeIf((IfNode) node, data, beanInfo);
+        } else if (node instanceof RangeNode) {
+            writeRange((RangeNode) node, data, beanInfo);
         } else if (node instanceof TemplateNode) {
             writeTemplate((TemplateNode) node, data);
         } else if (node instanceof TextNode) {
-            writeText((TextNode) node, data);
+            writeText((TextNode) node);
         } else if (node instanceof WithNode) {
             writeWith((WithNode) node, data, beanInfo);
         } else {
@@ -68,7 +77,41 @@ public class Writer {
         }
     }
 
-    private void writeText(TextNode textNode, Object data) {
+    private void writeRange(RangeNode rangeNode, Object data, BeanInfo beanInfo) {
+        Object arrayOrList = executePipe(rangeNode.getPipeNode(), data, beanInfo);
+
+        if (arrayOrList.getClass().isArray()) {
+            int length = Array.getLength(arrayOrList);
+            for (int i = 0; i < length; i++) {
+                Object value = Array.get(arrayOrList, i);
+                writeRangeValue(rangeNode, value);
+            }
+        }
+
+        if (arrayOrList instanceof Collection) {
+            Collection<?> collection = (Collection<?>) arrayOrList;
+            for (Object object : collection) {
+                writeRangeValue(rangeNode, object);
+            }
+        }
+
+        if (arrayOrList instanceof Map) {
+            Map<?, ?> map = (Map<?, ?>) arrayOrList;
+            for (Object object : map.values()) {
+                writeRangeValue(rangeNode, object);
+            }
+        }
+    }
+
+    private void writeRangeValue(RangeNode rangeNode, Object value) {
+        ListNode ifListNode = rangeNode.getIfListNode();
+        for (Node node : ifListNode) {
+            BeanInfo itemBeanInfo = getBeanInfo(value);
+            writeNode(node, value, itemBeanInfo);
+        }
+    }
+
+    private void writeText(TextNode textNode) {
         printText(textNode.getText());
     }
 
@@ -82,8 +125,19 @@ public class Writer {
         }
     }
 
-    private void writeTemplate(TemplateNode node, Object data) {
+    private void writeTemplate(TemplateNode templateNode, Object data) {
+        String name = templateNode.getName();
 
+        ListNode listNode = parser.getNodeMap().get(name);
+        if (listNode == null) {
+            throw new ExecutionException(String.format("template %s not defined", name));
+        }
+
+        BeanInfo beanInfo = getBeanInfo(data);
+        Object value = executePipe(templateNode.getPipeNode(), data, beanInfo);
+
+        BeanInfo valueBeanInfo = getBeanInfo(value);
+        writeNode(listNode, value, valueBeanInfo);
     }
 
     private Object executePipe(PipeNode pipeNode, Object data, BeanInfo beanInfo) {
@@ -107,10 +161,16 @@ public class Writer {
         if (firstArgument instanceof FieldNode) {
             return executeField((FieldNode) firstArgument, data, beanInfo);
         }
+        if (firstArgument instanceof IdentifierNode) {
+            return executeFunction((IdentifierNode) firstArgument, command.getArguments(), data, beanInfo);
+        }
 
 
         if (firstArgument instanceof DotNode) {
             return data;
+        }
+        if (firstArgument instanceof StringNode) {
+            return ((StringNode) firstArgument).getText();
         }
 
         throw new ExecutionException(String.format("can't evaluate command %s", firstArgument));
@@ -151,6 +211,42 @@ public class Writer {
         }
 
         return null;
+    }
+
+    private Object executeFunction(IdentifierNode identifierNode, List<Node> arguments, Object data, BeanInfo beanInfo) {
+        String identifier = identifierNode.getIdentifier();
+
+        Map<String, Function> functions = parser.getFunctions();
+        if (functions.containsKey(identifier)) {
+            Function function = functions.get(identifier);
+            if (function == null) {
+                throw new ExecutionException("call of null for " + identifier);
+            }
+
+            List<Node> args = arguments.subList(1, arguments.size());
+
+            Object[] argumentValues = new Object[args.size()];
+            for (int i = 0; i < args.size(); i++) {
+                Object value = executeArgument(args.get(i), data, beanInfo);
+                argumentValues[i] = value;
+            }
+
+            return function.invoke(argumentValues);
+        }
+
+        throw new ExecutionException(String.format("%s is not a defined function", identifier));
+    }
+
+    private Object executeArgument(Node argument, Object data, BeanInfo beanInfo) {
+        if (argument instanceof DotNode) {
+            return data;
+        }
+
+        if (argument instanceof StringNode) {
+            StringNode stringNode = (StringNode) argument;
+            return stringNode.getText();
+        }
+        throw new ExecutionException(String.format("can't extract value of argument %s", argument));
     }
 
 
@@ -206,6 +302,9 @@ public class Writer {
     }
 
     private void printValue(Object value) {
-        sb.append(value);
+        if (value instanceof String) {
+            String unescaped = StringUtils.unescape((String) value);
+            sb.append(unescaped);
+        }
     }
 }

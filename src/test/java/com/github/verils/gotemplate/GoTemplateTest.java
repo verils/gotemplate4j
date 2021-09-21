@@ -1,5 +1,6 @@
 package com.github.verils.gotemplate;
 
+import com.github.verils.gotemplate.parse.Function;
 import org.junit.jupiter.api.Test;
 
 import java.io.BufferedReader;
@@ -110,16 +111,23 @@ class GoTemplateTest {
 
 
     @Test
-    void testBlock() {
-        String master = "Names:{{block \"list\" .}}{{\"\\n\"}}{{range .}}{{println \"-\" .}}{{end}}{{end}}";
+    void testDefinition() {
+        String masterTemplate = "Names:{{block \"list\" .}}{{\"\\n\"}}{{range .}}{{println \"-\" .}}{{end}}{{end}}";
         String overlayTemplate = "{{define \"list\"}} {{join . \", \"}}{{end}} ";
 
         String[] guardians = {"Gamora", "Groot", "Nebula", "Rocket", "Star-Lord"};
 
-        Map<String, Object> functions = new LinkedHashMap<>();
+        Map<String, Function> functions = new LinkedHashMap<>();
+        functions.put("join", args -> {
+            CharSequence delimiter = (CharSequence) args[1];
+            CharSequence[] elements = (CharSequence[]) args[0];
+            return String.join(delimiter, elements);
+        });
+
 
         GoTemplate goTemplate = new GoTemplate("master", functions);
-        goTemplate.parse(master);
+        goTemplate.parse(masterTemplate);
+//        goTemplate.parse(overlayTemplate);
         String text = goTemplate.execute(guardians);
 
         assertEquals("Names:\n" +

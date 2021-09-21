@@ -5,11 +5,15 @@ import com.github.verils.gotemplate.lex.StringUtils;
 public class StringNode implements Node {
 
     private final String origin;
-    private final String unquoted;
+    private final String text;
 
     public StringNode(String origin) {
         this.origin = origin;
-        this.unquoted = StringUtils.unquote(origin);
+        this.text = StringUtils.unquote(origin);
+    }
+
+    public String getText() {
+        return text;
     }
 
     @Override

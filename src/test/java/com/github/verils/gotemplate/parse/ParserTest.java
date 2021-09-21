@@ -131,7 +131,7 @@ class ParserTest {
         };
 
 
-        Map<String, Object> functions = new LinkedHashMap<>();
+        Map<String, Function> functions = new LinkedHashMap<>();
         functions.put("printf", null);
         functions.put("contains", null);
 

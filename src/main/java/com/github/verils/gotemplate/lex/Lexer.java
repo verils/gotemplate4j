@@ -276,7 +276,7 @@ public class Lexer {
             }
 
             if (Char.isValid(ch, Char.EOF, Char.NEW_LINE)) {
-                return parseError("unclosed quote");
+                return parseError("unterminated quoted string");
             }
 
             if (ch == '"') {
