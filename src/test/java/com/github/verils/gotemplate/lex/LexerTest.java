@@ -326,7 +326,7 @@ class LexerTest {
                 }),
                 new Test("{{\"\n\"}}", new Item[]{
                         LEFT_DELIM_ITEM,
-                        mkItem(ItemType.ERROR, "unclosed quote"),
+                        mkItem(ItemType.ERROR, "unterminated quoted string"),
                 }),
                 new Test("{{`xx}}", new Item[]{
                         LEFT_DELIM_ITEM,
