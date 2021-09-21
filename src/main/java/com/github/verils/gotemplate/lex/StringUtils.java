@@ -1,7 +1,5 @@
 package com.github.verils.gotemplate.lex;
 
-import com.github.verils.gotemplate.parse.ParseException;
-
 public final class StringUtils {
 
     private StringUtils() {
@@ -43,4 +41,5 @@ public final class StringUtils {
 
         return unquoted;
     }
+
 }

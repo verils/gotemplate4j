@@ -8,6 +8,10 @@ public class IdentifierNode implements Node {
         this.identifier = identifier;
     }
 
+    public String getIdentifier() {
+        return identifier;
+    }
+
     @Override
     public String toString() {
         return identifier;
