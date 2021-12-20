@@ -109,15 +109,15 @@ class ParserTest {
 
                 new Test("bug1a", "{{$x:=.}}{{$x!2}}", "", true, null),
                 new Test("bug1b", "{{$x:=.}}{{$x+2}}", "", true, null),
-//                new Test("bug1c", "{{$x:=.}}{{$x +2}}", "", true, null),
+                new Test("bug1c", "{{$x:=.}}{{$x +2}}", "{{$x := .}}{{$x +2}}", false, null),
 
-//                new Test("dot after integer", "{{1.E}}", "", true, null),
-//                new Test("dot after float", "{{0.1.E}}", "", true, null),
-//                new Test("dot after boolean", "dot after boolean", "", true, null),
-//                new Test("dot after char", "{{'a'.any}}", "", true, null),
-//                new Test("dot after string", "{{\"hello\".guys}}", "", true, null),
-//                new Test("dot after dot", "{{..E}}", "", true, null),
-//                new Test("dot after nil", "{{nil.E}}", "", true, null),
+                new Test("dot after integer", "{{1.E}}", "", true, null),
+                new Test("dot after float", "{{0.1.E}}", "", true, null),
+                new Test("dot after boolean", "{{true.E}}", "", true, null),
+                new Test("dot after char", "{{'a'.any}}", "", true, null),
+                new Test("dot after string", "{{\"hello\".guys}}", "", true, null),
+                new Test("dot after dot", "{{..E}}", "", true, null),
+                new Test("dot after nil", "{{nil.E}}", "", true, null),
 
 //                new Test("wrong pipeline dot", "{{12|.}}", "", true, null),
 //                new Test("wrong pipeline number", "{{.|12|printf}}", "", true, null),
@@ -126,8 +126,8 @@ class ParserTest {
 //                new Test("wrong pipeline boolean", "{{.|true}}", "", true, null),
 //                new Test("wrong pipeline nil", "{{'c'|nil}}", "", true, null),
 //                new Test("empty pipeline", "{{printf \"%d\" ( ) }}", "", true, null),
-
-                new Test("block definition", "{{block \"foo\"}}hello{{end}}", "", true, null),
+//
+//                new Test("block definition", "{{block \"foo\"}}hello{{end}}", "", true, null),
         };
 
 

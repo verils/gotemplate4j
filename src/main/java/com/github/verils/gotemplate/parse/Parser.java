@@ -1,5 +1,8 @@
 package com.github.verils.gotemplate.parse;
 
+import com.github.verils.gotemplate.lex.Char;
+import com.github.verils.gotemplate.java.Complex;
+import com.github.verils.gotemplate.lex.StringUtils;
 import com.github.verils.gotemplate.lex.*;
 
 import java.util.*;
@@ -460,21 +463,7 @@ public class Parser {
                 case COMPLEX:
                 case NUMBER:
                     lexerViewer.prevItem();
-                    Item nextItem = lexerViewer.nextItem();
-                    String value = nextItem.value();
-
-                    NumberNode numberNode = new NumberNode(value);
-
-//                    if (value.endsWith("i")) {
-//                        String numberString = value.substring(0, value.length() - 1);
-//                        double number = Double.parseDouble(numberString);
-//                    } else {
-//                        numberNode
-//                    }
-//
-//                    int i = Integer.parseInt(value);
-
-                    node = numberNode;
+                    node = parseNumber(lexerViewer);
                     break;
                 case STRING:
                 case RAW_STRING:
@@ -502,6 +491,16 @@ public class Parser {
                         node = new FieldNode(chainNode.toString());
                     } else if (node instanceof VariableNode) {
                         node = new VariableNode(chainNode.toString());
+                    } else if (node instanceof BoolNode) {
+                        throw new ParseException(String.format("unexpected . after term %s", node));
+                    } else if (node instanceof StringNode) {
+                        throw new ParseException(String.format("unexpected . after term %s", node));
+                    } else if (node instanceof NumberNode) {
+                        throw new ParseException(String.format("unexpected . after term %s", node));
+                    } else if (node instanceof NilNode) {
+                        throw new ParseException(String.format("unexpected . after term %s", node));
+                    } else if (node instanceof DotNode) {
+                        throw new ParseException(String.format("unexpected . after term %s", node));
                     } else {
                         node = chainNode;
                     }
@@ -531,6 +530,69 @@ public class Parser {
         }
 
         pipeNode.append(commandNode);
+    }
+
+    private Node parseNumber(LexerViewer lexerViewer) {
+        Item nextItem = lexerViewer.nextItem();
+        String value = nextItem.value();
+        int length = value.length();
+
+        if (nextItem.type() == ItemType.CHAR_CONSTANT) {
+            if (value.charAt(0) != '\'') {
+                throw new ParseException(String.format("malformed character constant: %s", value));
+            }
+            int ch = Char.unquotedChar(value);
+            return new NumberNode(value, ch);
+        }
+
+        if (length > 0 && value.charAt(length - 1) == 'i') {
+            try {
+                double image = Double.parseDouble(value.substring(0, length - 1));
+                Complex complex = new Complex(0, image);
+                return new NumberNode(value, complex);
+            } catch (NumberFormatException ignored) {
+            }
+        }
+
+
+        Node node;
+        Number number = null;
+        try {
+            number = Long.valueOf(value);
+        } catch (NumberFormatException ignored) {
+        }
+
+        if (number == null) {
+            try {
+                number = Double.valueOf(value);
+            } catch (NumberFormatException ignored) {
+            }
+        }
+
+        if (number == null) {
+            try {
+                number = Double.valueOf(value);
+            } catch (NumberFormatException ignored) {
+            }
+        }
+
+        if (number == null) {
+            throw new ParseException(String.format("illegal number syntax: %s", value));
+        }
+
+        NumberNode numberNode = new NumberNode(value, number);
+
+//                    if (value.endsWith("i")) {
+//                        String numberString = value.substring(0, value.length() - 1);
+//                        double number = Double.parseDouble(numberString);
+//                    } else {
+//                        numberNode
+//                    }
+//
+//                    int i = Integer.parseInt(value);
+
+        node = numberNode;
+        return node;
     }
 
     private Node findVariable(String value) {
