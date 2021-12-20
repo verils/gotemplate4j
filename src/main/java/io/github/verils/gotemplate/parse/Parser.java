@@ -1,9 +1,7 @@
 package io.github.verils.gotemplate.parse;
 
-import io.github.verils.gotemplate.lex.*;
 import io.github.verils.gotemplate.java.Complex;
-import com.github.verils.gotemplate.lex.*;
-import io.github.verils.gotemplate.lex.Char;
+import io.github.verils.gotemplate.lex.*;
 
 import java.util.*;
 

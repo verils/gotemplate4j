@@ -1,7 +1,6 @@
 package io.github.verils.gotemplate;
 
 import io.github.verils.gotemplate.lex.StringEscapeUtils;
-import com.github.verils.gotemplate.parse.*;
 import io.github.verils.gotemplate.parse.*;
 
 import java.beans.BeanInfo;
