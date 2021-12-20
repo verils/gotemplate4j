@@ -93,7 +93,7 @@ class GoTemplateTest {
 
 
         writer = new StringWriter();
-        goTemplate.execute(writer, recipients[1]);
+        goTemplate.execute(writer, recipients[2]);
         String text3 = writer.toString();
 
         assertNotNull(text3);
