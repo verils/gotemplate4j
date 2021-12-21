@@ -362,8 +362,23 @@ public class Parser {
         while (true) {
             item = lexerViewer.nextNonSpaceItem();
             if (item.type() == end) {
-                if (pipeNode.getCommands().isEmpty()) {
+                List<CommandNode> commands = pipeNode.getCommands();
+                if (commands.isEmpty()) {
                     throwUnexpectError("missing value for " + pipeNode.getContext());
+                }
+                for (int i = 1; i < commands.size(); i++) {
+                    Node firstArgument = commands.get(i).getFirstArgument();
+                    if (firstArgument instanceof BoolNode) {
+                        throwUnexpectError(String.format("non executable command in pipeline stage %d", i + 1));
+                    } else if (firstArgument instanceof DotNode) {
+                        throwUnexpectError(String.format("non executable command in pipeline stage %d", i + 1));
+                    } else if (firstArgument instanceof NilNode) {
+                        throwUnexpectError(String.format("non executable command in pipeline stage %d", i + 1));
+                    } else if (firstArgument instanceof NumberNode) {
+                        throwUnexpectError(String.format("non executable command in pipeline stage %d", i + 1));
+                    } else if (firstArgument instanceof StringNode) {
+                        throwUnexpectError(String.format("non executable command in pipeline stage %d", i + 1));
+                    }
                 }
                 break;
             }
@@ -607,8 +622,8 @@ public class Parser {
         return functions.containsKey(name);
     }
 
-    private void throwUnexpectError(String format) throws ParseException {
-        throw new ParseException(format);
+    private void throwUnexpectError(String message) throws ParseException {
+        throw new ParseException(message);
     }
 
 

@@ -119,15 +119,15 @@ class ParserTest {
                 new Test("dot after dot", "{{..E}}", "", true, null),
                 new Test("dot after nil", "{{nil.E}}", "", true, null),
 
-//                new Test("wrong pipeline dot", "{{12|.}}", "", true, null),
-//                new Test("wrong pipeline number", "{{.|12|printf}}", "", true, null),
-//                new Test("wrong pipeline string", "{{.|printf|\"error\"}}", "", true, null),
-//                new Test("wrong pipeline char", "{{12|printf|'e'}}", "", true, null),
-//                new Test("wrong pipeline boolean", "{{.|true}}", "", true, null),
-//                new Test("wrong pipeline nil", "{{'c'|nil}}", "", true, null),
-//                new Test("empty pipeline", "{{printf \"%d\" ( ) }}", "", true, null),
-//
-//                new Test("block definition", "{{block \"foo\"}}hello{{end}}", "", true, null),
+                new Test("wrong pipeline dot", "{{12|.}}", "", true, null),
+                new Test("wrong pipeline number", "{{.|12|printf}}", "", true, null),
+                new Test("wrong pipeline string", "{{.|printf|\"error\"}}", "", true, null),
+                new Test("wrong pipeline char", "{{12|printf|'e'}}", "", true, null),
+                new Test("wrong pipeline boolean", "{{.|true}}", "", true, null),
+                new Test("wrong pipeline nil", "{{'c'|nil}}", "", true, null),
+                new Test("empty pipeline", "{{printf \"%d\" ( ) }}", "", true, null),
+
+                new Test("block definition", "{{block \"foo\"}}hello{{end}}", "", true, null),
         };
 
 
