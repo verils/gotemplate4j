@@ -27,7 +27,7 @@ public class GoTemplate {
         parser.parse(name, template);
     }
 
-    public void execute(Writer writer, Object data) throws IOException {
+    public void execute(Object data, Writer writer) throws IOException {
         Executor executor = new Executor(parser);
         executor.execute(writer, name, data);
     }
