@@ -2,6 +2,7 @@ package io.github.verils.gotemplate.parse;
 
 import org.junit.jupiter.api.Test;
 
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -138,9 +139,12 @@ class ParserTest {
 
         for (Test test : tests) {
             try {
+                Map<String, ListNode> nodes = new HashMap<>();
                 Parser parser = new Parser(functions);
-                parser.parse(test.name, test.input);
-                Node node = parser.getNode(test.name);
+
+                parser.parse(nodes, test.name, test.input);
+
+                Node node = nodes.get(test.name);
                 assertNotNull(node);
                 assertTrue(node instanceof ListNode);
                 assertEquals(test.result, node.toString(), String.format("%s: expected %s got %s", test.name, test.result, node));

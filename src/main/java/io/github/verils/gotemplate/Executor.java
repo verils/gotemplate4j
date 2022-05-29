@@ -18,15 +18,17 @@ import java.util.Map;
 
 public class Executor {
 
-    private final Parser parser;
+    private final Map<String, ListNode> nodes;
+    private final Map<String, Function> functions;
 
-    public Executor(Parser parser) {
-        this.parser = parser;
+    public Executor(Map<String, ListNode> nodes, Map<String, Function> functions) {
+        this.nodes = nodes;
+        this.functions = functions;
     }
 
 
     public void execute(Writer writer, String name, Object data) throws IOException {
-        ListNode listNode = parser.getNodeMap().get(name);
+        ListNode listNode = nodes.get(name);
         BeanInfo beanInfo = getBeanInfo(data);
         writeNode(writer, listNode, data, beanInfo);
     }
@@ -50,7 +52,7 @@ public class Executor {
         } else if (node instanceof WithNode) {
             writeWith(writer, (WithNode) node, data, beanInfo);
         } else {
-            throw new ExecutionException(String.format("unknown node: %s", node.toString()));
+            throw new TemplateExecutionException(String.format("unknown node: %s", node.toString()));
         }
     }
 
@@ -128,9 +130,9 @@ public class Executor {
     private void writeTemplate(Writer writer, TemplateNode templateNode, Object data) throws IOException {
         String name = templateNode.getName();
 
-        ListNode listNode = parser.getNodeMap().get(name);
+        ListNode listNode = nodes.get(name);
         if (listNode == null) {
-            throw new ExecutionException(String.format("template %s not defined", name));
+            throw new TemplateExecutionException(String.format("template %s not defined", name));
         }
 
         BeanInfo beanInfo = getBeanInfo(data);
@@ -173,7 +175,7 @@ public class Executor {
             return ((StringNode) firstArgument).getText();
         }
 
-        throw new ExecutionException(String.format("can't evaluate command %s", firstArgument));
+        throw new TemplateExecutionException(String.format("can't evaluate command %s", firstArgument));
     }
 
     private Object executeField(FieldNode fieldNode, Object data, BeanInfo beanInfo) {
@@ -202,12 +204,12 @@ public class Executor {
                     try {
                         return readMethod.invoke(data);
                     } catch (IllegalAccessException | InvocationTargetException e) {
-                        throw new ExecutionException(String.format("can't get value '%s' from data", identifier), e);
+                        throw new TemplateExecutionException(String.format("can't get value '%s' from data", identifier), e);
                     }
                 }
             }
 
-            throw new ExecutionException(String.format("can't get value '%s' from data", identifier));
+            throw new TemplateExecutionException(String.format("can't get value '%s' from data", identifier));
         }
 
         return null;
@@ -216,11 +218,10 @@ public class Executor {
     private Object executeFunction(IdentifierNode identifierNode, List<Node> arguments, Object data, BeanInfo beanInfo) {
         String identifier = identifierNode.getIdentifier();
 
-        Map<String, Function> functions = parser.getFunctions();
         if (functions.containsKey(identifier)) {
             Function function = functions.get(identifier);
             if (function == null) {
-                throw new ExecutionException("call of null for " + identifier);
+                throw new TemplateExecutionException("call of null for " + identifier);
             }
 
             List<Node> args = arguments.subList(1, arguments.size());
@@ -234,7 +235,7 @@ public class Executor {
             return function.invoke(argumentValues);
         }
 
-        throw new ExecutionException(String.format("%s is not a defined function", identifier));
+        throw new TemplateExecutionException(String.format("%s is not a defined function", identifier));
     }
 
     private Object executeArgument(Node argument, Object data, BeanInfo beanInfo) {
@@ -246,7 +247,7 @@ public class Executor {
             StringNode stringNode = (StringNode) argument;
             return stringNode.getText();
         }
-        throw new ExecutionException(String.format("can't extract value of argument %s", argument));
+        throw new TemplateExecutionException(String.format("can't extract value of argument %s", argument));
     }
 
 

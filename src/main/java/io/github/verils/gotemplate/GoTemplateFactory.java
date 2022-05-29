@@ -6,6 +6,7 @@ import org.apache.commons.io.IOUtils;
 import java.io.IOException;
 import java.io.Reader;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class GoTemplateFactory {
@@ -20,16 +21,17 @@ public class GoTemplateFactory {
 
     public GoTemplateFactory(Map<String, Function> functions) {
         this.templates = new HashMap<>();
-        this.functions = functions;
+
+        LinkedHashMap<String, Function> map = new LinkedHashMap<>(Functions.BUILT_IN);
+        if (functions != null) {
+            map.putAll(functions);
+        }
+        this.functions = map;
     }
 
 
     public void parse(String name, String text) {
-        GoTemplate goTemplate = templates.get(name);
-        if (goTemplate == null) {
-            goTemplate = functions != null ? new GoTemplate(name, functions) : new GoTemplate(name);
-            templates.put(name, goTemplate);
-        }
+        GoTemplate goTemplate = templates.computeIfAbsent(name, __ -> new GoTemplate(this, name));
         goTemplate.parse(text);
     }
 
@@ -44,5 +46,9 @@ public class GoTemplateFactory {
             throw new TemplateNotFoundException(String.format("Template '%s' not found.", name));
         }
         return goTemplate;
+    }
+
+    public Map<String, Function> getFunctions() {
+        return functions;
     }
 }

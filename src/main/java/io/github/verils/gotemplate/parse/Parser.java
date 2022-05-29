@@ -3,59 +3,38 @@ package io.github.verils.gotemplate.parse;
 import io.github.verils.gotemplate.java.Complex;
 import io.github.verils.gotemplate.lex.*;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Document of go template：<a href="https://pkg.go.dev/text/template#pkg-overview">Template</a>
  */
 public class Parser {
 
-    public static final Map<String, Function> DEFAULT_FUNCTIONS = new LinkedHashMap<>();
-
-    static {
-        DEFAULT_FUNCTIONS.put("println", args -> {
-            StringBuilder stringBuilder = new StringBuilder();
-            for (int i = 0; i < args.length; i++) {
-                stringBuilder.append(args[i]);
-                if (i < args.length - 1) {
-                    stringBuilder.append(' ');
-                }
-            }
-            stringBuilder.append("\n");
-            return stringBuilder.toString();
-        });
-    }
-
 
     private final Map<String, Function> functions;
 
-    private final Map<String, ListNode> nodeMap = new HashMap<>();
 
     /**
      * A list which contains all the variables in a branch context
      */
     private final List<String> variables = new ArrayList<>();
 
-    public Parser() {
-        this(Collections.emptyMap());
-    }
 
     public Parser(Map<String, Function> functions) {
         this.variables.add("$");
-
-        LinkedHashMap<String, Function> map = new LinkedHashMap<>(DEFAULT_FUNCTIONS);
-        map.putAll(functions);
-        this.functions = map;
+        this.functions = functions;
     }
 
 
-    public void parse(String name, String template) {
+    public void parse(Map<String, ListNode> rootNodes, String name, String template) {
         // Parse the template text, build a list node as the root node
         ListNode listNode = new ListNode();
         LexerViewer lexerViewer = new Lexer(template).getViewer();
 
 
-        parseList(listNode, lexerViewer);
+        parseList(rootNodes, listNode, lexerViewer);
 
         // Can not have ELSE and END node as the last in root list node
         Node lastNode = listNode.getLast();
@@ -66,13 +45,13 @@ public class Parser {
             throwUnexpectError("unexpected " + listNode);
         }
 
-        ListNode aListNode = nodeMap.get(name);
+        ListNode aListNode = rootNodes.get(name);
         if (aListNode != null) {
             for (Node node : aListNode) {
                 listNode.append(node);
             }
         } else {
-            nodeMap.put(name, listNode);
+            rootNodes.put(name, listNode);
         }
     }
 
@@ -80,10 +59,11 @@ public class Parser {
     /**
      * Parse list node. Must check the last node in the list when this method return
      *
+     * @param rootNodes   Template root nodes
      * @param listNode    List node which contains all nodes in this context
      * @param lexerViewer Lex container
      */
-    private void parseList(ListNode listNode, LexerViewer lexerViewer) {
+    private void parseList(Map<String, ListNode> rootNodes, ListNode listNode, LexerViewer lexerViewer) {
         loop:
         while (true) {
             Item item = lexerViewer.nextItem();
@@ -101,12 +81,12 @@ public class Parser {
                 case LEFT_DELIM:
                     item = lexerViewer.nextNonSpaceItem();
                     if (item.type() == ItemType.DEFINE) {
-                        parseDefinition(lexerViewer);
+                        parseDefinition(rootNodes, lexerViewer);
                         continue;
                     }
                     lexerViewer.prevItem();
 
-                    parseAction(listNode, lexerViewer);
+                    parseAction(rootNodes, listNode, lexerViewer);
 
                     // Stop parsing for list in current context, keep the last node, let the method caller handles it
                     Node lastNode = listNode.getLast();
@@ -125,11 +105,11 @@ public class Parser {
     }
 
 
-    private void parseAction(ListNode listNode, LexerViewer lexerViewer) {
+    private void parseAction(Map<String, ListNode> rootNodes, ListNode listNode, LexerViewer lexerViewer) {
         Item item = lexerViewer.nextNonSpaceItem();
         switch (item.type()) {
             case BLOCK:
-                parseBlock(listNode, lexerViewer);
+                parseBlock(rootNodes, listNode, lexerViewer);
                 break;
             case ELSE:
                 parseElse(listNode, lexerViewer);
@@ -138,16 +118,16 @@ public class Parser {
                 parseEnd(listNode, lexerViewer);
                 break;
             case IF:
-                parseIf(listNode, lexerViewer);
+                parseIf(rootNodes, listNode, lexerViewer);
                 break;
             case RANGE:
-                parseRange(listNode, lexerViewer);
+                parseRange(rootNodes, listNode, lexerViewer);
                 break;
             case TEMPLATE:
                 parseTemplate(listNode, lexerViewer);
                 break;
             case WITH:
-                parseWith(listNode, lexerViewer);
+                parseWith(rootNodes, listNode, lexerViewer);
                 break;
             default:
                 lexerViewer.prevItem();
@@ -164,7 +144,7 @@ public class Parser {
     }
 
 
-    private void parseBlock(ListNode listNode, LexerViewer lexerViewer) {
+    private void parseBlock(Map<String, ListNode> rootNodes, ListNode listNode, LexerViewer lexerViewer) {
         String context = "block clause";
 
         Item item = lexerViewer.nextNonSpaceItem();
@@ -182,7 +162,7 @@ public class Parser {
 
         // Parse block content as an associate template
         ListNode blockListNode = new ListNode();
-        parseList(blockListNode, lexerViewer);
+        parseList(rootNodes, blockListNode, lexerViewer);
 
         Node lastNode = blockListNode.getLast();
         if (lastNode instanceof ElseNode) {
@@ -192,14 +172,14 @@ public class Parser {
             blockListNode.removeLast();
         }
 
-        nodeMap.put(blockTemplateName, blockListNode);
+        rootNodes.put(blockTemplateName, blockListNode);
 
 
         listNode.append(blockTemplateNode);
     }
 
 
-    private void parseDefinition(LexerViewer lexerViewer) {
+    private void parseDefinition(Map<String, ListNode> rootNodes, LexerViewer lexerViewer) {
         String context = "define clause";
 
         Item item = lexerViewer.nextNonSpaceItem();
@@ -215,7 +195,7 @@ public class Parser {
         }
 
         ListNode definitionListNode = new ListNode();
-        parseList(definitionListNode, lexerViewer);
+        parseList(rootNodes, definitionListNode, lexerViewer);
 
         Node lastNode = definitionListNode.getLast();
         if (lastNode instanceof EndNode) {
@@ -225,7 +205,7 @@ public class Parser {
             return;
         }
 
-        nodeMap.put(definitionTemplateName, definitionListNode);
+        rootNodes.put(definitionTemplateName, definitionListNode);
     }
 
 
@@ -252,21 +232,21 @@ public class Parser {
         listNode.append(new EndNode());
     }
 
-    private void parseIf(ListNode listNode, LexerViewer lexerViewer) {
+    private void parseIf(Map<String, ListNode> rootNodes, ListNode listNode, LexerViewer lexerViewer) {
         lexerViewer.nextNonSpaceItem();
         lexerViewer.prevItem();
 
         IfNode ifNode = new IfNode();
-        parseBranch(ifNode, lexerViewer, "if", true);
+        parseBranch(rootNodes, ifNode, lexerViewer, "if", true);
         listNode.append(ifNode);
     }
 
-    private void parseRange(ListNode listNode, LexerViewer lexerViewer) {
+    private void parseRange(Map<String, ListNode> rootNodes, ListNode listNode, LexerViewer lexerViewer) {
         lexerViewer.nextNonSpaceItem();
         lexerViewer.prevItem();
 
         RangeNode rangeNode = new RangeNode();
-        parseBranch(rangeNode, lexerViewer, "range", true);
+        parseBranch(rootNodes, rangeNode, lexerViewer, "range", true);
         listNode.append(rangeNode);
     }
 
@@ -293,16 +273,16 @@ public class Parser {
         listNode.append(templateNode);
     }
 
-    private void parseWith(ListNode listNode, LexerViewer lexerViewer) {
+    private void parseWith(Map<String, ListNode> rootNodes, ListNode listNode, LexerViewer lexerViewer) {
         lexerViewer.nextNonSpaceItem();
         lexerViewer.prevItem();
 
         WithNode withNode = new WithNode();
-        parseBranch(withNode, lexerViewer, "with", false);
+        parseBranch(rootNodes, withNode, lexerViewer, "with", false);
         listNode.append(withNode);
     }
 
-    private void parseBranch(BranchNode branchNode, LexerViewer lexerViewer, String context, boolean allowElseIf) {
+    private void parseBranch(Map<String, ListNode> rootNodes, BranchNode branchNode, LexerViewer lexerViewer, String context, boolean allowElseIf) {
         int variableCount = variables.size();
 
         // Parse pipeline, the executable part
@@ -312,7 +292,7 @@ public class Parser {
 
         // Parse 'if' clause
         ListNode ifListNode = new ListNode();
-        parseList(ifListNode, lexerViewer);
+        parseList(rootNodes, ifListNode, lexerViewer);
         branchNode.setIfListNode(ifListNode);
 
         // Parse if 'else' clause exists
@@ -327,7 +307,7 @@ public class Parser {
                     lexerViewer.nextNonSpaceItem();
 
                     ListNode elseListNode = new ListNode();
-                    parseIf(elseListNode, lexerViewer);
+                    parseIf(rootNodes, elseListNode, lexerViewer);
                     branchNode.setElseListNode(elseListNode);
 
                     return;
@@ -335,7 +315,7 @@ public class Parser {
             }
 
             ListNode elseListNode = new ListNode();
-            parseList(elseListNode, lexerViewer);
+            parseList(rootNodes, elseListNode, lexerViewer);
             branchNode.setElseListNode(elseListNode);
 
             listNode = branchNode.getElseListNode();
@@ -626,16 +606,4 @@ public class Parser {
         throw new ParseException(message);
     }
 
-
-    public Map<String, ListNode> getNodeMap() {
-        return nodeMap;
-    }
-
-    public Node getNode(String name) {
-        return nodeMap.get(name);
-    }
-
-    public Map<String, Function> getFunctions() {
-        return functions;
-    }
 }
