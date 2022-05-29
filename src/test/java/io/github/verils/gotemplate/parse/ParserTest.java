@@ -137,7 +137,7 @@ class ParserTest {
         functions.put("contains", null);
 
 
-        GoTemplateFactory goTemplateFactory = new GoTemplateFactory();
+        GoTemplateFactory goTemplateFactory = new GoTemplateFactory(functions);
 
 
         for (Test test : tests) {

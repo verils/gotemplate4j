@@ -5,7 +5,6 @@ import io.github.verils.gotemplate.parse.ListNode;
 
 import java.io.IOException;
 import java.io.Writer;
-import java.util.HashMap;
 import java.util.Map;
 
 public class GoTemplate {
