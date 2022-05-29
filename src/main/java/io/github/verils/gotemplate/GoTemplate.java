@@ -2,7 +2,6 @@ package io.github.verils.gotemplate;
 
 import io.github.verils.gotemplate.parse.Function;
 import io.github.verils.gotemplate.parse.ListNode;
-import io.github.verils.gotemplate.parse.Parser;
 
 import java.io.IOException;
 import java.io.Writer;
@@ -21,31 +20,30 @@ public class GoTemplate {
      */
     private final String name;
 
-    /**
-     * Parsed AST nodes
-     */
-    private final Map<String, ListNode> nodes;
+    private final ListNode root;
 
 
-    public GoTemplate(GoTemplateFactory factory, String name) {
+    public GoTemplate(GoTemplateFactory factory, String name, ListNode root) {
         this.factory = factory;
-        this.nodes = new HashMap<>();
         this.name = name;
+        this.root = root;
     }
 
-
-    public void parse(String template) {
-        Parser parser = new Parser(getFunctions());
-        parser.parse(nodes, name, template);
-    }
 
     public void execute(Object data, Writer writer) throws IOException {
-        Executor executor = new Executor(nodes, getFunctions());
+        Executor executor = new Executor(factory, getFunctions());
         executor.execute(writer, name, data);
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public ListNode root() {
+        return root;
     }
 
     private Map<String, Function> getFunctions() {
         return factory.getFunctions();
     }
-
 }

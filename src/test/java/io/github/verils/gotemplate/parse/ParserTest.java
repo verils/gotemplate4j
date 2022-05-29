@@ -1,8 +1,8 @@
 package io.github.verils.gotemplate.parse;
 
+import io.github.verils.gotemplate.GoTemplateFactory;
 import org.junit.jupiter.api.Test;
 
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -137,14 +137,15 @@ class ParserTest {
         functions.put("contains", null);
 
 
+        GoTemplateFactory goTemplateFactory = new GoTemplateFactory();
+
+
         for (Test test : tests) {
             try {
-                Map<String, ListNode> nodes = new HashMap<>();
-                Parser parser = new Parser(functions);
+                Parser parser = new Parser(goTemplateFactory);
+                parser.parse(test.name, test.input);
 
-                parser.parse(nodes, test.name, test.input);
-
-                Node node = nodes.get(test.name);
+                Node node = goTemplateFactory.getTemplate(test.name).root();
                 assertNotNull(node);
                 assertTrue(node instanceof ListNode);
                 assertEquals(test.result, node.toString(), String.format("%s: expected %s got %s", test.name, test.result, node));

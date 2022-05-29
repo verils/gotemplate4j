@@ -122,7 +122,7 @@ class GoTemplateStandardTest {
 
         GoTemplateFactory goTemplateFactory1 = new GoTemplateFactory(functions);
         goTemplateFactory1.parse("master", masterTemplate);
-        goTemplateFactory1.parse("master", overlayTemplate);
+        goTemplateFactory1.parse(overlayTemplate);
         goTemplate = goTemplateFactory1.getTemplate("master");
 
         writer = new StringWriter();

@@ -18,17 +18,18 @@ import java.util.Map;
 
 public class Executor {
 
-    private final Map<String, ListNode> nodes;
+    private final GoTemplateFactory factory;
     private final Map<String, Function> functions;
 
-    public Executor(Map<String, ListNode> nodes, Map<String, Function> functions) {
-        this.nodes = nodes;
+    public Executor(GoTemplateFactory factory, Map<String, Function> functions) {
+        this.factory = factory;
         this.functions = functions;
     }
 
 
     public void execute(Writer writer, String name, Object data) throws IOException {
-        ListNode listNode = nodes.get(name);
+        GoTemplate template = factory.getTemplate(name);
+        ListNode listNode = template.root();
         BeanInfo beanInfo = getBeanInfo(data);
         writeNode(writer, listNode, data, beanInfo);
     }
@@ -130,7 +131,8 @@ public class Executor {
     private void writeTemplate(Writer writer, TemplateNode templateNode, Object data) throws IOException {
         String name = templateNode.getName();
 
-        ListNode listNode = nodes.get(name);
+        GoTemplate template = factory.getTemplate(name);
+        ListNode listNode = template.root();
         if (listNode == null) {
             throw new TemplateExecutionException(String.format("template %s not defined", name));
         }

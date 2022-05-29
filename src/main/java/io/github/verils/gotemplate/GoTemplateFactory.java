@@ -1,6 +1,7 @@
 package io.github.verils.gotemplate;
 
 import io.github.verils.gotemplate.parse.Function;
+import io.github.verils.gotemplate.parse.Parser;
 import org.apache.commons.io.IOUtils;
 
 import java.io.IOException;
@@ -30,9 +31,13 @@ public class GoTemplateFactory {
     }
 
 
+    public void parse(String text) {
+        parse("", text);
+    }
+
     public void parse(String name, String text) {
-        GoTemplate goTemplate = templates.computeIfAbsent(name, __ -> new GoTemplate(this, name));
-        goTemplate.parse(text);
+        Parser parser = new Parser(this);
+        parser.parse(name, text);
     }
 
     public void parse(String name, Reader reader) throws IOException {
@@ -40,15 +45,23 @@ public class GoTemplateFactory {
         parse(name, text);
     }
 
-    public GoTemplate getTemplate(String name) {
-        GoTemplate goTemplate = templates.get(name);
-        if (goTemplate == null) {
+    public void putTemplate(GoTemplate template) {
+        templates.put(template.getName(), template);
+    }
+
+    public GoTemplate getTemplate(String name) throws TemplateNotFoundException {
+        GoTemplate template = templates.get(name);
+        if (template == null) {
             throw new TemplateNotFoundException(String.format("Template '%s' not found.", name));
         }
-        return goTemplate;
+        return template;
     }
 
     public Map<String, Function> getFunctions() {
         return functions;
+    }
+
+    public boolean hasFunction(String name) {
+        return functions.containsKey(name);
     }
 }
