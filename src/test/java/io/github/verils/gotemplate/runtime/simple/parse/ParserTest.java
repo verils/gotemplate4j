@@ -1,4 +1,4 @@
-package io.github.verils.gotemplate.parse;
+package io.github.verils.gotemplate.runtime.simple.parse;
 
 import io.github.verils.gotemplate.GoTemplateFactory;
 import io.github.verils.gotemplate.Function;

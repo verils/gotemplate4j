@@ -1,6 +1,6 @@
 package io.github.verils.gotemplate;
 
-class Recipient {
+public class Recipient {
     private final String name;
     private final String gift;
     private final boolean attended;

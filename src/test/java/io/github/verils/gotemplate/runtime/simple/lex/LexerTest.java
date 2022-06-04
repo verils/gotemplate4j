@@ -1,4 +1,4 @@
-package io.github.verils.gotemplate.lex;
+package io.github.verils.gotemplate.runtime.simple.lex;
 
 import io.github.verils.gotemplate.runtime.simple.lex.Item;
 import io.github.verils.gotemplate.runtime.simple.lex.ItemType;
