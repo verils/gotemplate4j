@@ -2,8 +2,9 @@
 
 [![Testing](https://github.com/verils/gotemplate4j/actions/workflows/maven.yml/badge.svg)](https://github.com/verils/gotemplate4j/actions/workflows/maven.yml)
 
-For now, it‘s just a hand-write parser simply translated from Go. Introducing a Parser Generator is a fine way to do the
-template work, this is comming soon.
+A go template process library
+
+> ATTENTION: This is not ready for production yet.
 
 ## Installation
 
@@ -21,23 +22,28 @@ For Maven, you can simply add dependency:
 ## User Guide
 
 ```java
-// Prepare your data. For Golang it uses UpperCamelCase naming, but this is in Java,
-// you can use any kind of naming that you want.
-Map<String, Object> data = new HashMap<>();
-data.put("Name", "World");
+// Prepare your data. In Golang it uses UpperCamelCase naming method, in Java we should use camelCase.
+Map<String, Object> data=new HashMap<>();
+data.put("name","World");
 
 // Create a template factory, you can make it singleton, but it is better to use individually in each context
 GoTemplateFactory goTemplateFactory = new GoTemplateFactory();
 
-// Parse your template
-goTemplateFactory.parse("example", "Hello {{.Name}}!");
+// Parse your template, don't forget the template name: "example"
+goTemplateFactory.parse("example","Hello {{.name}}!");
 
-// Get template from factory
+// Get "example" template from factory
 GoTemplate goTemplate = goTemplateFactory.getTemplate("example");
 
-// Execute and output
+// Execute and do output
 StringWriter writer = new OutputStreamWriter(System.out);
 goTemplate.execute(data, writer);
 
 // Then it prints "Hello World!" on console
 ```
+
+## Waht is Next?
+
+- [ ] Support complex number format
+- [ ] Support standard *built-in* functions in Golang
+- [ ] Use JavaCC to deal with the syntax
