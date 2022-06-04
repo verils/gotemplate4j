@@ -1,4 +1,4 @@
-package io.github.verils.gotemplate.java;
+package io.github.verils.gotemplate.runtime.simple.parse;
 
 public class Complex {
 

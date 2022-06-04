@@ -4,7 +4,6 @@ import io.github.verils.gotemplate.GoTemplate;
 import io.github.verils.gotemplate.GoTemplateFactory;
 import io.github.verils.gotemplate.GoTemplateNotFoundException;
 import io.github.verils.gotemplate.GoTemplateParseException;
-import io.github.verils.gotemplate.java.Complex;
 import io.github.verils.gotemplate.runtime.simple.lex.*;
 
 import java.util.ArrayList;

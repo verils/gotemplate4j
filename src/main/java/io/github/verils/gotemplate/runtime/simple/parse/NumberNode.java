@@ -1,7 +1,5 @@
 package io.github.verils.gotemplate.runtime.simple.parse;
 
-import io.github.verils.gotemplate.java.Complex;
-
 public class NumberNode implements Node {
 
     private final String text;
