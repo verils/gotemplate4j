@@ -45,7 +45,7 @@ public class GoTemplateFactory {
      *
      * @param text Template text
      */
-    public void parse(String text) throws TemplateParseException {
+    public void parse(String text) throws GoTemplateParseException {
         parse("", text);
     }
 
@@ -56,7 +56,7 @@ public class GoTemplateFactory {
      * @param name The template name
      * @param text Template text
      */
-    public void parse(String name, String text) throws TemplateParseException {
+    public void parse(String name, String text) throws GoTemplateParseException {
         Parser parser = new Parser(this);
         parser.parse(name, text);
     }
@@ -69,7 +69,7 @@ public class GoTemplateFactory {
      * @param reader Template text reader
      * @throws IOException if fail on reading the content
      */
-    public void parse(String name, Reader reader) throws IOException, TemplateParseException {
+    public void parse(String name, Reader reader) throws IOException, GoTemplateParseException {
         String text = IOUtils.toString(reader);
         parse(name, text);
     }
@@ -88,12 +88,12 @@ public class GoTemplateFactory {
      *
      * @param name Template name
      * @return the template with the name
-     * @throws TemplateNotFoundException if template is missing. Did you put or parse it?
+     * @throws GoTemplateNotFoundException if template is missing. Did you put or parse it?
      */
-    public GoTemplate getTemplate(String name) throws TemplateNotFoundException {
+    public GoTemplate getTemplate(String name) throws GoTemplateNotFoundException {
         GoTemplate template = templates.get(name);
         if (template == null) {
-            throw new TemplateNotFoundException(String.format("Template '%s' not found.", name));
+            throw new GoTemplateNotFoundException(String.format("Template '%s' not found.", name));
         }
         return template;
     }

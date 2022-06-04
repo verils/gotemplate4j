@@ -28,7 +28,7 @@ public class Executor {
 
 
     public void execute(Writer writer, String name, Object data) throws IOException,
-            TemplateNotFoundException, TemplateExecutionException {
+            GoTemplateNotFoundException, GoTemplateExecutionException {
         GoTemplate template = factory.getTemplate(name);
         ListNode listNode = (ListNode) template.root();
         BeanInfo beanInfo = getBeanInfo(data);
@@ -37,7 +37,7 @@ public class Executor {
 
     @SuppressWarnings("StatementWithEmptyBody")
     public void writeNode(Writer writer, Node node, Object data, BeanInfo beanInfo) throws IOException,
-            TemplateExecutionException, TemplateNotFoundException {
+            GoTemplateExecutionException, GoTemplateNotFoundException {
         if (node instanceof ListNode) {
             writeList(writer, (ListNode) node, data, beanInfo);
         } else if (node instanceof ActionNode) {
@@ -55,12 +55,12 @@ public class Executor {
         } else if (node instanceof WithNode) {
             writeWith(writer, (WithNode) node, data, beanInfo);
         } else {
-            throw new TemplateExecutionException(String.format("unknown node: %s", node.toString()));
+            throw new GoTemplateExecutionException(String.format("unknown node: %s", node.toString()));
         }
     }
 
     private void writeAction(Writer writer, ActionNode actionNode, Object data, BeanInfo beanInfo) throws IOException,
-            TemplateExecutionException {
+            GoTemplateExecutionException {
         PipeNode pipeNode = actionNode.getPipeNode();
         Object value = executePipe(pipeNode, data, beanInfo);
         if (pipeNode.getVariableCount() == 0) {
@@ -69,7 +69,7 @@ public class Executor {
     }
 
     private void writeIf(Writer writer, IfNode ifNode, Object data, BeanInfo beanInfo) throws IOException,
-            TemplateExecutionException, TemplateNotFoundException {
+            GoTemplateExecutionException, GoTemplateNotFoundException {
         Object value = executePipe(ifNode.getPipeNode(), data, beanInfo);
         if (isTrue(value)) {
             writeNode(writer, ifNode.getIfListNode(), data, beanInfo);
@@ -79,14 +79,14 @@ public class Executor {
     }
 
     private void writeList(Writer writer, ListNode listNode, Object data, BeanInfo beanInfo) throws IOException,
-            TemplateExecutionException, TemplateNotFoundException {
+            GoTemplateExecutionException, GoTemplateNotFoundException {
         for (Node node : listNode) {
             writeNode(writer, node, data, beanInfo);
         }
     }
 
     private void writeRange(Writer writer, RangeNode rangeNode, Object data, BeanInfo beanInfo) throws IOException,
-            TemplateExecutionException, TemplateNotFoundException {
+            GoTemplateExecutionException, GoTemplateNotFoundException {
         Object arrayOrList = executePipe(rangeNode.getPipeNode(), data, beanInfo);
 
         if (arrayOrList.getClass().isArray()) {
@@ -113,7 +113,7 @@ public class Executor {
     }
 
     private void writeRangeValue(Writer writer, RangeNode rangeNode, Object value) throws IOException,
-            TemplateExecutionException, TemplateNotFoundException {
+            GoTemplateExecutionException, GoTemplateNotFoundException {
         ListNode ifListNode = rangeNode.getIfListNode();
         for (Node node : ifListNode) {
             BeanInfo itemBeanInfo = getBeanInfo(value);
@@ -126,7 +126,7 @@ public class Executor {
     }
 
     private void writeWith(Writer writer, WithNode withNode, Object data, BeanInfo beanInfo) throws IOException,
-            TemplateExecutionException, TemplateNotFoundException {
+            GoTemplateExecutionException, GoTemplateNotFoundException {
         Object value = executePipe(withNode.getPipeNode(), data, beanInfo);
         if (isTrue(value)) {
             BeanInfo valueBeanInfo = getBeanInfo(value);
@@ -137,13 +137,13 @@ public class Executor {
     }
 
     private void writeTemplate(Writer writer, TemplateNode templateNode, Object data) throws IOException,
-            TemplateExecutionException, TemplateNotFoundException {
+            GoTemplateExecutionException, GoTemplateNotFoundException {
         String name = templateNode.getName();
 
         GoTemplate template = factory.getTemplate(name);
         ListNode listNode = (ListNode) template.root();
         if (listNode == null) {
-            throw new TemplateExecutionException(String.format("template %s not defined", name));
+            throw new GoTemplateExecutionException(String.format("template %s not defined", name));
         }
 
         BeanInfo beanInfo = getBeanInfo(data);
@@ -153,7 +153,7 @@ public class Executor {
         writeNode(writer, listNode, value, valueBeanInfo);
     }
 
-    private Object executePipe(PipeNode pipeNode, Object data, BeanInfo beanInfo) throws TemplateExecutionException {
+    private Object executePipe(PipeNode pipeNode, Object data, BeanInfo beanInfo) throws GoTemplateExecutionException {
         if (pipeNode == null) {
             return data;
         }
@@ -170,7 +170,7 @@ public class Executor {
     }
 
     private Object executeCommand(CommandNode command, Object data, BeanInfo beanInfo)
-            throws TemplateExecutionException {
+            throws GoTemplateExecutionException {
         Node firstArgument = command.getFirstArgument();
         if (firstArgument instanceof FieldNode) {
             return executeField((FieldNode) firstArgument, data, beanInfo);
@@ -187,11 +187,11 @@ public class Executor {
             return ((StringNode) firstArgument).getText();
         }
 
-        throw new TemplateExecutionException(String.format("can't evaluate command %s", firstArgument));
+        throw new GoTemplateExecutionException(String.format("can't evaluate command %s", firstArgument));
     }
 
     private Object executeField(FieldNode fieldNode, Object data, BeanInfo beanInfo)
-            throws TemplateExecutionException {
+            throws GoTemplateExecutionException {
         String[] identifiers = fieldNode.getIdentifiers();
         for (String identifier : identifiers) {
             if (data == null) {
@@ -217,26 +217,26 @@ public class Executor {
                     try {
                         return readMethod.invoke(data);
                     } catch (IllegalAccessException | InvocationTargetException e) {
-                        throw new TemplateExecutionException(String.format(
+                        throw new GoTemplateExecutionException(String.format(
                                 "can't get value '%s' from data", identifier), e);
                     }
                 }
             }
 
-            throw new TemplateExecutionException(String.format("can't get value '%s' from data", identifier));
+            throw new GoTemplateExecutionException(String.format("can't get value '%s' from data", identifier));
         }
 
         return null;
     }
 
     private Object executeFunction(IdentifierNode identifierNode, List<Node> arguments, Object data, BeanInfo beanInfo)
-            throws TemplateExecutionException {
+            throws GoTemplateExecutionException {
         String identifier = identifierNode.getIdentifier();
 
         if (functions.containsKey(identifier)) {
             Function function = functions.get(identifier);
             if (function == null) {
-                throw new TemplateExecutionException("call of null for " + identifier);
+                throw new GoTemplateExecutionException("call of null for " + identifier);
             }
 
             List<Node> args = arguments.subList(1, arguments.size());
@@ -250,10 +250,10 @@ public class Executor {
             return function.invoke(argumentValues);
         }
 
-        throw new TemplateExecutionException(String.format("%s is not a defined function", identifier));
+        throw new GoTemplateExecutionException(String.format("%s is not a defined function", identifier));
     }
 
-    private Object executeArgument(Node argument, Object data, BeanInfo beanInfo) throws TemplateExecutionException {
+    private Object executeArgument(Node argument, Object data, BeanInfo beanInfo) throws GoTemplateExecutionException {
         if (argument instanceof DotNode) {
             return data;
         }
@@ -262,7 +262,7 @@ public class Executor {
             StringNode stringNode = (StringNode) argument;
             return stringNode.getText();
         }
-        throw new TemplateExecutionException(String.format("can't extract value of argument %s", argument));
+        throw new GoTemplateExecutionException(String.format("can't extract value of argument %s", argument));
     }
 
 
