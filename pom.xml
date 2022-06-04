@@ -6,7 +6,7 @@
 
     <groupId>io.github.verils</groupId>
     <artifactId>gotemplate4j</artifactId>
-    <version>0.1.0</version>
+    <version>0.2.0</version>
 
     <name>Go Template for Java</name>
     <description>A handwrite go template parser for Java</description>

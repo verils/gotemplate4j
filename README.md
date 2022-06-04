@@ -5,48 +5,39 @@
 For now, it‘s just a hand-write parser simply translated from Go. Introducing a Parser Generator is a fine way to do the
 template work, this is comming soon.
 
-## How To Use?
+## Installation
 
-This repo has not been published to maven central yet, you may clone this repo or download the code directly then introduce in to you project.
+For Maven, you can simply add dependency:
 
-### Use data object
+```xml
 
-Class Data:
-```
-class Data {
-    private String greeting;
-    
-    // Go style naming is supported, and it will be choose in prior, but we recommend using java style naming
-    private String Greeting;
-}
+<dependency>
+    <groupId>io.github.verils</groupId>
+    <artifactId>gotemplate4j</artifactId>
+    <version>0.2.0</version>
+</dependency>
 ```
 
-Usage example:
+## User Guide
+
 ```java
-GoTemplate goTemplate = new GoTemplate("greeting");
-goTemplate.parse("{{.Greeting}}");
+// Prepare your data. For Golang it uses UpperCamelCase naming, but this is in Java,
+// you can use any kind of naming that you want.
+Map<String, Object> data = new HashMap<>();
+data.put("Name", "World");
 
-// Prapare data
-Data data = new Data();
-data.setGreeting("Good day!");
+// Create a template factory, you can make it singleton, but it is better to use individually in each context
+GoTemplateFactory goTemplateFactory = new GoTemplateFactory();
 
-String text = goTemplate.execute(data);
-System.out.println(text); // text = "Good day!"
-```
+// Parse your template
+goTemplateFactory.parse("example", "Hello {{.Name}}!");
 
-### Use data map
-You can use data map either
+// Get template from factory
+GoTemplate goTemplate = goTemplateFactory.getTemplate("example");
 
-```
-GoTemplate goTemplate = new GoTemplate("greeting");
-goTemplate.parse("{{.Greeting}}");
+// Execute and output
+StringWriter writer = new OutputStreamWriter(System.out);
+goTemplate.execute(data, writer);
 
-// Prapare data
-Map<String, Object> data = new HashMap();
-data.put("Greeting", "Good day!");
-// You can also use java style naming, it is recommended
-data.put("greeting", "Good day!");
-
-String text = goTemplate.execute(data);
-System.out.println(text); // text = "Good day!"
+// Then it prints "Hello World!" on console
 ```
