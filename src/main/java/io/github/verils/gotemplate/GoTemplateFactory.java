@@ -45,7 +45,7 @@ public class GoTemplateFactory {
      *
      * @param text Template text
      */
-    public void parse(String text) {
+    public void parse(String text) throws TemplateParseException {
         parse("", text);
     }
 
@@ -56,7 +56,7 @@ public class GoTemplateFactory {
      * @param name The template name
      * @param text Template text
      */
-    public void parse(String name, String text) {
+    public void parse(String name, String text) throws TemplateParseException {
         Parser parser = new Parser(this);
         parser.parse(name, text);
     }
@@ -69,7 +69,7 @@ public class GoTemplateFactory {
      * @param reader Template text reader
      * @throws IOException if fail on reading the content
      */
-    public void parse(String name, Reader reader) throws IOException {
+    public void parse(String name, Reader reader) throws IOException, TemplateParseException {
         String text = IOUtils.toString(reader);
         parse(name, text);
     }

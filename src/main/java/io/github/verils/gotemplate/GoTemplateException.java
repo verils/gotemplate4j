@@ -1,6 +1,6 @@
 package io.github.verils.gotemplate;
 
-public class GoTemplateException extends RuntimeException {
+public class GoTemplateException extends Exception {
 
     public GoTemplateException(String message) {
         super(message);

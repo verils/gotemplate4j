@@ -17,7 +17,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 class GoTemplateStandardTest {
 
     @Test
-    void test() throws IOException {
+    void test() throws IOException, TemplateParseException, TemplateNotFoundException, TemplateExecutionException {
         String letter = "\n" +
                 "Dear {{.Name}},\n" +
                 "{{if .Attended}}\n" +
@@ -86,7 +86,7 @@ class GoTemplateStandardTest {
 
 
     @Test
-    void testDefinition() throws IOException {
+    void testDefinition() throws IOException, TemplateParseException, TemplateNotFoundException, TemplateExecutionException {
         String masterTemplate = "Names:{{block \"list\" .}}{{\"\\n\"}}{{range .}}{{println \"-\" .}}{{end}}{{end}}";
         String overlayTemplate = "{{define \"list\"}} {{join . \", \"}}{{end}} ";
 

@@ -2,6 +2,7 @@ package io.github.verils.gotemplate;
 
 import io.github.verils.gotemplate.parse.Function;
 import io.github.verils.gotemplate.parse.ListNode;
+import io.github.verils.gotemplate.parse.Node;
 
 import java.io.IOException;
 import java.io.Writer;
@@ -29,7 +30,8 @@ public class GoTemplate {
     }
 
 
-    public void execute(Object data, Writer writer) throws IOException {
+    public void execute(Object data, Writer writer) throws IOException,
+            TemplateNotFoundException, TemplateExecutionException {
         Executor executor = new Executor(factory, getFunctions());
         executor.execute(writer, name, data);
     }
@@ -38,7 +40,7 @@ public class GoTemplate {
         return name;
     }
 
-    public ListNode root() {
+    public Node root() {
         return root;
     }
 

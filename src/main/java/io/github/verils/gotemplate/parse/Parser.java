@@ -3,6 +3,7 @@ package io.github.verils.gotemplate.parse;
 import io.github.verils.gotemplate.GoTemplate;
 import io.github.verils.gotemplate.GoTemplateFactory;
 import io.github.verils.gotemplate.TemplateNotFoundException;
+import io.github.verils.gotemplate.TemplateParseException;
 import io.github.verils.gotemplate.java.Complex;
 import io.github.verils.gotemplate.lex.*;
 
@@ -29,7 +30,7 @@ public class Parser {
     }
 
 
-    public void parse(String name, String text) {
+    public void parse(String name, String text) throws TemplateParseException {
         // Parse the template text, build a list node as the root node
         ListNode rootNode = new ListNode();
         LexerViewer lexerViewer = new Lexer(text).getViewer();
@@ -49,7 +50,7 @@ public class Parser {
 
         try {
             GoTemplate template = factory.getTemplate(name);
-            ListNode root = template.root();
+            ListNode root = (ListNode) template.root();
             for (Node node : root) {
                 rootNode.append(node);
             }
@@ -66,7 +67,7 @@ public class Parser {
      * @param listNode    List node which contains all nodes in this context
      * @param lexerViewer Lex container
      */
-    private void parseList(ListNode listNode, LexerViewer lexerViewer) {
+    private void parseList(ListNode listNode, LexerViewer lexerViewer) throws TemplateParseException {
         loop:
         while (true) {
             Item item = lexerViewer.nextItem();
@@ -108,7 +109,7 @@ public class Parser {
     }
 
 
-    private void parseAction(ListNode listNode, LexerViewer lexerViewer) {
+    private void parseAction(ListNode listNode, LexerViewer lexerViewer) throws TemplateParseException {
         Item item = lexerViewer.nextNonSpaceItem();
         switch (item.type()) {
             case BLOCK:
@@ -147,12 +148,12 @@ public class Parser {
     }
 
 
-    private void parseBlock(ListNode listNode, LexerViewer lexerViewer) {
+    private void parseBlock(ListNode listNode, LexerViewer lexerViewer) throws TemplateParseException {
         String context = "block clause";
 
         Item item = lexerViewer.nextNonSpaceItem();
         if (item.type() != ItemType.STRING && item.type() != ItemType.RAW_STRING) {
-            throw new ParseException(String.format("unexpected '%s' in %s", item.value(), context));
+            throw new TemplateParseException(String.format("unexpected '%s' in %s", item.value(), context));
         }
 
         String blockTemplateName = StringUtils.unquote(item.value());
@@ -183,19 +184,19 @@ public class Parser {
     }
 
 
-    private void parseDefinition(LexerViewer lexerViewer) {
+    private void parseDefinition(LexerViewer lexerViewer) throws TemplateParseException {
         String context = "define clause";
 
         Item item = lexerViewer.nextNonSpaceItem();
         if (item.type() != ItemType.STRING && item.type() != ItemType.RAW_STRING) {
-            throw new ParseException(String.format("unexpected '%s' in %s", item.value(), context));
+            throw new TemplateParseException(String.format("unexpected '%s' in %s", item.value(), context));
         }
 
         String definitionTemplateName = StringUtils.unquote(item.value());
 
         item = lexerViewer.nextNonSpaceItem();
         if (item.type() != ItemType.RIGHT_DELIM) {
-            throw new ParseException(String.format("unexpected '%s' in %s", item.value(), context));
+            throw new TemplateParseException(String.format("unexpected '%s' in %s", item.value(), context));
         }
 
         ListNode definitionListNode = new ListNode();
@@ -214,7 +215,7 @@ public class Parser {
     }
 
 
-    private void parseElse(ListNode listNode, LexerViewer lexerViewer) {
+    private void parseElse(ListNode listNode, LexerViewer lexerViewer) throws TemplateParseException {
         Item item = lexerViewer.nextNonSpaceItem();
         switch (item.type()) {
             case IF:
@@ -229,7 +230,7 @@ public class Parser {
         }
     }
 
-    private void parseEnd(ListNode listNode, LexerViewer lexerViewer) {
+    private void parseEnd(ListNode listNode, LexerViewer lexerViewer) throws TemplateParseException {
         Item item = lexerViewer.nextNonSpaceItem();
         if (item.type() != ItemType.RIGHT_DELIM) {
             throwUnexpectError(String.format("unexpected %s in end", item));
@@ -237,7 +238,7 @@ public class Parser {
         listNode.append(new EndNode());
     }
 
-    private void parseIf(ListNode listNode, LexerViewer lexerViewer) {
+    private void parseIf(ListNode listNode, LexerViewer lexerViewer) throws TemplateParseException {
         lexerViewer.nextNonSpaceItem();
         lexerViewer.prevItem();
 
@@ -246,7 +247,7 @@ public class Parser {
         listNode.append(ifNode);
     }
 
-    private void parseRange(ListNode listNode, LexerViewer lexerViewer) {
+    private void parseRange(ListNode listNode, LexerViewer lexerViewer) throws TemplateParseException {
         lexerViewer.nextNonSpaceItem();
         lexerViewer.prevItem();
 
@@ -255,12 +256,12 @@ public class Parser {
         listNode.append(rangeNode);
     }
 
-    private void parseTemplate(ListNode listNode, LexerViewer lexerViewer) {
+    private void parseTemplate(ListNode listNode, LexerViewer lexerViewer) throws TemplateParseException {
         String context = "template clause";
 
         Item item = lexerViewer.nextNonSpaceItem();
         if (item.type() != ItemType.STRING && item.type() != ItemType.RAW_STRING) {
-            throw new ParseException(String.format("unexpected '%s' in %s", item.value(), context));
+            throw new TemplateParseException(String.format("unexpected '%s' in %s", item.value(), context));
         }
 
         String templateName = StringUtils.unquote(item.value());
@@ -278,7 +279,7 @@ public class Parser {
         listNode.append(templateNode);
     }
 
-    private void parseWith(ListNode listNode, LexerViewer lexerViewer) {
+    private void parseWith(ListNode listNode, LexerViewer lexerViewer) throws TemplateParseException {
         lexerViewer.nextNonSpaceItem();
         lexerViewer.prevItem();
 
@@ -287,7 +288,7 @@ public class Parser {
         listNode.append(withNode);
     }
 
-    private void parseBranch(BranchNode branchNode, LexerViewer lexerViewer, String context, boolean allowElseIf) {
+    private void parseBranch(BranchNode branchNode, LexerViewer lexerViewer, String context, boolean allowElseIf) throws TemplateParseException {
         int variableCount = variables.size();
 
         // Parse pipeline, the executable part
@@ -337,7 +338,7 @@ public class Parser {
         variables.subList(variableCount, variables.size()).clear();
     }
 
-    private void parsePipe(PipeNode pipeNode, LexerViewer lexerViewer, ItemType end) {
+    private void parsePipe(PipeNode pipeNode, LexerViewer lexerViewer, ItemType end) throws TemplateParseException {
         Item item = lexerViewer.lookNextNonSpaceItem();
 
         if (item.type() == ItemType.VARIABLE) {
@@ -385,12 +386,12 @@ public class Parser {
                     break;
                 case ERROR:
                 default:
-                    throw new ParseException(String.format("unexpected %s in %s", item, pipeNode.getContext()));
+                    throw new TemplateParseException(String.format("unexpected %s in %s", item, pipeNode.getContext()));
             }
         }
     }
 
-    private void parseVariable(PipeNode pipeNode, LexerViewer lexerViewer, Item variableItem) {
+    private void parseVariable(PipeNode pipeNode, LexerViewer lexerViewer, Item variableItem) throws TemplateParseException {
         lexerViewer.nextNonSpaceItem();
         Item nextItem = lexerViewer.lookNextNonSpaceItem();
         switch (nextItem.type()) {
@@ -427,7 +428,7 @@ public class Parser {
         }
     }
 
-    private void parseCommand(PipeNode pipeNode, LexerViewer lexerViewer) {
+    private void parseCommand(PipeNode pipeNode, LexerViewer lexerViewer) throws TemplateParseException {
         CommandNode commandNode = new CommandNode();
 
         loop:
@@ -490,15 +491,15 @@ public class Parser {
                     } else if (node instanceof VariableNode) {
                         node = new VariableNode(chainNode.toString());
                     } else if (node instanceof BoolNode) {
-                        throw new ParseException(String.format("unexpected . after term %s", node));
+                        throw new TemplateParseException(String.format("unexpected . after term %s", node));
                     } else if (node instanceof StringNode) {
-                        throw new ParseException(String.format("unexpected . after term %s", node));
+                        throw new TemplateParseException(String.format("unexpected . after term %s", node));
                     } else if (node instanceof NumberNode) {
-                        throw new ParseException(String.format("unexpected . after term %s", node));
+                        throw new TemplateParseException(String.format("unexpected . after term %s", node));
                     } else if (node instanceof NilNode) {
-                        throw new ParseException(String.format("unexpected . after term %s", node));
+                        throw new TemplateParseException(String.format("unexpected . after term %s", node));
                     } else if (node instanceof DotNode) {
-                        throw new ParseException(String.format("unexpected . after term %s", node));
+                        throw new TemplateParseException(String.format("unexpected . after term %s", node));
                     } else {
                         node = chainNode;
                     }
@@ -530,14 +531,14 @@ public class Parser {
         pipeNode.append(commandNode);
     }
 
-    private Node parseNumber(LexerViewer lexerViewer) {
+    private Node parseNumber(LexerViewer lexerViewer) throws TemplateParseException {
         Item nextItem = lexerViewer.nextItem();
         String value = nextItem.value();
         int length = value.length();
 
         if (nextItem.type() == ItemType.CHAR_CONSTANT) {
             if (value.charAt(0) != '\'') {
-                throw new ParseException(String.format("malformed character constant: %s", value));
+                throw new TemplateParseException(String.format("malformed character constant: %s", value));
             }
             int ch = Char.unquotedChar(value);
             return new NumberNode(value, ch);
@@ -575,7 +576,7 @@ public class Parser {
         }
 
         if (number == null) {
-            throw new ParseException(String.format("illegal number syntax: %s", value));
+            throw new TemplateParseException(String.format("illegal number syntax: %s", value));
         }
 
         NumberNode numberNode = new NumberNode(value, number);
@@ -593,7 +594,7 @@ public class Parser {
         return node;
     }
 
-    private Node findVariable(String value) {
+    private Node findVariable(String value) throws TemplateParseException {
         VariableNode variableNode = new VariableNode(value);
         String name = variableNode.getIdentifier(0);
         if (variables.contains(name)) {
@@ -607,8 +608,8 @@ public class Parser {
         return factory.hasFunction(name);
     }
 
-    private void throwUnexpectError(String message) throws ParseException {
-        throw new ParseException(message);
+    private void throwUnexpectError(String message) throws TemplateParseException {
+        throw new TemplateParseException(message);
     }
 
 }

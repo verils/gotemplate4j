@@ -39,7 +39,7 @@ public abstract class BranchNode implements Node {
             case "with":
                 break;
             default:
-                throw new ParseException("unknown branch type");
+                throw new IllegalStateException("unknown branch type");
         }
 
         StringBuilder sb = new StringBuilder();

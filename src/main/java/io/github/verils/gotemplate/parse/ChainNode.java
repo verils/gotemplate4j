@@ -14,12 +14,12 @@ public class ChainNode implements Node {
 
     public void append(String value) {
         if (!value.startsWith(".")) {
-            throw new ParseException("not in field");
+            throw new IllegalArgumentException("not in field");
         }
 
         value = value.substring(1);
         if ("".equals(value)) {
-            throw new ParseException("empty field");
+            throw new IllegalArgumentException("empty field");
         }
 
         fields.add(value);
