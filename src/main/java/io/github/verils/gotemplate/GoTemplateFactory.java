@@ -40,7 +40,8 @@ public class GoTemplateFactory {
 
 
     /**
-     * Parse an unnamed template, it will be treated as a library template
+     * Parse an unnamed template. Some templates contain names in their contents, like {@code define}, {@code block} etc.
+     * They are treated as library templates.
      *
      * @param text Template text
      */
