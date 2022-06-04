@@ -1,7 +1,6 @@
 package io.github.verils.gotemplate;
 
 import io.github.verils.gotemplate.runtime.simple.Executor;
-import io.github.verils.gotemplate.runtime.simple.parse.ListNode;
 import io.github.verils.gotemplate.runtime.simple.parse.Node;
 
 import java.io.IOException;
@@ -20,20 +19,20 @@ public class GoTemplate {
      */
     private final String name;
 
-    private final ListNode root;
+    private final Node rootNode;
 
 
-    public GoTemplate(GoTemplateFactory factory, String name, ListNode root) {
+    public GoTemplate(GoTemplateFactory factory, String name, Node rootNode) {
         this.factory = factory;
         this.name = name;
-        this.root = root;
+        this.rootNode = rootNode;
     }
 
 
     public void execute(Object data, Writer writer) throws IOException,
             GoTemplateNotFoundException, GoTemplateExecutionException {
         Executor executor = new Executor(factory, getFunctions());
-        executor.execute(writer, name, data);
+        executor.execute(name, data, writer);
     }
 
     public String getName() {
@@ -41,7 +40,7 @@ public class GoTemplate {
     }
 
     public Node root() {
-        return root;
+        return rootNode;
     }
 
     private Map<String, Function> getFunctions() {

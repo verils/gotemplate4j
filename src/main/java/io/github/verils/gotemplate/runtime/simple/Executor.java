@@ -28,12 +28,17 @@ public class Executor {
     }
 
 
-    public void execute(Writer writer, String name, Object data) throws IOException,
+    public void execute(String name, Object data, Writer writer) throws IOException,
             GoTemplateNotFoundException, GoTemplateExecutionException {
         GoTemplate template = factory.getTemplate(name);
         ListNode listNode = (ListNode) template.root();
-        BeanInfo beanInfo = getBeanInfo(data);
-        writeNode(writer, listNode, data, beanInfo);
+
+        if (data != null) {
+            BeanInfo beanInfo = getBeanInfo(data);
+            writeNode(writer, listNode, data, beanInfo);
+        } else {
+            writeNode(writer, listNode, null, null);
+        }
     }
 
     @SuppressWarnings("StatementWithEmptyBody")
@@ -147,11 +152,15 @@ public class Executor {
             throw new GoTemplateExecutionException(String.format("template %s not defined", name));
         }
 
-        BeanInfo beanInfo = getBeanInfo(data);
-        Object value = executePipe(templateNode.getPipeNode(), data, beanInfo);
+        if (data != null) {
+            BeanInfo beanInfo = getBeanInfo(data);
+            Object value = executePipe(templateNode.getPipeNode(), data, beanInfo);
 
-        BeanInfo valueBeanInfo = getBeanInfo(value);
-        writeNode(writer, listNode, value, valueBeanInfo);
+            BeanInfo valueBeanInfo = getBeanInfo(value);
+            writeNode(writer, listNode, value, valueBeanInfo);
+        } else {
+            writeNode(writer, listNode, null, null);
+        }
     }
 
     private Object executePipe(PipeNode pipeNode, Object data, BeanInfo beanInfo) throws GoTemplateExecutionException {
