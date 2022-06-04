@@ -119,15 +119,28 @@ class GoTemplateStandardTest {
         );
 
 
-        GoTemplateFactory goTemplateFactory1 = new GoTemplateFactory(functions);
-        goTemplateFactory1.parse("master", masterTemplate);
-        goTemplateFactory1.parse(overlayTemplate);
-        goTemplate = goTemplateFactory1.getTemplate("master");
+        goTemplateFactory.parse(overlayTemplate);
+        goTemplate = goTemplateFactory.getTemplate("master");
 
         writer = new StringWriter();
         goTemplate.execute(guardians, writer);
         String overlayText = writer.toString();
 
         assertEquals("Names: Gamora, Groot, Nebula, Rocket, Star-Lord", overlayText);
+    }
+
+    @Test
+    void invoke() throws GoTemplateParseException, GoTemplateNotFoundException, IOException, GoTemplateExecutionException {
+        GoTemplateFactory goTemplateFactory = new GoTemplateFactory();
+        goTemplateFactory.parse("T0.tmpl", "T0 invokes T1: ({{template \"T1\"}})");
+        goTemplateFactory.parse("T1.tmpl", "{{define \"T1\"}}T1 invokes T2: ({{template \"T2\"}}){{end}}");
+        goTemplateFactory.parse("T2.tmpl", "{{define \"T2\"}}This is T2{{end}}");
+
+
+        GoTemplate goTemplate = goTemplateFactory.getTemplate("T0.tmpl");
+
+        StringWriter writer = new StringWriter();
+        goTemplate.execute(null, writer);
+        assertEquals("T0 invokes T1: (T1 invokes T2: (This is T2))", writer.toString());
     }
 }
