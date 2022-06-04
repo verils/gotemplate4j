@@ -1,6 +1,5 @@
 package io.github.verils.gotemplate;
 
-import io.github.verils.gotemplate.parse.Function;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;

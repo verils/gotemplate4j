@@ -1,5 +1,6 @@
 package io.github.verils.gotemplate.lex;
 
+import io.github.verils.gotemplate.runtime.simple.lex.StringEscapeUtils;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;

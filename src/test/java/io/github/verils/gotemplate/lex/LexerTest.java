@@ -1,5 +1,9 @@
 package io.github.verils.gotemplate.lex;
 
+import io.github.verils.gotemplate.runtime.simple.lex.Item;
+import io.github.verils.gotemplate.runtime.simple.lex.ItemType;
+import io.github.verils.gotemplate.runtime.simple.lex.Lexer;
+import io.github.verils.gotemplate.runtime.simple.lex.LexerViewer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 

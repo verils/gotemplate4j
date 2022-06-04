@@ -1,7 +1,5 @@
 package io.github.verils.gotemplate;
 
-import io.github.verils.gotemplate.parse.Function;
-
 import java.util.LinkedHashMap;
 import java.util.Map;
 

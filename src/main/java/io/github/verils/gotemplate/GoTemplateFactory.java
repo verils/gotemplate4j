@@ -1,7 +1,6 @@
 package io.github.verils.gotemplate;
 
-import io.github.verils.gotemplate.parse.Function;
-import io.github.verils.gotemplate.parse.Parser;
+import io.github.verils.gotemplate.runtime.simple.parse.Parser;
 import org.apache.commons.io.IOUtils;
 
 import java.io.IOException;
