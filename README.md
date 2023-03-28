@@ -11,7 +11,7 @@ This project is for experimental purpose, please **DON'T USE IN PRODUCTION**, fo
 
 ## Requirements
 
-Java Version: >=**1.8**
+Java Version: >= **1.8**
 
 ## Installation
 
