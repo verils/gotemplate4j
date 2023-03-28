@@ -8,6 +8,11 @@ Before then, there is another fine library with a name not so intuitive: [Java T
 
 This project is for experimental purpose, please **DON'T USE IN PRODUCTION**, for just now. Wish I can complete it ASAP.
 
+
+## Requirements
+
+Java Version: >=**1.8**
+
 ## Installation
 
 For Maven, you can simply add dependency:
