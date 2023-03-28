@@ -4,7 +4,7 @@
 
 Evaluate go templates and make textual output.
 
-Before then, there is another fine library with a name not so intuitive: [java-template-engine](https://github.com/proninyaroslav/java-template-engine), you can choose anyone you like.
+Before then, there is another fine library with a name not so intuitive: [Java Template Engine](https://github.com/proninyaroslav/java-template-engine), you can choose that if you like.
 
 This project is for experimental purpose, please **DON'T USE IN PRODUCTION**, for just now. Wish I can complete it ASAP.
 
