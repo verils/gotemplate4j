@@ -4,7 +4,8 @@ import io.github.verils.gotemplate.GoTemplate;
 import io.github.verils.gotemplate.GoTemplateFactory;
 import io.github.verils.gotemplate.GoTemplateNotFoundException;
 import io.github.verils.gotemplate.GoTemplateParseException;
-import io.github.verils.gotemplate.runtime.simple.lex.*;
+import io.github.verils.gotemplate.internal.*;
+import io.github.verils.gotemplate.runtime.simple.lex.LexerViewer;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -69,21 +70,21 @@ public class Parser {
     private void parseList(ListNode listNode, LexerViewer lexerViewer) throws GoTemplateParseException {
         loop:
         while (true) {
-            Item item = lexerViewer.nextItem();
-            switch (item.type()) {
+            Token token = lexerViewer.nextItem();
+            switch (token.type()) {
                 case EOF:
                     return;
                 case TEXT:
-                    TextNode textNode = new TextNode(item.value());
+                    TextNode textNode = new TextNode(token.value());
                     listNode.append(textNode);
                     break;
                 case COMMENT:
-                    CommentNode commentNode = new CommentNode(item.value());
+                    CommentNode commentNode = new CommentNode(token.value());
                     listNode.append(commentNode);
                     break;
                 case LEFT_DELIM:
-                    item = lexerViewer.nextNonSpaceItem();
-                    if (item.type() == ItemType.DEFINE) {
+                    token = lexerViewer.nextNonSpaceItem();
+                    if (token.type() == TokenType.DEFINE) {
                         parseDefinition(lexerViewer);
                         continue;
                     }
@@ -102,15 +103,15 @@ public class Parser {
 
                     break;
                 default:
-                    throwUnexpectError(String.format("unexpected %s in input", item));
+                    throwUnexpectError(String.format("unexpected %s in input", token));
             }
         }
     }
 
 
     private void parseAction(ListNode listNode, LexerViewer lexerViewer) throws GoTemplateParseException {
-        Item item = lexerViewer.nextNonSpaceItem();
-        switch (item.type()) {
+        Token token = lexerViewer.nextNonSpaceItem();
+        switch (token.type()) {
             case BLOCK:
                 parseBlock(listNode, lexerViewer);
                 break;
@@ -139,7 +140,7 @@ public class Parser {
                 ActionNode actionNode = new ActionNode();
 
                 PipeNode pipeNode = new PipeNode("command");
-                parsePipe(pipeNode, lexerViewer, ItemType.RIGHT_DELIM);
+                parsePipe(pipeNode, lexerViewer, TokenType.RIGHT_DELIM);
                 actionNode.setPipeNode(pipeNode);
 
                 listNode.append(actionNode);
@@ -150,16 +151,16 @@ public class Parser {
     private void parseBlock(ListNode listNode, LexerViewer lexerViewer) throws GoTemplateParseException {
         String context = "block clause";
 
-        Item item = lexerViewer.nextNonSpaceItem();
-        if (item.type() != ItemType.STRING && item.type() != ItemType.RAW_STRING) {
-            throw new GoTemplateParseException(String.format("unexpected '%s' in %s", item.value(), context));
+        Token token = lexerViewer.nextNonSpaceItem();
+        if (token.type() != TokenType.STRING && token.type() != TokenType.RAW_STRING) {
+            throw new GoTemplateParseException(String.format("unexpected '%s' in %s", token.value(), context));
         }
 
-        String blockTemplateName = StringUtils.unquote(item.value());
+        String blockTemplateName = StringUtils.unquote(token.value());
         TemplateNode blockTemplateNode = new TemplateNode(blockTemplateName);
 
         PipeNode pipeNode = new PipeNode(context);
-        parsePipe(pipeNode, lexerViewer, ItemType.RIGHT_DELIM);
+        parsePipe(pipeNode, lexerViewer, TokenType.RIGHT_DELIM);
         blockTemplateNode.setPipeNode(pipeNode);
 
 
@@ -186,16 +187,16 @@ public class Parser {
     private void parseDefinition(LexerViewer lexerViewer) throws GoTemplateParseException {
         String context = "define clause";
 
-        Item item = lexerViewer.nextNonSpaceItem();
-        if (item.type() != ItemType.STRING && item.type() != ItemType.RAW_STRING) {
-            throw new GoTemplateParseException(String.format("unexpected '%s' in %s", item.value(), context));
+        Token token = lexerViewer.nextNonSpaceItem();
+        if (token.type() != TokenType.STRING && token.type() != TokenType.RAW_STRING) {
+            throw new GoTemplateParseException(String.format("unexpected '%s' in %s", token.value(), context));
         }
 
-        String definitionTemplateName = StringUtils.unquote(item.value());
+        String definitionTemplateName = StringUtils.unquote(token.value());
 
-        item = lexerViewer.nextNonSpaceItem();
-        if (item.type() != ItemType.RIGHT_DELIM) {
-            throw new GoTemplateParseException(String.format("unexpected '%s' in %s", item.value(), context));
+        token = lexerViewer.nextNonSpaceItem();
+        if (token.type() != TokenType.RIGHT_DELIM) {
+            throw new GoTemplateParseException(String.format("unexpected '%s' in %s", token.value(), context));
         }
 
         ListNode definitionListNode = new ListNode();
@@ -215,8 +216,8 @@ public class Parser {
 
 
     private void parseElse(ListNode listNode, LexerViewer lexerViewer) throws GoTemplateParseException {
-        Item item = lexerViewer.nextNonSpaceItem();
-        switch (item.type()) {
+        Token token = lexerViewer.nextNonSpaceItem();
+        switch (token.type()) {
             case IF:
                 lexerViewer.prevItem();
                 listNode.append(new ElseNode());
@@ -225,14 +226,14 @@ public class Parser {
                 listNode.append(new ElseNode());
                 break;
             default:
-                throwUnexpectError(String.format("unexpected %s in end", item));
+                throwUnexpectError(String.format("unexpected %s in end", token));
         }
     }
 
     private void parseEnd(ListNode listNode, LexerViewer lexerViewer) throws GoTemplateParseException {
-        Item item = lexerViewer.nextNonSpaceItem();
-        if (item.type() != ItemType.RIGHT_DELIM) {
-            throwUnexpectError(String.format("unexpected %s in end", item));
+        Token token = lexerViewer.nextNonSpaceItem();
+        if (token.type() != TokenType.RIGHT_DELIM) {
+            throwUnexpectError(String.format("unexpected %s in end", token));
         }
         listNode.append(new EndNode());
     }
@@ -258,20 +259,20 @@ public class Parser {
     private void parseTemplate(ListNode listNode, LexerViewer lexerViewer) throws GoTemplateParseException {
         String context = "template clause";
 
-        Item item = lexerViewer.nextNonSpaceItem();
-        if (item.type() != ItemType.STRING && item.type() != ItemType.RAW_STRING) {
-            throw new GoTemplateParseException(String.format("unexpected '%s' in %s", item.value(), context));
+        Token token = lexerViewer.nextNonSpaceItem();
+        if (token.type() != TokenType.STRING && token.type() != TokenType.RAW_STRING) {
+            throw new GoTemplateParseException(String.format("unexpected '%s' in %s", token.value(), context));
         }
 
-        String templateName = StringUtils.unquote(item.value());
+        String templateName = StringUtils.unquote(token.value());
         TemplateNode templateNode = new TemplateNode(templateName);
 
-        item = lexerViewer.nextNonSpaceItem();
-        if (item.type() != ItemType.RIGHT_DELIM) {
+        token = lexerViewer.nextNonSpaceItem();
+        if (token.type() != TokenType.RIGHT_DELIM) {
             lexerViewer.prevItem();
 
             PipeNode pipeNode = new PipeNode(context);
-            parsePipe(pipeNode, lexerViewer, ItemType.RIGHT_DELIM);
+            parsePipe(pipeNode, lexerViewer, TokenType.RIGHT_DELIM);
             templateNode.setPipeNode(pipeNode);
         }
 
@@ -292,7 +293,7 @@ public class Parser {
 
         // Parse pipeline, the executable part
         PipeNode pipeNode = new PipeNode(context);
-        parsePipe(pipeNode, lexerViewer, ItemType.RIGHT_DELIM);
+        parsePipe(pipeNode, lexerViewer, TokenType.RIGHT_DELIM);
         branchNode.setPipeNode(pipeNode);
 
         // Parse 'if' clause
@@ -307,8 +308,8 @@ public class Parser {
             listNode.removeLast();
 
             if (allowElseIf) {
-                Item item = lexerViewer.lookNextNonSpaceItem();
-                if (item.type() == ItemType.IF) {
+                Token token = lexerViewer.lookNextNonSpaceItem();
+                if (token.type() == TokenType.IF) {
                     lexerViewer.nextNonSpaceItem();
 
                     ListNode elseListNode = new ListNode();
@@ -337,16 +338,16 @@ public class Parser {
         variables.subList(variableCount, variables.size()).clear();
     }
 
-    private void parsePipe(PipeNode pipeNode, LexerViewer lexerViewer, ItemType end) throws GoTemplateParseException {
-        Item item = lexerViewer.lookNextNonSpaceItem();
+    private void parsePipe(PipeNode pipeNode, LexerViewer lexerViewer, TokenType end) throws GoTemplateParseException {
+        Token token = lexerViewer.lookNextNonSpaceItem();
 
-        if (item.type() == ItemType.VARIABLE) {
-            parseVariable(pipeNode, lexerViewer, item);
+        if (token.type() == TokenType.VARIABLE) {
+            parseVariable(pipeNode, lexerViewer, token);
         }
 
         while (true) {
-            item = lexerViewer.nextNonSpaceItem();
-            if (item.type() == end) {
+            token = lexerViewer.nextNonSpaceItem();
+            if (token.type() == end) {
                 List<CommandNode> commands = pipeNode.getCommands();
                 if (commands.isEmpty()) {
                     throwUnexpectError("missing value for " + pipeNode.getContext());
@@ -367,7 +368,7 @@ public class Parser {
                 }
                 break;
             }
-            switch (item.type()) {
+            switch (token.type()) {
                 case BOOL:
                 case CHAR_CONSTANT:
                 case COMPLEX:
@@ -385,34 +386,34 @@ public class Parser {
                     break;
                 case ERROR:
                 default:
-                    throw new GoTemplateParseException(String.format("unexpected %s in %s", item, pipeNode.getContext()));
+                    throw new GoTemplateParseException(String.format("unexpected %s in %s", token, pipeNode.getContext()));
             }
         }
     }
 
-    private void parseVariable(PipeNode pipeNode, LexerViewer lexerViewer, Item variableItem) throws GoTemplateParseException {
+    private void parseVariable(PipeNode pipeNode, LexerViewer lexerViewer, Token variableToken) throws GoTemplateParseException {
         lexerViewer.nextNonSpaceItem();
-        Item nextItem = lexerViewer.lookNextNonSpaceItem();
-        switch (nextItem.type()) {
+        Token nextToken = lexerViewer.lookNextNonSpaceItem();
+        switch (nextToken.type()) {
             case ASSIGN:
             case DECLARE:
                 lexerViewer.nextNonSpaceItem();
-                pipeNode.append(new VariableNode(variableItem.value()));
-                variables.add(variableItem.value());
+                pipeNode.append(new VariableNode(variableToken.value()));
+                variables.add(variableToken.value());
                 break;
             case CHAR:
-                if (",".equals(nextItem.value())) {
+                if (",".equals(nextToken.value())) {
                     lexerViewer.nextNonSpaceItem();
-                    pipeNode.append(new VariableNode(variableItem.value()));
-                    variables.add(variableItem.value());
+                    pipeNode.append(new VariableNode(variableToken.value()));
+                    variables.add(variableToken.value());
                     if ("range".equals(pipeNode.getContext()) && pipeNode.getVariableCount() < 2) {
-                        nextItem = lexerViewer.lookNextNonSpaceItem();
-                        switch (nextItem.type()) {
+                        nextToken = lexerViewer.lookNextNonSpaceItem();
+                        switch (nextToken.type()) {
                             case VARIABLE:
                             case RIGHT_DELIM:
                             case RIGHT_PAREN:
-                                if (variableItem.type() == ItemType.VARIABLE) {
-                                    parseVariable(pipeNode, lexerViewer, nextItem);
+                                if (variableToken.type() == TokenType.VARIABLE) {
+                                    parseVariable(pipeNode, lexerViewer, nextToken);
                                 }
                                 break;
                             default:
@@ -434,13 +435,13 @@ public class Parser {
         while (true) {
             Node node = null;
 
-            Item item = lexerViewer.nextNonSpaceItem();
-            switch (item.type()) {
+            Token token = lexerViewer.nextNonSpaceItem();
+            switch (token.type()) {
                 case IDENTIFIER:
-                    if (!hasFunction(item.value())) {
-                        throwUnexpectError(String.format("function %s not defined", item.value()));
+                    if (!hasFunction(token.value())) {
+                        throwUnexpectError(String.format("function %s not defined", token.value()));
                     }
-                    node = new IdentifierNode(item.value());
+                    node = new IdentifierNode(token.value());
                     break;
                 case DOT:
                     node = new DotNode();
@@ -449,13 +450,13 @@ public class Parser {
                     node = new NilNode();
                     break;
                 case VARIABLE:
-                    node = findVariable(item.value());
+                    node = findVariable(token.value());
                     break;
                 case FIELD:
-                    node = new FieldNode(item.value());
+                    node = new FieldNode(token.value());
                     break;
                 case BOOL:
-                    node = new BoolNode(item.value());
+                    node = new BoolNode(token.value());
                     break;
                 case CHAR_CONSTANT:
                 case COMPLEX:
@@ -465,11 +466,11 @@ public class Parser {
                     break;
                 case STRING:
                 case RAW_STRING:
-                    node = new StringNode(item.value());
+                    node = new StringNode(token.value());
                     break;
                 case LEFT_PAREN:
                     PipeNode nestedPipeNode = new PipeNode("parenthesized pipeline");
-                    parsePipe(nestedPipeNode, lexerViewer, ItemType.RIGHT_PAREN);
+                    parsePipe(nestedPipeNode, lexerViewer, TokenType.RIGHT_PAREN);
                     node = nestedPipeNode;
                     break;
                 default:
@@ -477,11 +478,11 @@ public class Parser {
             }
 
             if (node != null) {
-                item = lexerViewer.lookNextItem();
-                if (item.type() == ItemType.FIELD) {
+                token = lexerViewer.lookNextItem();
+                if (token.type() == TokenType.FIELD) {
                     ChainNode chainNode = new ChainNode(node);
-                    for (item = lexerViewer.nextItem(); item.type() == ItemType.FIELD; item = lexerViewer.nextItem()) {
-                        chainNode.append(item.value());
+                    for (token = lexerViewer.nextItem(); token.type() == TokenType.FIELD; token = lexerViewer.nextItem()) {
+                        chainNode.append(token.value());
                     }
                     lexerViewer.prevItem();
 
@@ -506,8 +507,8 @@ public class Parser {
                 commandNode.append(node);
             }
 
-            item = lexerViewer.nextItem();
-            switch (item.type()) {
+            token = lexerViewer.nextItem();
+            switch (token.type()) {
                 case SPACE:
                     continue loop;
                 case RIGHT_DELIM:
@@ -517,7 +518,7 @@ public class Parser {
                 case PIPE:
                     break;
                 default:
-                    throwUnexpectError(String.format("unexpected %s in operand", item));
+                    throwUnexpectError(String.format("unexpected %s in operand", token));
             }
 
             break;
@@ -531,15 +532,22 @@ public class Parser {
     }
 
     private Node parseNumber(LexerViewer lexerViewer) throws GoTemplateParseException {
-        Item nextItem = lexerViewer.nextItem();
-        String value = nextItem.value();
+        Token nextToken = lexerViewer.nextItem();
+        String value = nextToken.value();
         int length = value.length();
 
-        if (nextItem.type() == ItemType.CHAR_CONSTANT) {
+        if (nextToken.type() == TokenType.CHAR_CONSTANT) {
             if (value.charAt(0) != '\'') {
                 throw new GoTemplateParseException(String.format("malformed character constant: %s", value));
             }
-            int ch = Char.unquotedChar(value);
+
+            int ch;
+            try {
+                ch = CharUtils.unquotedChar(value);
+            } catch (IllegalArgumentException e) {
+                throw new GoTemplateParseException("invalid syntax: " + value, e);
+            }
+
             return new NumberNode(value, ch);
         }
 

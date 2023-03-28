@@ -1,18 +1,18 @@
-package io.github.verils.gotemplate.runtime.simple.lex;
+package io.github.verils.gotemplate.internal;
 
-public class Item {
+public class Token {
 
-    private final ItemType type;
+    private final TokenType type;
     private final String val;
     private final int pos;
 
-    public Item(ItemType type, String val, int pos) {
+    public Token(TokenType type, String val, int pos) {
         this.type = type;
         this.val = val;
         this.pos = pos;
     }
 
-    public ItemType type() {
+    public TokenType type() {
         return type;
     }
 
@@ -29,10 +29,9 @@ public class Item {
         switch (type) {
             case EOF:
                 return "EOF";
-            case ERROR:
-                return val;
             case KEYWORD:
                 return '<' + val + '>';
+            case ERROR:
             default:
                 return val;
         }

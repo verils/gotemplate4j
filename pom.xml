@@ -9,7 +9,7 @@
     <version>0.2.1</version>
 
     <name>Go Template for Java</name>
-    <description>A handwrite go template parser for Java</description>
+    <description>Go template engine for Java</description>
     <url>https://github.com/verils/gotemplate4j</url>
 
     <licenses>

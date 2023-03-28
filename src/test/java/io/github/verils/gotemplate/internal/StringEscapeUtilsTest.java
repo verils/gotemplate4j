@@ -1,9 +1,8 @@
-package io.github.verils.gotemplate.runtime.simple.lex;
+package io.github.verils.gotemplate.internal;
 
-import io.github.verils.gotemplate.runtime.simple.lex.StringEscapeUtils;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class StringEscapeUtilsTest {
 

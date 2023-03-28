@@ -1,6 +1,6 @@
-package io.github.verils.gotemplate.runtime.simple.lex;
+package io.github.verils.gotemplate.internal;
 
-public final class Char {
+public final class CharUtils {
 
     public static final char EOF = (char) -1;
     public static final char SPACE = ' ';
@@ -14,7 +14,7 @@ public final class Char {
     public static final String OCTET_DIGITS = "01234567_";
     public static final String BINARY_DIGITS = "01_";
 
-    private Char() {
+    private CharUtils() {
     }
 
     public static boolean isSpace(char ch) {
@@ -71,7 +71,7 @@ public final class Char {
     /**
      * Check if single character is one of the characters you expect
      * <p>
-     * This is same with {@link Char#isValid(char, char...)} but accept a CharSequence to indicate expected characters
+     * This is same with {@link CharUtils#isValid(char, char...)} but accept a CharSequence to indicate expected characters
      *
      * @param ch    Character to be checked
      * @param valid A CharSequence including characters which you expect
@@ -81,13 +81,13 @@ public final class Char {
         return valid.chars().anyMatch(c -> c == ch);
     }
 
-    public static char unquotedChar(String str) {
-        if (str.length() == 0) {
-            throw new SyntaxException("invalid syntax: " + str);
+    public static char unquotedChar(String character) {
+        if (character.length() == 0) {
+            throw new IllegalArgumentException("invalid character: " + character);
         }
-        if (str.charAt(0) != '\'' && str.charAt(2) != '\'') {
-            throw new SyntaxException("invalid syntax: " + str);
+        if (character.charAt(0) != '\'' && character.charAt(2) != '\'') {
+            throw new IllegalArgumentException("invalid character: " + character);
         }
-        return str.charAt(1);
+        return character.charAt(1);
     }
 }

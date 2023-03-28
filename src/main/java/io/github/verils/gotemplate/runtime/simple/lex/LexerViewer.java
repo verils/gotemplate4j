@@ -1,14 +1,17 @@
 package io.github.verils.gotemplate.runtime.simple.lex;
 
+import io.github.verils.gotemplate.internal.Token;
+import io.github.verils.gotemplate.internal.TokenType;
+
 public class LexerViewer {
 
     private final String input;
-    private final Item[] items;
+    private final Token[] tokens;
     private int index;
 
-    public LexerViewer(String input, Item[] items) {
+    public LexerViewer(String input, Token[] tokens) {
         this.input = input;
-        this.items = items;
+        this.tokens = tokens;
     }
 
 
@@ -21,9 +24,9 @@ public class LexerViewer {
      *
      * @return 下一个元素。第一次执行返回第一个元素，超出最后一个元素后返回null
      */
-    public Item lookNextItem() {
-        if (index < items.length) {
-            return items[index];
+    public Token lookNextItem() {
+        if (index < tokens.length) {
+            return tokens[index];
         }
         return null;
     }
@@ -33,12 +36,12 @@ public class LexerViewer {
      *
      * @return 下一个元素。第一次执行返回第一个元素，超出最后一个元素后返回null
      */
-    public Item nextItem() {
-        Item item = lookNextItem();
-        if (item != null) {
+    public Token nextItem() {
+        Token token = lookNextItem();
+        if (token != null) {
             index++;
         }
-        return item;
+        return token;
     }
 
     /**
@@ -46,17 +49,17 @@ public class LexerViewer {
      *
      * @return 下一个元素。第一次执行返回第一个元素，超出最后一个元素后返回null
      */
-    public Item lookNextNonSpaceItem() {
+    public Token lookNextNonSpaceItem() {
         int count = 0;
         while (true) {
-            Item item = nextItem();
+            Token token = nextItem();
             count++;
-            if (item == null) {
+            if (token == null) {
                 return null;
             }
-            if (item.type() != ItemType.SPACE) {
+            if (token.type() != TokenType.SPACE) {
                 index -= count;
-                return item;
+                return token;
             }
         }
     }
@@ -66,14 +69,14 @@ public class LexerViewer {
      *
      * @return 下一个元素。第一次执行返回第一个元素，超出最后一个元素后返回null
      */
-    public Item nextNonSpaceItem() {
+    public Token nextNonSpaceItem() {
         while (true) {
-            Item item = nextItem();
-            if (item == null) {
+            Token token = nextItem();
+            if (token == null) {
                 return null;
             }
-            if (item.type() != ItemType.SPACE) {
-                return item;
+            if (token.type() != TokenType.SPACE) {
+                return token;
             }
         }
     }
@@ -83,9 +86,9 @@ public class LexerViewer {
      *
      * @return 上一个元素。第一次执行返回null，超出最后一个元素后执行返回最后的元素
      */
-    public Item prevItem() {
+    public Token prevItem() {
         if (index > 0) {
-            return items[--index];
+            return tokens[--index];
         }
         return null;
     }
@@ -95,14 +98,14 @@ public class LexerViewer {
      *
      * @return 上一个元素。第一次执行返回null，超出最后一个元素后执行返回最后的元素
      */
-    public Item prevNonSpaceItem() {
+    public Token prevNonSpaceItem() {
         while (true) {
-            Item item = prevItem();
-            if (item == null) {
+            Token token = prevItem();
+            if (token == null) {
                 return null;
             }
-            if (item.type() != ItemType.SPACE) {
-                return item;
+            if (token.type() != TokenType.SPACE) {
+                return token;
             }
         }
     }

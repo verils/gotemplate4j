@@ -1,4 +1,4 @@
-package io.github.verils.gotemplate.runtime.simple.lex;
+package io.github.verils.gotemplate.internal;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -59,7 +59,6 @@ public final class StringEscapeUtils {
 
     private StringEscapeUtils() {
     }
-
 
     /**
      * Unescape string to literal in Java. For example, replace '\\n' to '\n', '\\b' to '\b', and so on.

@@ -1,7 +1,7 @@
 package io.github.verils.gotemplate.runtime.simple;
 
 import io.github.verils.gotemplate.*;
-import io.github.verils.gotemplate.runtime.simple.lex.StringEscapeUtils;
+import io.github.verils.gotemplate.internal.StringEscapeUtils;
 import io.github.verils.gotemplate.runtime.simple.parse.*;
 
 import java.beans.BeanInfo;

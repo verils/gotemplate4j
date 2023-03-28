@@ -1,4 +1,6 @@
-package io.github.verils.gotemplate.runtime.simple.lex;
+package io.github.verils.gotemplate.internal;
+
+import io.github.verils.gotemplate.runtime.simple.lex.LexerViewer;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -21,36 +23,39 @@ public class Lexer {
     private static final int AT_RIGHT_DELIM_STATUS_REACHED_WITH_TRIM_MARKER = 2;
 
 
-    private static final Map<String, ItemType> KEY = new LinkedHashMap<>();
+    private static final Map<String, TokenType> KEY_MAP = new LinkedHashMap<>();
 
     static {
-        KEY.put(".", ItemType.DOT);
-        KEY.put("block", ItemType.BLOCK);
-        KEY.put("define", ItemType.DEFINE);
-        KEY.put("else", ItemType.ELSE);
-        KEY.put("end", ItemType.END);
-        KEY.put("if", ItemType.IF);
-        KEY.put("nil", ItemType.NIL);
-        KEY.put("range", ItemType.RANGE);
-        KEY.put("template", ItemType.TEMPLATE);
-        KEY.put("with", ItemType.WITH);
+        KEY_MAP.put(".", TokenType.DOT);
+        KEY_MAP.put("block", TokenType.BLOCK);
+        KEY_MAP.put("define", TokenType.DEFINE);
+        KEY_MAP.put("else", TokenType.ELSE);
+        KEY_MAP.put("end", TokenType.END);
+        KEY_MAP.put("if", TokenType.IF);
+        KEY_MAP.put("nil", TokenType.NIL);
+        KEY_MAP.put("range", TokenType.RANGE);
+        KEY_MAP.put("template", TokenType.TEMPLATE);
+        KEY_MAP.put("with", TokenType.WITH);
     }
+
 
     private final String input;
     private final boolean keepComments;
 
-    private final String leftDelim;
-    private final String rightDelim;
+    private final String leftDelimiter;
+    private final String rightDelimiter;
 
     private final String leftComment;
     private final String rightComment;
 
-    /* 解析过程种的标记位 */
+
+    /* Position markers */
+
     private int start = 0;
     private int pos = 0;
     private int parenDepth = 0;
 
-    private final List<Item> items = new ArrayList<>(32);
+    private final List<Token> tokens = new ArrayList<>(32);
 
 
     public Lexer(String input) {
@@ -58,23 +63,25 @@ public class Lexer {
     }
 
     public Lexer(String input, boolean keepComments) {
+        this(input, keepComments, DEFAULT_LEFT_DELIM, DEFAULT_RIGHT_DELIM, DEFAULT_LEFT_COMMENT, DEFAULT_RIGHT_COMMENT);
+    }
+
+    public Lexer(String input, boolean keepComments, String leftDelimiter, String rightDelimiter, String leftComment, String rightComment) {
         if (input == null) {
             throw new NullPointerException();
         }
 
         this.input = input;
         this.keepComments = keepComments;
+        this.leftDelimiter = leftDelimiter;
+        this.rightDelimiter = rightDelimiter;
+        this.leftComment = leftComment;
+        this.rightComment = rightComment;
 
-        this.leftDelim = DEFAULT_LEFT_DELIM;
-        this.rightDelim = DEFAULT_RIGHT_DELIM;
-
-        this.leftComment = DEFAULT_LEFT_COMMENT;
-        this.rightComment = DEFAULT_RIGHT_COMMENT;
-
-        parse();
+        parseInput();
     }
 
-    private void parse() {
+    private void parseInput() {
         State state = parseText();
         while (state != null) {
             state = state.exec();
@@ -82,7 +89,7 @@ public class Lexer {
     }
 
     private State parseText() {
-        int n = input.indexOf(leftDelim, pos);
+        int n = input.indexOf(leftDelimiter, pos);
         boolean hasLeftDelim = n >= 0;
         if (hasLeftDelim) {
             pos = n;
@@ -93,7 +100,7 @@ public class Lexer {
             }
 
             if (pos > start) {
-                addItem(ItemType.TEXT);
+                addItem(TokenType.TEXT);
             }
 
             pos = n;
@@ -104,18 +111,18 @@ public class Lexer {
 
         if (input.length() > pos) {
             pos = input.length();
-            addItem(ItemType.TEXT);
+            addItem(TokenType.TEXT);
         }
 
         moveStartToPos();
-        addItem(ItemType.EOF);
+        addItem(TokenType.EOF);
 
         return null;
     }
 
     private State parseLeftDelim() {
         boolean atLeftTrimMarker = atLeftTrimMarker();
-        pos += leftDelim.length();
+        pos += leftDelimiter.length();
 
         int parseStart = atLeftTrimMarker ? pos + 2 : pos;
         int n = input.indexOf(leftComment, parseStart);
@@ -127,7 +134,7 @@ public class Lexer {
             return this::parseComment;
         }
 
-        addItem(ItemType.LEFT_DELIM);
+        addItem(TokenType.LEFT_DELIM);
 
         pos = parseStart;
         moveStartToPos();
@@ -150,15 +157,15 @@ public class Lexer {
         }
 
         if (keepComments) {
-            addItem(ItemType.COMMENT);
+            addItem(TokenType.COMMENT);
         }
 
         if (atRightDelimStatus == AT_RIGHT_DELIM_STATUS_REACHED_WITH_TRIM_MARKER) {
-            pos += TRIM_MARKER_LENGTH + rightDelim.length();
+            pos += TRIM_MARKER_LENGTH + rightDelimiter.length();
             pos += rtrimLength();
         }
         if (atRightDelimStatus == AT_RIGHT_DELIM_STATUS_REACHED_WITHOUT_TRIM_MARKER) {
-            pos += rightDelim.length();
+            pos += rightDelimiter.length();
         }
         moveStartToPos();
 
@@ -176,9 +183,9 @@ public class Lexer {
         }
 
         char ch = nextChar();
-        if (ch == Char.EOF) {
+        if (ch == CharUtils.EOF) {
             return parseError("unclosed action");
-        } else if (Char.isSpace(ch)) {
+        } else if (CharUtils.isSpace(ch)) {
             return this::parseSpace;
         } else if (ch == ':') {
             return this::parseDeclare;
@@ -194,20 +201,20 @@ public class Lexer {
             return this::parseChar;
         } else if (ch == '.') {
             return this::parseDot;
-        } else if (Char.isValid(ch, "+-") || Char.isNumeric(ch)) {
+        } else if (CharUtils.isValid(ch, "+-") || CharUtils.isNumeric(ch)) {
             movePosToStart();
             return this::parseNumber;
-        } else if (Char.isAlphabetic(ch)) {
+        } else if (CharUtils.isAlphabetic(ch)) {
             movePosToStart();
             return this::parseIdentifier;
         } else if (ch == '(') {
-            addItem(ItemType.LEFT_PAREN);
+            addItem(TokenType.LEFT_PAREN);
             parenDepth++;
         } else if (ch == ')') {
-            addItem(ItemType.RIGHT_PAREN);
+            addItem(TokenType.RIGHT_PAREN);
             parenDepth--;
-        } else if (Char.isAscii(ch) && Char.isVisible(ch)) {
-            addItem(ItemType.CHAR);
+        } else if (CharUtils.isAscii(ch) && CharUtils.isVisible(ch)) {
+            addItem(TokenType.CHAR);
         } else {
             return parseError("bad character in action: " + ch);
         }
@@ -225,12 +232,12 @@ public class Lexer {
             moveStartToPos();
         }
 
-        pos = start + rightDelim.length();
-        addItem(ItemType.RIGHT_DELIM);
+        pos = start + rightDelimiter.length();
+        addItem(TokenType.RIGHT_DELIM);
         moveStartToPos();
 
         if (atRightTrimMarker) {
-            while (Char.isSpace(nextChar())) {
+            while (CharUtils.isSpace(nextChar())) {
             }
             pos--;
             moveStartToPos();
@@ -240,7 +247,7 @@ public class Lexer {
     }
 
     private State parseSpace() {
-        addItem(ItemType.SPACE);
+        addItem(TokenType.SPACE);
         moveStartToPos();
 
         return this::parseInsideAction;
@@ -252,14 +259,14 @@ public class Lexer {
             return () -> parseError("expected :=");
         }
 
-        addItem(ItemType.DECLARE);
+        addItem(TokenType.DECLARE);
         moveStartToPos();
 
         return this::parseInsideAction;
     }
 
     private State parsePipe() {
-        addItem(ItemType.PIPE);
+        addItem(TokenType.PIPE);
         moveStartToPos();
 
         return this::parseInsideAction;
@@ -270,12 +277,12 @@ public class Lexer {
             char ch = nextChar();
             if (ch == '\\') {
                 ch = nextChar();
-                if (!Char.isValid(ch, Char.EOF, Char.NEW_LINE)) {
+                if (!CharUtils.isValid(ch, CharUtils.EOF, CharUtils.NEW_LINE)) {
                     continue;
                 }
             }
 
-            if (Char.isValid(ch, Char.EOF, Char.NEW_LINE)) {
+            if (CharUtils.isValid(ch, CharUtils.EOF, CharUtils.NEW_LINE)) {
                 return parseError("unterminated quoted string");
             }
 
@@ -284,7 +291,7 @@ public class Lexer {
             }
         }
 
-        addItem(ItemType.STRING);
+        addItem(TokenType.STRING);
         moveStartToPos();
 
         return this::parseInsideAction;
@@ -293,7 +300,7 @@ public class Lexer {
     private State parseRawQuote() {
         while (true) {
             char ch = nextChar();
-            if (ch == Char.EOF) {
+            if (ch == CharUtils.EOF) {
                 return parseError("unclosed raw quote");
             }
 
@@ -302,7 +309,7 @@ public class Lexer {
             }
         }
 
-        addItem(ItemType.STRING);
+        addItem(TokenType.STRING);
         moveStartToPos();
 
         return this::parseInsideAction;
@@ -310,18 +317,18 @@ public class Lexer {
 
     private State parseVariable() {
         if (atWordTerminator()) {
-            addItem(ItemType.VARIABLE);
+            addItem(TokenType.VARIABLE);
             moveStartToPos();
 
             return this::parseInsideAction;
         }
 
-        char ch = goUntil(c -> !Char.isAlphabetic(c));
+        char ch = goUntil(c -> !CharUtils.isAlphabetic(c));
         if (!atWordTerminator()) {
             return () -> parseError("bad character: " + ch);
         }
 
-        addItem(ItemType.VARIABLE);
+        addItem(TokenType.VARIABLE);
         moveStartToPos();
 
         return this::parseInsideAction;
@@ -333,12 +340,12 @@ public class Lexer {
             if (ch == '\\') {
                 ch = nextChar();
 
-                if (!Char.isValid(ch, Char.EOF, Char.NEW_LINE)) {
+                if (!CharUtils.isValid(ch, CharUtils.EOF, CharUtils.NEW_LINE)) {
                     continue;
                 }
             }
 
-            if (Char.isValid(ch, Char.EOF, Char.NEW_LINE)) {
+            if (CharUtils.isValid(ch, CharUtils.EOF, CharUtils.NEW_LINE)) {
                 return parseError("unclosed character constant");
             }
 
@@ -347,7 +354,7 @@ public class Lexer {
             }
         }
 
-        addItem(ItemType.CHAR_CONSTANT);
+        addItem(TokenType.CHAR_CONSTANT);
         moveStartToPos();
 
         return this::parseInsideAction;
@@ -364,18 +371,18 @@ public class Lexer {
 
     private State parseField() {
         if (atWordTerminator()) {
-            addItem(ItemType.DOT);
+            addItem(TokenType.DOT);
             moveStartToPos();
 
             return this::parseInsideAction;
         }
 
-        char ch = goUntil(c -> !Char.isAlphabetic(c));
+        char ch = goUntil(c -> !CharUtils.isAlphabetic(c));
         if (!atWordTerminator()) {
             return () -> parseError("bad character: " + ch);
         }
 
-        addItem(ItemType.FIELD);
+        addItem(TokenType.FIELD);
         moveStartToPos();
 
         return this::parseInsideAction;
@@ -385,17 +392,17 @@ public class Lexer {
         lookForNumber();
 
         char ch = getChar();
-        if (Char.isAlphabetic(ch)) {
+        if (CharUtils.isAlphabetic(ch)) {
             pos++;
             return parseError("bad number: " + getValue());
         }
 
-        if (Char.isValid(ch, "+-")) {
+        if (CharUtils.isValid(ch, "+-")) {
             lookForNumber();
 
-            addItem(ItemType.COMPLEX);
+            addItem(TokenType.COMPLEX);
         } else {
-            addItem(ItemType.NUMBER);
+            addItem(TokenType.NUMBER);
         }
 
         moveStartToPos();
@@ -406,24 +413,24 @@ public class Lexer {
     private State parseIdentifier() {
         while (true) {
             char ch = nextChar();
-            if (ch == Char.EOF) {
+            if (ch == CharUtils.EOF) {
                 break;
             }
-            if (!Char.isAlphabetic(ch)) {
+            if (!CharUtils.isAlphabetic(ch)) {
                 pos--;
                 break;
             }
         }
         String word = getValue();
 
-        if (KEY.containsKey(word)) {
-            addItem(KEY.get(word));
+        if (KEY_MAP.containsKey(word)) {
+            addItem(KEY_MAP.get(word));
         } else if (word.charAt(0) == '.') {
-            addItem(ItemType.FIELD);
+            addItem(TokenType.FIELD);
         } else if ("true".equals(word) || "false".equals(word)) {
-            addItem(ItemType.BOOL);
+            addItem(TokenType.BOOL);
         } else {
-            addItem(ItemType.IDENTIFIER);
+            addItem(TokenType.IDENTIFIER);
         }
 
         moveStartToPos();
@@ -439,17 +446,17 @@ public class Lexer {
     private void lookForNumber() {
         goIf("+-");
 
-        String digits = Char.DECIMAL_DIGITS;
+        String digits = CharUtils.DECIMAL_DIGITS;
 
         char ch = nextChar();
         if (ch == '0') {
             ch = nextChar();
-            if (Char.isValid(ch, "xX")) {
-                digits = Char.HEX_DIGITS;
-            } else if (Char.isValid(ch, "oO")) {
-                digits = Char.OCTET_DIGITS;
-            } else if (Char.isValid(ch, "bB")) {
-                digits = Char.BINARY_DIGITS;
+            if (CharUtils.isValid(ch, "xX")) {
+                digits = CharUtils.HEX_DIGITS;
+            } else if (CharUtils.isValid(ch, "oO")) {
+                digits = CharUtils.OCTET_DIGITS;
+            } else if (CharUtils.isValid(ch, "bB")) {
+                digits = CharUtils.BINARY_DIGITS;
             }
         }
 
@@ -459,18 +466,18 @@ public class Lexer {
             ch = goUntilNot(digits);
         }
 
-        if (digits.length() == 10 + 1 && Char.isValid(ch, "eE")) {
+        if (digits.length() == 10 + 1 && CharUtils.isValid(ch, "eE")) {
             pos++;
 
             goIf("+-");
-            ch = goUntilNot(Char.DECIMAL_DIGITS);
+            ch = goUntilNot(CharUtils.DECIMAL_DIGITS);
         }
 
-        if (digits.length() == 16 + 6 + 1 && Char.isValid(ch, "pP")) {
+        if (digits.length() == 16 + 6 + 1 && CharUtils.isValid(ch, "pP")) {
             pos++;
 
             goIf("+-");
-            goUntilNot(Char.DECIMAL_DIGITS);
+            goUntilNot(CharUtils.DECIMAL_DIGITS);
         }
 
         goIf("i");
@@ -486,13 +493,13 @@ public class Lexer {
 
     private void goIf(CharSequence want) {
         char ch = getChar();
-        if (Char.isValid(ch, want)) {
+        if (CharUtils.isValid(ch, want)) {
             pos++;
         }
     }
 
     private char goUntilNot(String valid) {
-        Predicate<Character> predicate = c -> !Char.isValid(c, valid);
+        Predicate<Character> predicate = c -> !CharUtils.isValid(c, valid);
         return goUntil(predicate);
     }
 
@@ -508,7 +515,7 @@ public class Lexer {
 
     private char nextChar() {
         if (pos >= input.length()) {
-            return Char.EOF;
+            return CharUtils.EOF;
         }
 
         char ch = input.charAt(pos);
@@ -523,20 +530,20 @@ public class Lexer {
     }
 
     private boolean atLeftTrimMarker() {
-        int leftDelimLength = leftDelim.length();
+        int leftDelimLength = leftDelimiter.length();
         if (pos + leftDelimLength + TRIM_MARKER_LENGTH > input.length()) {
             return false;
         }
-        return input.indexOf(leftDelim, pos) == pos &&
+        return input.indexOf(leftDelimiter, pos) == pos &&
                 TRIM_MARKER == input.charAt(pos + leftDelimLength) &&
-                Char.isSpace(input.charAt(pos + leftDelimLength + 1));
+                CharUtils.isSpace(input.charAt(pos + leftDelimLength + 1));
     }
 
     private boolean atRightTrimMarker() {
         if (pos + TRIM_MARKER_LENGTH > input.length()) {
             return false;
         }
-        return Char.isSpace(input.charAt(pos)) && TRIM_MARKER == input.charAt(pos + 1);
+        return CharUtils.isSpace(input.charAt(pos)) && TRIM_MARKER == input.charAt(pos + 1);
     }
 
     private int atRightDelimStatus() {
@@ -550,12 +557,12 @@ public class Lexer {
     }
 
     private boolean atRightDelim(int checkPos) {
-        return input.indexOf(rightDelim, checkPos) == checkPos;
+        return input.indexOf(rightDelimiter, checkPos) == checkPos;
     }
 
     private boolean atWordTerminator() {
         char ch = getChar();
-        if (Char.isSpace(ch) || Char.isValid(ch, Char.EOF + ".,|:()")) {
+        if (CharUtils.isSpace(ch) || CharUtils.isValid(ch, CharUtils.EOF + ".,|:()")) {
             return true;
         }
         return atRightDelimStatus() != AT_RIGHT_DELIM_STATUS_UNREACHED;
@@ -569,7 +576,7 @@ public class Lexer {
         int i = pos;
         for (; i > 0; i--) {
             char ch = input.charAt(i - 1);
-            if (!Char.isSpace(ch)) {
+            if (!CharUtils.isSpace(ch)) {
                 break;
             }
         }
@@ -580,24 +587,24 @@ public class Lexer {
         int i = pos;
         for (; i < input.length(); i++) {
             char ch = input.charAt(i);
-            if (!Char.isSpace(ch)) {
+            if (!CharUtils.isSpace(ch)) {
                 break;
             }
         }
         return i - pos;
     }
 
-    private void addItem(ItemType type) {
+    private void addItem(TokenType type) {
         String value = getValue();
-        items.add(new Item(type, value, start));
+        tokens.add(new Token(type, value, start));
     }
 
     private void addErrorItem(String error) {
-        items.add(new Item(ItemType.ERROR, error, start));
+        tokens.add(new Token(TokenType.ERROR, error, start));
     }
 
     public LexerViewer getViewer() {
-        return new LexerViewer(input, items.toArray(new Item[0]));
+        return new LexerViewer(input, tokens.toArray(new Token[0]));
     }
 
 

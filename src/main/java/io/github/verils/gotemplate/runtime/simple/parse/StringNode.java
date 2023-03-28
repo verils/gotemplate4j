@@ -1,6 +1,6 @@
 package io.github.verils.gotemplate.runtime.simple.parse;
 
-import io.github.verils.gotemplate.runtime.simple.lex.StringUtils;
+import io.github.verils.gotemplate.internal.StringUtils;
 
 public class StringNode implements Node {
 
