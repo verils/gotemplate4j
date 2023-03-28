@@ -1,4 +1,13 @@
-v0.1.0 (2021-12-21)
+v0.2.1 (2023-03-28)
+
+Features
+
+- Add a new Golang-like api
+
+Fix some executor issues
+
+- Print number value correctly
+- Process Map object correctly
 
 ========
 
