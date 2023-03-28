@@ -2,7 +2,7 @@
 
 [![Testing](https://github.com/verils/gotemplate4j/actions/workflows/maven.yml/badge.svg)](https://github.com/verils/gotemplate4j/actions/workflows/maven.yml)
 
-Evaluate go templates and make the textual output.
+Evaluate go templates and make textual output.
 
 Before then, there is another fine library with a name not so intuitive: [java-template-engine](https://github.com/proninyaroslav/java-template-engine), you can choose anyone you like.
 
