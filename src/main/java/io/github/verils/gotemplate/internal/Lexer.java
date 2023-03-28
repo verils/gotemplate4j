@@ -1,7 +1,5 @@
 package io.github.verils.gotemplate.internal;
 
-import io.github.verils.gotemplate.runtime.simple.lex.LexerViewer;
-
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -55,6 +53,9 @@ public class Lexer {
     private int pos = 0;
     private int parenDepth = 0;
 
+
+    /* Result tokens */
+
     private final List<Token> tokens = new ArrayList<>(32);
 
 
@@ -81,10 +82,13 @@ public class Lexer {
         parseInput();
     }
 
+    /**
+     * Parse and handle states
+     */
     private void parseInput() {
         State state = parseText();
         while (state != null) {
-            state = state.exec();
+            state = state.run();
         }
     }
 
@@ -603,13 +607,13 @@ public class Lexer {
         tokens.add(new Token(TokenType.ERROR, error, start));
     }
 
-    public LexerViewer getViewer() {
-        return new LexerViewer(input, tokens.toArray(new Token[0]));
+    public List<Token> getTokens() {
+        return tokens;
     }
 
 
     private interface State {
 
-        State exec();
+        State run();
     }
 }

@@ -1,8 +1,9 @@
 package io.github.verils.gotemplate.internal;
 
-import io.github.verils.gotemplate.runtime.simple.lex.LexerViewer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
+import java.util.Iterator;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -385,9 +386,9 @@ class LexerTest {
 
         for (Test test : tests) {
             Lexer lexer = new Lexer(test.input, true);
-            LexerViewer lexerViewer = lexer.getViewer();
+            Iterator<Token> iterator = lexer.getTokens().iterator();
             for (Token token : test.items) {
-                Token tgt = lexerViewer.nextItem();
+                Token tgt = iterator.next();
                 assertNotNull(tgt, String.format("Input: '%s', Expected item type: '%s'", test.input, token.type()));
                 assertEquals(token.type(), tgt.type(), String.format("Input: '%s', Expected item value: '%s', value: '%s'", test.input, token.value(), tgt.value()));
                 assertEquals(token.value(), tgt.value(), String.format("Input: '%s'", test.input));
