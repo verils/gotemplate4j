@@ -4,6 +4,8 @@ import io.github.verils.gotemplate.runtime.simple.parse.Parser;
 import org.apache.commons.io.IOUtils;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.Reader;
 import java.util.Collections;
 import java.util.HashMap;
@@ -62,6 +64,17 @@ public class GoTemplateFactory {
     }
 
     /**
+     * Parse a named template, then you can obtain the template using
+     * {@link GoTemplateFactory#getTemplate(String)} by its name
+     *
+     * @param name The template name
+     * @param in   Template text input stream
+     */
+    public void parse(String name, InputStream in) throws GoTemplateParseException, IOException {
+        parse(name, new InputStreamReader(in));
+    }
+
+    /**
      * Parse a named template from a {@link Reader}, then you can obtain the template using
      * {@link GoTemplateFactory#getTemplate(String)} by its name
      *
@@ -69,7 +82,7 @@ public class GoTemplateFactory {
      * @param reader Template text reader
      * @throws IOException if fail on reading the content
      */
-    public void parse(String name, Reader reader) throws IOException, GoTemplateParseException {
+    public void parse(String name, Reader reader) throws GoTemplateParseException, IOException {
         String text = IOUtils.toString(reader);
         parse(name, text);
     }

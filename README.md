@@ -1,12 +1,14 @@
 # Golang Template Engine for Java
 
+
+
 [![Testing](https://github.com/verils/gotemplate4j/actions/workflows/maven.yml/badge.svg)](https://github.com/verils/gotemplate4j/actions/workflows/maven.yml)
 
 Evaluate go templates and make textual output.
 
 Before then, there is another fine library with a name not so intuitive: [Java Template Engine](https://github.com/proninyaroslav/java-template-engine), you can choose that if you like.
 
-This project is for experimental purpose, please **DON'T USE IN PRODUCTION**, for just now. Wish I can complete it ASAP.
+This project is for experimental purpose, please **DON'T USE IN PRODUCTION** for now because the support for complex number and builtin functions is incomplete. Wish I can finish them ASAP.
 
 
 ## Requirements
@@ -53,4 +55,3 @@ goTemplate.execute(data, writer);
 
 - [ ] Support complex number format
 - [ ] Support standard *built-in* functions in Golang
-- [ ] Use JavaCC to deal with the syntax
