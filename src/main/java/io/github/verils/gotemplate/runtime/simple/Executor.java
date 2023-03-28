@@ -211,7 +211,7 @@ public class Executor {
             if (data instanceof Map) {
                 //noinspection unchecked
                 Map<String, Object> map = (Map<String, Object>) data;
-                return null;
+                return map.get(identifier);
             }
 
             PropertyDescriptor[] propertyDescriptors = beanInfo.getPropertyDescriptors();
@@ -331,6 +331,8 @@ public class Executor {
         if (value instanceof String) {
             String unescaped = StringEscapeUtils.unescape((String) value);
             writer.write(unescaped);
+        } else if (value instanceof Number) {
+            writer.write(String.valueOf(value));
         }
     }
 }

@@ -6,7 +6,7 @@ import org.junit.jupiter.api.Test;
 import java.io.IOException;
 import java.io.StringWriter;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class TemplateTest {
 
@@ -25,10 +25,8 @@ class TemplateTest {
         user.setName("Bob");
 
         template.execute(writer, user);
-        template.executeTemplate(writer,"", user);
         assertEquals("Bob", writer.toString());
     }
-
 
     public static class User {
         private String name;

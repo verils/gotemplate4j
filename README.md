@@ -28,7 +28,7 @@ For Maven, you can simply add dependency:
 </dependency>
 ```
 
-## User Guide
+## Usage
 
 ```java
 // Prepare your data. In Golang it uses UpperCamelCase naming method, in Java we should use camelCase.
