@@ -1,10 +1,12 @@
-# Go Template for Java
+# Golang Template Engine for Java
 
 [![Testing](https://github.com/verils/gotemplate4j/actions/workflows/maven.yml/badge.svg)](https://github.com/verils/gotemplate4j/actions/workflows/maven.yml)
 
-A go template process library
+Evaluate go templates and make the textual output.
 
-> ATTENTION: This is not ready for production yet.
+Before then, there is another fine library with a name not so intuitive: [java-template-engine](https://github.com/proninyaroslav/java-template-engine), you can choose anyone you like.
+
+This project is for experimental purpose, please **DON'T USE IN PRODUCTION**, for just now. Wish I can complete it ASAP.
 
 ## Installation
 
