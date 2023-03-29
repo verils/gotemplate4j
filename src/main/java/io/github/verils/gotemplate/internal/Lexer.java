@@ -611,6 +611,10 @@ public class Lexer {
         return tokens;
     }
 
+    public String getLeftDelimiter() {
+        return leftDelimiter;
+    }
+
 
     private interface State {
 

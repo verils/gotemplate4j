@@ -1,20 +1,22 @@
 package io.github.verils.gotemplate.internal;
 
-import io.github.verils.gotemplate.GoTemplate;
-import io.github.verils.gotemplate.GoTemplateFactory;
-import io.github.verils.gotemplate.GoTemplateNotFoundException;
+import io.github.verils.gotemplate.Function;
 import io.github.verils.gotemplate.GoTemplateParseException;
 import io.github.verils.gotemplate.runtime.simple.parse.*;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Document of go template：<a href="https://pkg.go.dev/text/template#pkg-overview">Template</a>
  */
 public class Parser {
 
-    private final GoTemplateFactory factory;
+    private final Map<String, Function> functions;
+
+    private final Map<String, Node> rootNodes;
 
 
     // Position marker
@@ -28,13 +30,14 @@ public class Parser {
     private final List<String> variables = new ArrayList<>();
 
 
-    public Parser(GoTemplateFactory factory) {
-        this.factory = factory;
+    public Parser(Map<String, Function> functions) {
+        this.functions = functions;
+        this.rootNodes = new LinkedHashMap<>();
         this.variables.add("$");
     }
 
 
-    public void parse(String name, String text) throws GoTemplateParseException {
+    public Map<String, Node> parse(String name, String text) throws GoTemplateParseException {
         // Parse the template text, build a list node as the root node
         ListNode rootNode = new ListNode();
 
@@ -50,17 +53,16 @@ public class Parser {
             throwUnexpectError("unexpected " + rootNode);
         }
 
-
-        try {
-            GoTemplate template = factory.getTemplate(name);
-            ListNode root = (ListNode) template.root();
+        ListNode root = (ListNode) rootNodes.get(name);
+        if (root == null) {
+            rootNodes.put(name, rootNode);
+        } else {
             for (Node node : root) {
                 rootNode.append(node);
             }
-        } catch (GoTemplateNotFoundException e) {
-            GoTemplate template = new GoTemplate(factory, name, rootNode);
-            factory.putTemplate(template);
         }
+
+        return rootNodes;
     }
 
 
@@ -68,7 +70,7 @@ public class Parser {
      * Parse list node. Must check the last node in the list when this method return
      *
      * @param listNode List node which contains all nodes in this context
-     * @param lexer
+     * @param lexer    Lexer holding tokens
      */
     private void parseList(ListNode listNode, Lexer lexer) throws GoTemplateParseException {
         loop:
@@ -87,6 +89,10 @@ public class Parser {
                     break;
                 case LEFT_DELIM:
                     token = moveToNextNonSpaceToken(lexer);
+                    if (token == null) {
+                        throwUnexpectError("unclosed delim: " + lexer.getLeftDelimiter());
+                    }
+
                     if (token.type() == TokenType.DEFINE) {
                         parseDefinition(lexer);
                         continue;
@@ -180,11 +186,9 @@ public class Parser {
             blockListNode.removeLast();
         }
 
-
-        GoTemplate template = new GoTemplate(factory, blockTemplateName, blockListNode);
-        factory.putTemplate(template);
-
         listNode.append(blockTemplateNode);
+
+        rootNodes.put(blockTemplateName, blockListNode);
     }
 
 
@@ -214,8 +218,7 @@ public class Parser {
             return;
         }
 
-        GoTemplate template = new GoTemplate(factory, definitionTemplateName, definitionListNode);
-        factory.putTemplate(template);
+        rootNodes.put(definitionTemplateName, definitionListNode);
     }
 
 
@@ -442,7 +445,8 @@ public class Parser {
             Token token = moveToNextNonSpaceToken(lexer);
             switch (token.type()) {
                 case IDENTIFIER:
-                    if (!hasFunction(token.value())) {
+                    String name = token.value();
+                    if (!hasFunction(name)) {
                         throwUnexpectError(String.format("function %s not defined", token.value()));
                     }
                     node = new IdentifierNode(token.value());
@@ -533,6 +537,10 @@ public class Parser {
         }
 
         pipeNode.append(commandNode);
+    }
+
+    private boolean hasFunction(String name) {
+        return functions.containsKey(name);
     }
 
     /**
@@ -706,12 +714,12 @@ public class Parser {
         return null;
     }
 
-    private boolean hasFunction(String name) {
-        return factory.hasFunction(name);
-    }
-
     private void throwUnexpectError(String message) throws GoTemplateParseException {
         throw new GoTemplateParseException(message);
+    }
+
+    public Node getRootNode(String name) {
+        return rootNodes.get(name);
     }
 
 }
