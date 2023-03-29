@@ -1,4 +1,4 @@
-package io.github.verils.gotemplate.runtime.simple.parse;
+package io.github.verils.gotemplate.internal.ast;
 
 public class VariableNode implements Node {
 

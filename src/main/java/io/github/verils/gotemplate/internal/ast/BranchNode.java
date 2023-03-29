@@ -1,4 +1,4 @@
-package io.github.verils.gotemplate.runtime.simple.parse;
+package io.github.verils.gotemplate.internal.ast;
 
 public abstract class BranchNode implements Node {
 
@@ -45,7 +45,7 @@ public abstract class BranchNode implements Node {
         StringBuilder sb = new StringBuilder();
         sb.append("{{").append(name).append(' ').append(pipeNode).append("}}");
         if (ifListNode != null) {
-            // 避免直接输出字符串"null"
+            // Avoid printing "null"
             sb.append(ifListNode);
         }
         if (elseListNode != null) {

@@ -1,4 +1,4 @@
-package io.github.verils.gotemplate.runtime.simple.parse;
+package io.github.verils.gotemplate.internal.ast;
 
 import java.util.Iterator;
 import java.util.LinkedList;

@@ -1,7 +1,7 @@
 package io.github.verils.gotemplate;
 
 import io.github.verils.gotemplate.internal.Parser;
-import io.github.verils.gotemplate.runtime.simple.parse.Node;
+import io.github.verils.gotemplate.internal.ast.Node;
 import org.apache.commons.io.IOUtils;
 
 import java.io.IOException;

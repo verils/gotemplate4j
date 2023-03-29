@@ -2,7 +2,7 @@ package io.github.verils.gotemplate.internal;
 
 import io.github.verils.gotemplate.Function;
 import io.github.verils.gotemplate.GoTemplateParseException;
-import io.github.verils.gotemplate.runtime.simple.parse.*;
+import io.github.verils.gotemplate.internal.ast.*;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;

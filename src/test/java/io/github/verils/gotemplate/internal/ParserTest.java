@@ -2,8 +2,8 @@ package io.github.verils.gotemplate.internal;
 
 import io.github.verils.gotemplate.Function;
 import io.github.verils.gotemplate.GoTemplateFactory;
-import io.github.verils.gotemplate.runtime.simple.parse.ListNode;
-import io.github.verils.gotemplate.runtime.simple.parse.Node;
+import io.github.verils.gotemplate.internal.ast.ListNode;
+import io.github.verils.gotemplate.internal.ast.Node;
 import org.junit.jupiter.api.Test;
 
 import java.util.LinkedHashMap;

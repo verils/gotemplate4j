@@ -1,8 +1,8 @@
 package io.github.verils.gotemplate.runtime.simple;
 
 import io.github.verils.gotemplate.*;
-import io.github.verils.gotemplate.internal.StringEscapeUtils;
-import io.github.verils.gotemplate.runtime.simple.parse.*;
+import io.github.verils.gotemplate.internal.*;
+import io.github.verils.gotemplate.internal.ast.*;
 
 import java.beans.BeanInfo;
 import java.beans.IntrospectionException;
