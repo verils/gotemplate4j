@@ -31,7 +31,7 @@ public class GoTemplate {
 
     public void execute(Object data, Writer writer) throws IOException,
             GoTemplateNotFoundException, GoTemplateExecutionException {
-        Executor executor = new Executor(factory, getFunctions());
+        Executor executor = new Executor(factory.getRootNodes(), getFunctions());
         executor.execute(name, data, writer);
     }
 

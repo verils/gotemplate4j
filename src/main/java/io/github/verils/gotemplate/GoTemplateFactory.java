@@ -1,8 +1,8 @@
 package io.github.verils.gotemplate;
 
+import io.github.verils.gotemplate.internal.IOUtils;
 import io.github.verils.gotemplate.internal.Parser;
 import io.github.verils.gotemplate.internal.ast.Node;
-import org.apache.commons.io.IOUtils;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -84,7 +84,7 @@ public class GoTemplateFactory {
      * @throws IOException if fail on reading the content
      */
     public void parse(String name, Reader reader) throws GoTemplateParseException, IOException {
-        String text = IOUtils.toString(reader);
+        String text = IOUtils.read(reader);
         parse(name, text);
     }
 
@@ -105,6 +105,10 @@ public class GoTemplateFactory {
 
     public Map<String, Function> getFunctions() {
         return functions;
+    }
+
+    public Map<String, Node> getRootNodes() {
+        return rootNodes;
     }
 
 }

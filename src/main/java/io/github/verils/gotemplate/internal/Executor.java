@@ -1,7 +1,8 @@
 package io.github.verils.gotemplate.internal;
 
-import io.github.verils.gotemplate.*;
-import io.github.verils.gotemplate.internal.*;
+import io.github.verils.gotemplate.Function;
+import io.github.verils.gotemplate.GoTemplateExecutionException;
+import io.github.verils.gotemplate.GoTemplateNotFoundException;
 import io.github.verils.gotemplate.internal.ast.*;
 
 import java.beans.BeanInfo;
@@ -19,19 +20,20 @@ import java.util.Map;
 
 public class Executor {
 
-    private final GoTemplateFactory factory;
+    private final Map<String, Node> rootNodes;
     private final Map<String, Function> functions;
 
-    public Executor(GoTemplateFactory factory, Map<String, Function> functions) {
-        this.factory = factory;
+    public Executor(Map<String, Node> rootNodes, Map<String, Function> functions) {
+        this.rootNodes = rootNodes;
         this.functions = functions;
     }
 
-
     public void execute(String name, Object data, Writer writer) throws IOException,
             GoTemplateNotFoundException, GoTemplateExecutionException {
-        GoTemplate template = factory.getTemplate(name);
-        ListNode listNode = (ListNode) template.root();
+        ListNode listNode = (ListNode) rootNodes.get(name);
+        if (listNode == null) {
+            throw new GoTemplateNotFoundException(String.format("template '%s' not found", name));
+        }
 
         if (data != null) {
             BeanInfo beanInfo = getBeanInfo(data);
@@ -146,8 +148,7 @@ public class Executor {
             GoTemplateExecutionException, GoTemplateNotFoundException {
         String name = templateNode.getName();
 
-        GoTemplate template = factory.getTemplate(name);
-        ListNode listNode = (ListNode) template.root();
+        ListNode listNode = (ListNode) rootNodes.get(name);
         if (listNode == null) {
             throw new GoTemplateExecutionException(String.format("template %s not defined", name));
         }
