@@ -32,7 +32,7 @@ public class GoTemplateFactory {
      * @param functions The functions map, will merge the builtin functions
      */
     public GoTemplateFactory(Map<String, Function> functions) {
-        LinkedHashMap<String, Function> map = new LinkedHashMap<>(Functions.BUILT_IN);
+        LinkedHashMap<String, Function> map = new LinkedHashMap<>(Functions.BUILTIN);
         if (functions != null) {
             map.putAll(functions);
         }

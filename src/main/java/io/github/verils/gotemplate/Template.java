@@ -21,7 +21,7 @@ public class Template {
 
 
     public Template(String name) {
-        this(name, Functions.BUILT_IN);
+        this(name, Functions.BUILTIN);
     }
 
     public Template(String name, Map<String, Function> functions) {
