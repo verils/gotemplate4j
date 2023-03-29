@@ -1,6 +1,6 @@
 package io.github.verils.gotemplate;
 
-import io.github.verils.gotemplate.runtime.simple.Executor;
+import io.github.verils.gotemplate.internal.Executor;
 import io.github.verils.gotemplate.internal.ast.Node;
 
 import java.io.IOException;

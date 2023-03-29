@@ -1,4 +1,4 @@
-package io.github.verils.gotemplate.runtime.simple;
+package io.github.verils.gotemplate.internal;
 
 import io.github.verils.gotemplate.*;
 import io.github.verils.gotemplate.internal.*;
