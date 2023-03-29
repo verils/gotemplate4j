@@ -1,7 +1,7 @@
 package io.github.verils.gotemplate.internal;
 
 import io.github.verils.gotemplate.Function;
-import io.github.verils.gotemplate.GoTemplateParseException;
+import io.github.verils.gotemplate.TemplateParseException;
 import io.github.verils.gotemplate.internal.ast.*;
 
 import java.util.ArrayList;
@@ -37,7 +37,7 @@ public class Parser {
     }
 
 
-    public Map<String, Node> parse(String name, String text) throws GoTemplateParseException {
+    public Map<String, Node> parse(String name, String text) throws TemplateParseException {
         // Parse the template text, build a list node as the root node
         ListNode rootNode = new ListNode();
 
@@ -72,7 +72,7 @@ public class Parser {
      * @param listNode List node which contains all nodes in this context
      * @param lexer    Lexer holding tokens
      */
-    private void parseList(ListNode listNode, Lexer lexer) throws GoTemplateParseException {
+    private void parseList(ListNode listNode, Lexer lexer) throws TemplateParseException {
         loop:
         while (true) {
             Token token = moveToNextToken(lexer);
@@ -119,7 +119,7 @@ public class Parser {
     }
 
 
-    private void parseAction(ListNode listNode, Lexer lexer) throws GoTemplateParseException {
+    private void parseAction(ListNode listNode, Lexer lexer) throws TemplateParseException {
         Token token = moveToNextNonSpaceToken(lexer);
         switch (token.type()) {
             case BLOCK:
@@ -158,12 +158,12 @@ public class Parser {
     }
 
 
-    private void parseBlock(ListNode listNode, Lexer lexer) throws GoTemplateParseException {
+    private void parseBlock(ListNode listNode, Lexer lexer) throws TemplateParseException {
         String context = "block clause";
 
         Token token = moveToNextNonSpaceToken(lexer);
         if (token.type() != TokenType.STRING && token.type() != TokenType.RAW_STRING) {
-            throw new GoTemplateParseException(String.format("unexpected '%s' in %s", token.value(), context));
+            throw new TemplateParseException(String.format("unexpected '%s' in %s", token.value(), context));
         }
 
         String blockTemplateName = StringUtils.unquote(token.value());
@@ -192,19 +192,19 @@ public class Parser {
     }
 
 
-    private void parseDefinition(Lexer lexer) throws GoTemplateParseException {
+    private void parseDefinition(Lexer lexer) throws TemplateParseException {
         String context = "define clause";
 
         Token token = moveToNextNonSpaceToken(lexer);
         if (token.type() != TokenType.STRING && token.type() != TokenType.RAW_STRING) {
-            throw new GoTemplateParseException(String.format("unexpected '%s' in %s", token.value(), context));
+            throw new TemplateParseException(String.format("unexpected '%s' in %s", token.value(), context));
         }
 
         String definitionTemplateName = StringUtils.unquote(token.value());
 
         token = moveToNextNonSpaceToken(lexer);
         if (token.type() != TokenType.RIGHT_DELIM) {
-            throw new GoTemplateParseException(String.format("unexpected '%s' in %s", token.value(), context));
+            throw new TemplateParseException(String.format("unexpected '%s' in %s", token.value(), context));
         }
 
         ListNode definitionListNode = new ListNode();
@@ -222,7 +222,7 @@ public class Parser {
     }
 
 
-    private void parseElse(ListNode listNode, Lexer lexer) throws GoTemplateParseException {
+    private void parseElse(ListNode listNode, Lexer lexer) throws TemplateParseException {
         Token token = moveToNextNonSpaceToken(lexer);
         switch (token.type()) {
             case IF:
@@ -237,7 +237,7 @@ public class Parser {
         }
     }
 
-    private void parseEnd(ListNode listNode, Lexer lexer) throws GoTemplateParseException {
+    private void parseEnd(ListNode listNode, Lexer lexer) throws TemplateParseException {
         Token token = moveToNextNonSpaceToken(lexer);
         if (token.type() != TokenType.RIGHT_DELIM) {
             throwUnexpectError(String.format("unexpected %s in end", token));
@@ -245,7 +245,7 @@ public class Parser {
         listNode.append(new EndNode());
     }
 
-    private void parseIf(ListNode listNode, Lexer lexer) throws GoTemplateParseException {
+    private void parseIf(ListNode listNode, Lexer lexer) throws TemplateParseException {
         moveToNextNonSpaceToken(lexer);
         moveToPrevItem(lexer);
 
@@ -254,7 +254,7 @@ public class Parser {
         listNode.append(ifNode);
     }
 
-    private void parseRange(ListNode listNode, Lexer lexer) throws GoTemplateParseException {
+    private void parseRange(ListNode listNode, Lexer lexer) throws TemplateParseException {
         moveToNextNonSpaceToken(lexer);
         moveToPrevItem(lexer);
 
@@ -263,12 +263,12 @@ public class Parser {
         listNode.append(rangeNode);
     }
 
-    private void parseTemplate(ListNode listNode, Lexer lexer) throws GoTemplateParseException {
+    private void parseTemplate(ListNode listNode, Lexer lexer) throws TemplateParseException {
         String context = "template clause";
 
         Token token = moveToNextNonSpaceToken(lexer);
         if (token.type() != TokenType.STRING && token.type() != TokenType.RAW_STRING) {
-            throw new GoTemplateParseException(String.format("unexpected '%s' in %s", token.value(), context));
+            throw new TemplateParseException(String.format("unexpected '%s' in %s", token.value(), context));
         }
 
         String templateName = StringUtils.unquote(token.value());
@@ -286,7 +286,7 @@ public class Parser {
         listNode.append(templateNode);
     }
 
-    private void parseWith(ListNode listNode, Lexer lexer) throws GoTemplateParseException {
+    private void parseWith(ListNode listNode, Lexer lexer) throws TemplateParseException {
         moveToNextNonSpaceToken(lexer);
         moveToPrevItem(lexer);
 
@@ -295,7 +295,7 @@ public class Parser {
         listNode.append(withNode);
     }
 
-    private void parseBranch(BranchNode branchNode, Lexer lexer, String context, boolean allowElseIf) throws GoTemplateParseException {
+    private void parseBranch(BranchNode branchNode, Lexer lexer, String context, boolean allowElseIf) throws TemplateParseException {
         int variableCount = variables.size();
 
         // Parse pipeline, the executable part
@@ -345,7 +345,7 @@ public class Parser {
         variables.subList(variableCount, variables.size()).clear();
     }
 
-    private void parsePipe(PipeNode pipeNode, Lexer lexer, TokenType end) throws GoTemplateParseException {
+    private void parsePipe(PipeNode pipeNode, Lexer lexer, TokenType end) throws TemplateParseException {
         Token token = lookNextNonSpaceToken(lexer);
 
         if (token.type() == TokenType.VARIABLE) {
@@ -393,12 +393,12 @@ public class Parser {
                     break;
                 case ERROR:
                 default:
-                    throw new GoTemplateParseException(String.format("unexpected %s in %s", token, pipeNode.getContext()));
+                    throw new TemplateParseException(String.format("unexpected %s in %s", token, pipeNode.getContext()));
             }
         }
     }
 
-    private void parseVariable(PipeNode pipeNode, Lexer lexer, Token variableToken) throws GoTemplateParseException {
+    private void parseVariable(PipeNode pipeNode, Lexer lexer, Token variableToken) throws TemplateParseException {
         moveToNextNonSpaceToken(lexer);
         Token nextToken = lookNextNonSpaceToken(lexer);
         switch (nextToken.type()) {
@@ -435,7 +435,7 @@ public class Parser {
         }
     }
 
-    private void parseCommand(PipeNode pipeNode, Lexer lexer) throws GoTemplateParseException {
+    private void parseCommand(PipeNode pipeNode, Lexer lexer) throws TemplateParseException {
         CommandNode commandNode = new CommandNode();
 
         loop:
@@ -499,15 +499,15 @@ public class Parser {
                     } else if (node instanceof VariableNode) {
                         node = new VariableNode(chainNode.toString());
                     } else if (node instanceof BoolNode) {
-                        throw new GoTemplateParseException(String.format("unexpected . after term %s", node));
+                        throw new TemplateParseException(String.format("unexpected . after term %s", node));
                     } else if (node instanceof StringNode) {
-                        throw new GoTemplateParseException(String.format("unexpected . after term %s", node));
+                        throw new TemplateParseException(String.format("unexpected . after term %s", node));
                     } else if (node instanceof NumberNode) {
-                        throw new GoTemplateParseException(String.format("unexpected . after term %s", node));
+                        throw new TemplateParseException(String.format("unexpected . after term %s", node));
                     } else if (node instanceof NilNode) {
-                        throw new GoTemplateParseException(String.format("unexpected . after term %s", node));
+                        throw new TemplateParseException(String.format("unexpected . after term %s", node));
                     } else if (node instanceof DotNode) {
-                        throw new GoTemplateParseException(String.format("unexpected . after term %s", node));
+                        throw new TemplateParseException(String.format("unexpected . after term %s", node));
                     } else {
                         node = chainNode;
                     }
@@ -555,21 +555,21 @@ public class Parser {
         return null;
     }
 
-    private Node parseNumber(Lexer lexer) throws GoTemplateParseException {
+    private Node parseNumber(Lexer lexer) throws TemplateParseException {
         Token nextToken = moveToNextToken(lexer);
         String value = nextToken.value();
         int length = value.length();
 
         if (nextToken.type() == TokenType.CHAR_CONSTANT) {
             if (value.charAt(0) != '\'') {
-                throw new GoTemplateParseException(String.format("malformed character constant: %s", value));
+                throw new TemplateParseException(String.format("malformed character constant: %s", value));
             }
 
             int ch;
             try {
                 ch = CharUtils.unquotedChar(value);
             } catch (IllegalArgumentException e) {
-                throw new GoTemplateParseException("invalid syntax: " + value, e);
+                throw new TemplateParseException("invalid syntax: " + value, e);
             }
 
             return new NumberNode(value, ch);
@@ -607,7 +607,7 @@ public class Parser {
         }
 
         if (number == null) {
-            throw new GoTemplateParseException(String.format("illegal number syntax: %s", value));
+            throw new TemplateParseException(String.format("illegal number syntax: %s", value));
         }
 
         NumberNode numberNode = new NumberNode(value, number);
@@ -704,7 +704,7 @@ public class Parser {
         }
     }
 
-    private Node findVariable(String value) throws GoTemplateParseException {
+    private Node findVariable(String value) throws TemplateParseException {
         VariableNode variableNode = new VariableNode(value);
         String name = variableNode.getIdentifier(0);
         if (variables.contains(name)) {
@@ -714,8 +714,8 @@ public class Parser {
         return null;
     }
 
-    private void throwUnexpectError(String message) throws GoTemplateParseException {
-        throw new GoTemplateParseException(message);
+    private void throwUnexpectError(String message) throws TemplateParseException {
+        throw new TemplateParseException(message);
     }
 
     public Node getRootNode(String name) {

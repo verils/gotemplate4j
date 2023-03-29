@@ -47,7 +47,7 @@ public class GoTemplateFactory {
      *
      * @param text Template text
      */
-    public void parse(String text) throws GoTemplateParseException {
+    public void parse(String text) throws TemplateParseException {
         parse("", text);
     }
 
@@ -58,7 +58,7 @@ public class GoTemplateFactory {
      * @param name The template name
      * @param text Template text
      */
-    public void parse(String name, String text) throws GoTemplateParseException {
+    public void parse(String name, String text) throws TemplateParseException {
         Parser parser = new Parser(functions);
         Map<String, Node> parsedNodes = parser.parse(name, text);
         rootNodes.putAll(parsedNodes);
@@ -71,7 +71,7 @@ public class GoTemplateFactory {
      * @param name The template name
      * @param in   Template text input stream
      */
-    public void parse(String name, InputStream in) throws GoTemplateParseException, IOException {
+    public void parse(String name, InputStream in) throws TemplateParseException, IOException {
         parse(name, new InputStreamReader(in));
     }
 
@@ -83,7 +83,7 @@ public class GoTemplateFactory {
      * @param reader Template text reader
      * @throws IOException if fail on reading the content
      */
-    public void parse(String name, Reader reader) throws GoTemplateParseException, IOException {
+    public void parse(String name, Reader reader) throws TemplateParseException, IOException {
         String text = IOUtils.read(reader);
         parse(name, text);
     }
@@ -93,12 +93,12 @@ public class GoTemplateFactory {
      *
      * @param name Template name
      * @return the template with the name
-     * @throws GoTemplateNotFoundException if template is missing. Did you put or parse it?
+     * @throws TemplateNotFoundException if template is missing. Did you put or parse it?
      */
-    public GoTemplate getTemplate(String name) throws GoTemplateNotFoundException {
+    public GoTemplate getTemplate(String name) throws TemplateNotFoundException {
         Node rootNode = rootNodes.get(name);
         if (rootNode == null) {
-            throw new GoTemplateNotFoundException(String.format("Template '%s' not found.", name));
+            throw new TemplateNotFoundException(String.format("Template '%s' not found.", name));
         }
         return new GoTemplate(this, name, rootNode);
     }

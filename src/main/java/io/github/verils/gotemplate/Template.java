@@ -31,35 +31,35 @@ public class Template {
     }
 
 
-    public void parse(String template) throws GoTemplateParseException {
+    public void parse(String template) throws TemplateParseException {
         Parser parser = new Parser(functions);
         Map<String, Node> nodes = parser.parse(name, template);
         rootNodes.putAll(nodes);
     }
 
 
-    public void parse(InputStream in) throws GoTemplateParseException, IOException {
+    public void parse(InputStream in) throws TemplateParseException, IOException {
         parse(new InputStreamReader(in));
     }
 
 
-    public void parse(Reader reader) throws GoTemplateParseException, IOException {
+    public void parse(Reader reader) throws TemplateParseException, IOException {
         String text = IOUtils.read(reader);
         parse(text);
     }
 
-    public void execute(OutputStream out, Object data) throws GoTemplateException, IOException {
+    public void execute(OutputStream out, Object data) throws TemplateException, IOException {
         execute(new OutputStreamWriter(out), data);
     }
 
-    public void execute(Writer writer, Object data) throws GoTemplateException, IOException {
+    public void execute(Writer writer, Object data) throws TemplateException, IOException {
         executeTemplate(writer, name, data);
     }
 
-    public void executeTemplate(Writer writer, String name, Object data) throws GoTemplateException, IOException {
+    public void executeTemplate(Writer writer, String name, Object data) throws TemplateException, IOException {
         Node rootNode = rootNodes.get(name);
         if (rootNode == null) {
-            throw new GoTemplateNotFoundException(String.format("Template '%s' not found.", name));
+            throw new TemplateNotFoundException(String.format("Template '%s' not found.", name));
         }
 
         Executor executor = new Executor(rootNodes, functions);

@@ -16,7 +16,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 class GoTemplateStandardTest {
 
     @Test
-    void test() throws IOException, GoTemplateParseException, GoTemplateNotFoundException, GoTemplateExecutionException {
+    void test() throws IOException, TemplateParseException, TemplateNotFoundException, TemplateExecutionException {
         String letter = "\n" +
                 "Dear {{.Name}},\n" +
                 "{{if .Attended}}\n" +
@@ -85,7 +85,7 @@ class GoTemplateStandardTest {
 
 
     @Test
-    void testDefinition() throws IOException, GoTemplateParseException, GoTemplateNotFoundException, GoTemplateExecutionException {
+    void testDefinition() throws IOException, TemplateParseException, TemplateNotFoundException, TemplateExecutionException {
         String masterTemplate = "Names:{{block \"list\" .}}{{\"\\n\"}}{{range .}}{{println \"-\" .}}{{end}}{{end}}";
         String overlayTemplate = "{{define \"list\"}} {{join . \", \"}}{{end}} ";
 
@@ -130,7 +130,7 @@ class GoTemplateStandardTest {
     }
 
     @Test
-    void invoke() throws GoTemplateParseException, GoTemplateNotFoundException, IOException, GoTemplateExecutionException {
+    void invoke() throws TemplateParseException, TemplateNotFoundException, IOException, TemplateExecutionException {
         GoTemplateFactory goTemplateFactory = new GoTemplateFactory();
         goTemplateFactory.parse("T0.tmpl", "T0 invokes T1: ({{template \"T1\"}})");
         goTemplateFactory.parse("T1.tmpl", "{{define \"T1\"}}T1 invokes T2: ({{template \"T2\"}}){{end}}");

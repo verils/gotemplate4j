@@ -15,7 +15,7 @@ class TemplateTest {
     }
 
     @Test
-    void test() throws IOException, GoTemplateException {
+    void test() throws IOException, TemplateException {
         Template template = new Template("demo");
         template.parse("{{ .Name }}");
 
