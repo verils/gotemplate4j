@@ -51,6 +51,12 @@ goTemplate.execute(data, writer);
 // Then it prints "Hello World!" on console
 ```
 
+
+## Limitations
+
+- No built-in support for **complex** number in Java. Golang supports complex as a basic data type
+- The format of **print** functions in Java are different from Golang
+
 ## Waht is Next?
 
 - [ ] Support complex number format

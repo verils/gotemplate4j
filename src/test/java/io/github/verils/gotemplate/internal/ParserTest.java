@@ -1,8 +1,11 @@
 package io.github.verils.gotemplate.internal;
 
 import io.github.verils.gotemplate.Function;
+import io.github.verils.gotemplate.TemplateParseException;
 import io.github.verils.gotemplate.internal.ast.ListNode;
 import io.github.verils.gotemplate.internal.ast.Node;
+import io.github.verils.gotemplate.internal.ast.NumberNode;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.util.LinkedHashMap;
@@ -159,8 +162,9 @@ class ParserTest {
     }
 
 
+    @Disabled
     @Test
-    void testParseNumber() {
+    void testParseNumber() throws TemplateParseException {
 
         class NumberTest {
             private final String text;
@@ -179,62 +183,76 @@ class ParserTest {
 
 
         NumberTest[] tests = new NumberTest[]{
-                new NumberTest("0", true, false, false),
-                new NumberTest("-0", true, false, false),
-                new NumberTest("73", true, false, false),
+                new NumberTest("0", true, true, false),
+                new NumberTest("-0", true, true, false),
+                new NumberTest("73", true, true, false),
                 new NumberTest("7_3", true, false, false),
-                new NumberTest("0b10_010_01", true, false, false),
-                new NumberTest("0B10_010_01", true, false, false),
-                new NumberTest("073", true, false, false),
-                new NumberTest("0o73", true, false, false),
-                new NumberTest("0O73", true, false, false),
-                new NumberTest("0x73", true, false, false),
-                new NumberTest("0X73", true, false, false),
-                new NumberTest("0x7_3", true, false, false),
-                new NumberTest("-73", true, false, false),
-                new NumberTest("+73", true, false, false),
-                new NumberTest("100", true, false, false),
-                new NumberTest("1e9", true, false, false),
-                new NumberTest("-1e9", true, false, false),
-                new NumberTest("-1.2", true, false, false),
-                new NumberTest("1e19", true, false, false),
-                new NumberTest("1e1_9", true, false, false),
-                new NumberTest("1E19", true, false, false),
-                new NumberTest("-1e19", true, false, false),
-                new NumberTest("0x_1p4", true, false, false),
-                new NumberTest("0X_1P4", true, false, false),
-                new NumberTest("0x_1p-4", true, false, false),
-                new NumberTest("4i", true, false, false),
-                new NumberTest("-1.2+4.2i", true, false, false),
-                new NumberTest("073i", true, false, false),
-                new NumberTest("0i", true, false, false),
-                new NumberTest("-1.2+0i", true, false, false),
-                new NumberTest("-12+0i", true, false, false),
-                new NumberTest("13+0i", true, false, false),
-                new NumberTest("0123", true, false, false),
-                new NumberTest("-0x0", true, false, false),
-                new NumberTest("0xdeadbeef", true, false, false),
-                new NumberTest("'a'", true, false, false),
-                new NumberTest("'\\n'", true, false, false),
-                new NumberTest("'\\\\'", true, false, false),
+                new NumberTest("0b10_010_01", true, true, false),
+                new NumberTest("0B10_010_01", true, true, false),
+                new NumberTest("073", true, true, false),
+                new NumberTest("0o73", true, true, false),
+                new NumberTest("0O73", true, true, false),
+                new NumberTest("0x73", true, true, false),
+                new NumberTest("0X73", true, true, false),
+                new NumberTest("0x7_3", true, true, false),
+                new NumberTest("-73", true, true, false),
+                new NumberTest("+73", true, true, false),
+                new NumberTest("100", true, true, false),
+                new NumberTest("1e9", true, true, false),
+                new NumberTest("-1e9", true, true, false),
+                new NumberTest("-1.2", false, true, false),
+                new NumberTest("1e19", false, true, false),
+                new NumberTest("1e1_9", false, true, false),
+                new NumberTest("1E19", false, true, false),
+                new NumberTest("-1e19", false, true, false),
+                new NumberTest("0x_1p4", true, true, false),
+                new NumberTest("0X_1P4", true, true, false),
+                new NumberTest("0x_1p-4", false, true, false),
+                new NumberTest("4i", false, false, true),
+                new NumberTest("-1.2+4.2i", false, false, true),
+                new NumberTest("073i", false, false, true),
+                new NumberTest("0i", true, true, true),
+                new NumberTest("-1.2+0i", false, true, true),
+                new NumberTest("-12+0i", true, true, true),
+                new NumberTest("13+0i", true, true, true),
+                new NumberTest("0123", true, true, false),
+                new NumberTest("-0x0", true, true, false),
+                new NumberTest("0xdeadbeef", true, true, false),
+                new NumberTest("'a'", true, true, false),
+                new NumberTest("'\\n'", true, true, false),
+                new NumberTest("'\\\\'", true, true, false),
                 new NumberTest("'\\''", true, false, false),
-                new NumberTest("'\\xFF'", true, false, false),
-                new NumberTest("'パ'", true, false, false),
-                new NumberTest("'\\u30d1'", true, false, false),
-                new NumberTest("'\\U000030d1'", true, false, false),
-                new NumberTest("+-2", true, false, false),
-                new NumberTest("0x123.", true, false, false),
-                new NumberTest("1e.", true, false, false),
-                new NumberTest("0xi.", true, false, false),
-                new NumberTest("1+2.", true, false, false),
-                new NumberTest("'x", true, false, false),
-                new NumberTest("'xx'", true, false, false),
-                new NumberTest("'433937734937734969526500969526500'", true, false, false),
-                new NumberTest("0xef3", true, false, false),
+                new NumberTest("'\\xFF'", true, true, false),
+                new NumberTest("'パ'", true, true, false),
+                new NumberTest("'\\u30d1'", true, true, false),
+                new NumberTest("'\\U000030d1'", true, true, false),
+                new NumberTest("+-2", false, false, false),
+                new NumberTest("0x123.", false, false, false),
+                new NumberTest("1e.", false, false, false),
+                new NumberTest("0xi.", false, false, false),
+                new NumberTest("1+2.", false, false, false),
+                new NumberTest("'x", false, false, false),
+                new NumberTest("'xx'", false, false, false),
+                new NumberTest("'433937734937734969526500969526500'", false, false, false),
+                new NumberTest("0xef", true, true, false),
         };
 
         for (NumberTest test : tests) {
             Parser parser = new Parser();
+
+            String text = test.text;
+            NumberNode numberNode = new NumberNode(text);
+
+            TokenType type = TokenType.NUMBER;
+            if (text.charAt(0) == '\'') {
+                type = TokenType.CHAR_CONSTANT;
+            }
+
+
+            parser.parseNumber(numberNode, text, type);
+            assertEquals(test.isInt, numberNode.isInt(), String.format("%s: invalid number", test.text));
+            assertEquals(test.isFloat, numberNode.isFloat(), String.format("%s: invalid number", test.text));
+            assertEquals(test.isComplex, numberNode.isComplex(), String.format("%s: invalid number", test.text));
         }
     }
 

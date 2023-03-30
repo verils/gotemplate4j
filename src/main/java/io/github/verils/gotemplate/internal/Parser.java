@@ -531,7 +531,7 @@ public class Parser {
                 case COMPLEX:
                 case NUMBER:
                     NumberNode numberNode = new NumberNode(token.value());
-                    parseNumber(numberNode, lexer, token);
+                    parseNumber(numberNode, token);
                     node = numberNode;
                     break;
                 case STRING:
@@ -621,10 +621,13 @@ public class Parser {
         return null;
     }
 
-    private void parseNumber(NumberNode numberNode, Lexer lexer, Token token) throws TemplateParseException {
+    private void parseNumber(NumberNode numberNode, Token token) throws TemplateParseException {
         String value = token.value();
-
         TokenType type = token.type();
+        parseNumber(numberNode, value, type);
+    }
+
+    void parseNumber(NumberNode numberNode, String value, TokenType type) throws TemplateParseException {
         if (type == TokenType.CHAR_CONSTANT) {
             if (value.charAt(0) != '\'') {
                 throw new TemplateParseException(String.format("malformed character constant: %s", value));
@@ -637,8 +640,15 @@ public class Parser {
                 throw new TemplateParseException("invalid syntax: " + value, e);
             }
 
-            new NumberNode(value, ch);
+            numberNode.setIsInt(true);
+            numberNode.setIntValue(ch);
+            numberNode.setIsFloat(true);
+            numberNode.setFloatValue(ch);
             return;
+        }
+
+        if (type == TokenType.COMPLEX) {
+            throw new TemplateParseException(String.format("complex number is unsupported: %s", value));
         }
 
         int length = value.length();
@@ -646,38 +656,27 @@ public class Parser {
             try {
                 double image = Double.parseDouble(value.substring(0, length - 1));
                 Complex complex = new Complex(0, image);
-                new NumberNode(value, complex);
+                numberNode.setComplex(complex);
                 return;
             } catch (NumberFormatException ignored) {
             }
         }
 
 
-        Number number = null;
         try {
-            number = Long.valueOf(value);
+            long intValue = Long.parseLong(value.replace("_", ""));
+            numberNode.setIsInt(true);
+            numberNode.setIntValue(intValue);
         } catch (NumberFormatException ignored) {
         }
 
-        if (number == null) {
-            try {
-                number = Double.valueOf(value);
-            } catch (NumberFormatException ignored) {
-            }
+        try {
+            double floatValue = Double.parseDouble(value.replace("_", ""));
+            numberNode.setIsFloat(true);
+            numberNode.setFloatValue(floatValue);
+        } catch (NumberFormatException ignored) {
         }
 
-        if (number == null) {
-            try {
-                number = Double.valueOf(value);
-            } catch (NumberFormatException ignored) {
-            }
-        }
-
-        if (number == null) {
-            throw new TemplateParseException(String.format("illegal number syntax: %s", value));
-        }
-
-        Node node;
 
 //                    if (value.endsWith("i")) {
 //                        String numberString = value.substring(0, value.length() - 1);
@@ -688,7 +687,6 @@ public class Parser {
 //
 //                    int i = Integer.parseInt(value);
 
-        node = numberNode;
     }
 
     /**
