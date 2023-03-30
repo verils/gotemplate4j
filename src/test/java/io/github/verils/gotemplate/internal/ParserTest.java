@@ -1,7 +1,6 @@
 package io.github.verils.gotemplate.internal;
 
 import io.github.verils.gotemplate.Function;
-import io.github.verils.gotemplate.GoTemplateFactory;
 import io.github.verils.gotemplate.internal.ast.ListNode;
 import io.github.verils.gotemplate.internal.ast.Node;
 import org.junit.jupiter.api.Test;
@@ -140,9 +139,6 @@ class ParserTest {
         functions.put("contains", null);
 
 
-        GoTemplateFactory goTemplateFactory = new GoTemplateFactory(functions);
-
-
         for (Test test : tests) {
             try {
                 Parser parser = new Parser(functions);
@@ -161,4 +157,5 @@ class ParserTest {
             }
         }
     }
+
 }

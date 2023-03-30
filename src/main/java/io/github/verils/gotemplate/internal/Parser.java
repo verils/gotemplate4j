@@ -3,6 +3,9 @@ package io.github.verils.gotemplate.internal;
 import io.github.verils.gotemplate.Function;
 import io.github.verils.gotemplate.TemplateParseException;
 import io.github.verils.gotemplate.internal.ast.*;
+import io.github.verils.gotemplate.internal.lang.CharUtils;
+import io.github.verils.gotemplate.internal.lang.Complex;
+import io.github.verils.gotemplate.internal.lang.StringUtils;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -37,6 +40,14 @@ public class Parser {
     }
 
 
+    /**
+     * Parser a template text
+     *
+     * @param name the name of template
+     * @param text template content
+     * @return a map containing all ast root nodes
+     * @throws TemplateParseException if reach invalid syntax
+     */
     public Map<String, Node> parse(String name, String text) throws TemplateParseException {
         // Parse the template text, build a list node as the root node
         ListNode rootNode = new ListNode();
@@ -90,7 +101,7 @@ public class Parser {
                 case LEFT_DELIM:
                     token = moveToNextNonSpaceToken(lexer);
                     if (token == null) {
-                        throwUnexpectError("unclosed delim: " + lexer.getLeftDelimiter());
+                        throwUnexpectError("unclosed delimiter: " + lexer.getLeftDelimiter());
                     }
 
                     if (token.type() == TokenType.DEFINE) {
@@ -102,7 +113,7 @@ public class Parser {
 
                     parseAction(listNode, lexer);
 
-                    // Stop parsing for list in current context, keep the last node, let the method caller handles it
+                    // Stop parsing list in current context, keep the last node, let the method caller handles it
                     Node lastNode = listNode.getLast();
                     if (lastNode instanceof ElseNode) {
                         break loop;
@@ -121,6 +132,10 @@ public class Parser {
 
     private void parseAction(ListNode listNode, Lexer lexer) throws TemplateParseException {
         Token token = moveToNextNonSpaceToken(lexer);
+        if (token == null) {
+            throwUnexpectError("missing action token");
+        }
+
         switch (token.type()) {
             case BLOCK:
                 parseBlock(listNode, lexer);
@@ -162,6 +177,10 @@ public class Parser {
         String context = "block clause";
 
         Token token = moveToNextNonSpaceToken(lexer);
+        if (token == null) {
+            throwUnexpectError("missing token");
+        }
+
         if (token.type() != TokenType.STRING && token.type() != TokenType.RAW_STRING) {
             throw new TemplateParseException(String.format("unexpected '%s' in %s", token.value(), context));
         }
@@ -196,6 +215,10 @@ public class Parser {
         String context = "define clause";
 
         Token token = moveToNextNonSpaceToken(lexer);
+        if (token == null) {
+            throwUnexpectError("missing token");
+        }
+
         if (token.type() != TokenType.STRING && token.type() != TokenType.RAW_STRING) {
             throw new TemplateParseException(String.format("unexpected '%s' in %s", token.value(), context));
         }
@@ -203,6 +226,10 @@ public class Parser {
         String definitionTemplateName = StringUtils.unquote(token.value());
 
         token = moveToNextNonSpaceToken(lexer);
+        if (token == null) {
+            throwUnexpectError("missing token");
+        }
+
         if (token.type() != TokenType.RIGHT_DELIM) {
             throw new TemplateParseException(String.format("unexpected '%s' in %s", token.value(), context));
         }
@@ -224,6 +251,10 @@ public class Parser {
 
     private void parseElse(ListNode listNode, Lexer lexer) throws TemplateParseException {
         Token token = moveToNextNonSpaceToken(lexer);
+        if (token == null) {
+            throwUnexpectError("missing token");
+        }
+
         switch (token.type()) {
             case IF:
                 moveToPrevItem(lexer);
@@ -239,6 +270,10 @@ public class Parser {
 
     private void parseEnd(ListNode listNode, Lexer lexer) throws TemplateParseException {
         Token token = moveToNextNonSpaceToken(lexer);
+        if (token == null) {
+            throwUnexpectError("missing token");
+        }
+
         if (token.type() != TokenType.RIGHT_DELIM) {
             throwUnexpectError(String.format("unexpected %s in end", token));
         }
@@ -267,6 +302,10 @@ public class Parser {
         String context = "template clause";
 
         Token token = moveToNextNonSpaceToken(lexer);
+        if (token == null) {
+            throwUnexpectError("missing token");
+        }
+
         if (token.type() != TokenType.STRING && token.type() != TokenType.RAW_STRING) {
             throw new TemplateParseException(String.format("unexpected '%s' in %s", token.value(), context));
         }
@@ -275,6 +314,10 @@ public class Parser {
         TemplateNode templateNode = new TemplateNode(templateName);
 
         token = moveToNextNonSpaceToken(lexer);
+        if (token == null) {
+            throwUnexpectError("missing token");
+        }
+
         if (token.type() != TokenType.RIGHT_DELIM) {
             moveToPrevItem(lexer);
 
@@ -316,6 +359,10 @@ public class Parser {
 
             if (allowElseIf) {
                 Token token = lookNextNonSpaceToken(lexer);
+                if (token == null) {
+                    throwUnexpectError("missing token");
+                }
+
                 if (token.type() == TokenType.IF) {
                     moveToNextNonSpaceToken(lexer);
 
@@ -347,6 +394,9 @@ public class Parser {
 
     private void parsePipe(PipeNode pipeNode, Lexer lexer, TokenType end) throws TemplateParseException {
         Token token = lookNextNonSpaceToken(lexer);
+        if (token == null) {
+            throwUnexpectError("missing token");
+        }
 
         if (token.type() == TokenType.VARIABLE) {
             parseVariable(pipeNode, lexer, token);
@@ -354,6 +404,10 @@ public class Parser {
 
         while (true) {
             token = moveToNextNonSpaceToken(lexer);
+            if (token == null) {
+                throwUnexpectError("missing token");
+            }
+
             if (token.type() == end) {
                 List<CommandNode> commands = pipeNode.getCommands();
                 if (commands.isEmpty()) {
@@ -401,6 +455,10 @@ public class Parser {
     private void parseVariable(PipeNode pipeNode, Lexer lexer, Token variableToken) throws TemplateParseException {
         moveToNextNonSpaceToken(lexer);
         Token nextToken = lookNextNonSpaceToken(lexer);
+        if (nextToken == null) {
+            throwUnexpectError("missing token");
+        }
+
         switch (nextToken.type()) {
             case ASSIGN:
             case DECLARE:
@@ -415,6 +473,10 @@ public class Parser {
                     variables.add(variableToken.value());
                     if ("range".equals(pipeNode.getContext()) && pipeNode.getVariableCount() < 2) {
                         nextToken = lookNextNonSpaceToken(lexer);
+                        if (nextToken == null) {
+                            throwUnexpectError("missing token");
+                        }
+
                         switch (nextToken.type()) {
                             case VARIABLE:
                             case RIGHT_DELIM:
@@ -443,6 +505,10 @@ public class Parser {
             Node node = null;
 
             Token token = moveToNextNonSpaceToken(lexer);
+            if (token == null) {
+                throwUnexpectError("missing token");
+            }
+
             switch (token.type()) {
                 case IDENTIFIER:
                     String name = token.value();
@@ -487,6 +553,10 @@ public class Parser {
 
             if (node != null) {
                 token = lookNextItem(lexer);
+                if (token == null) {
+                    throwUnexpectError("missing token");
+                }
+
                 if (token.type() == TokenType.FIELD) {
                     ChainNode chainNode = new ChainNode(node);
                     for (token = moveToNextToken(lexer); token.type() == TokenType.FIELD; token = moveToNextToken(lexer)) {

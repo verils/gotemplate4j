@@ -1,4 +1,4 @@
-package io.github.verils.gotemplate.internal;
+package io.github.verils.gotemplate.internal.lang;
 
 public final class CharUtils {
 

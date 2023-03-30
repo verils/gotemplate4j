@@ -34,6 +34,10 @@ public class Functions {
     }
 
     private static Function noop() {
+        return args -> null;
+    }
+
+    private static Function print() {
         return args -> {
             StringBuilder stringBuilder = new StringBuilder();
             for (int i = 0; i < args.length; i++) {
@@ -44,10 +48,6 @@ public class Functions {
             }
             return stringBuilder.toString();
         };
-    }
-
-    private static Function print() {
-        return null;
     }
 
     private static Function printf() {

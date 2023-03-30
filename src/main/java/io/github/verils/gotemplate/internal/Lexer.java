@@ -1,5 +1,7 @@
 package io.github.verils.gotemplate.internal;
 
+import io.github.verils.gotemplate.internal.lang.CharUtils;
+
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;

@@ -1,6 +1,6 @@
 package io.github.verils.gotemplate.internal.ast;
 
-import io.github.verils.gotemplate.internal.Complex;
+import io.github.verils.gotemplate.internal.lang.Complex;
 
 public class NumberNode implements Node {
 

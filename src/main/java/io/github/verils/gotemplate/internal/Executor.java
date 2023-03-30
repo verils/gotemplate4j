@@ -4,6 +4,7 @@ import io.github.verils.gotemplate.Function;
 import io.github.verils.gotemplate.TemplateExecutionException;
 import io.github.verils.gotemplate.TemplateNotFoundException;
 import io.github.verils.gotemplate.internal.ast.*;
+import io.github.verils.gotemplate.internal.lang.StringEscapeUtils;
 
 import java.beans.BeanInfo;
 import java.beans.IntrospectionException;

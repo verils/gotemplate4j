@@ -1,6 +1,6 @@
 package io.github.verils.gotemplate.internal.ast;
 
-import io.github.verils.gotemplate.internal.StringUtils;
+import io.github.verils.gotemplate.internal.lang.StringUtils;
 
 public class TemplateNode implements Node {
 
