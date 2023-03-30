@@ -1,6 +1,7 @@
 package io.github.verils.gotemplate.internal;
 
 import io.github.verils.gotemplate.Function;
+import io.github.verils.gotemplate.Functions;
 import io.github.verils.gotemplate.TemplateParseException;
 import io.github.verils.gotemplate.internal.ast.*;
 import io.github.verils.gotemplate.internal.lang.CharUtils;
@@ -19,24 +20,13 @@ public class Parser {
 
     private final Map<String, Function> functions;
 
-    private final Map<String, Node> rootNodes;
 
-
-    // Position marker
-
-    private int tokenIndex;
-
-
-    /**
-     * A list which contains all the variables in a branch context
-     */
-    private final List<String> variables = new ArrayList<>();
-
+    public Parser() {
+        this(Functions.BUILTIN);
+    }
 
     public Parser(Map<String, Function> functions) {
         this.functions = functions;
-        this.rootNodes = new LinkedHashMap<>();
-        this.variables.add("$");
     }
 
 
@@ -53,7 +43,11 @@ public class Parser {
         ListNode rootNode = new ListNode();
 
         Lexer lexer = new Lexer(text);
-        parseList(rootNode, lexer);
+
+        State state = new State();
+        state.variables.add("$");
+
+        parseList(rootNode, lexer, state);
 
         // Can not have ELSE and END node as the last in root list node
         Node lastNode = rootNode.getLast();
@@ -64,16 +58,16 @@ public class Parser {
             throwUnexpectError("unexpected " + rootNode);
         }
 
-        ListNode root = (ListNode) rootNodes.get(name);
+        ListNode root = (ListNode) state.rootNodes.get(name);
         if (root == null) {
-            rootNodes.put(name, rootNode);
+            state.rootNodes.put(name, rootNode);
         } else {
             for (Node node : root) {
                 rootNode.append(node);
             }
         }
 
-        return rootNodes;
+        return state.rootNodes;
     }
 
 
@@ -82,11 +76,12 @@ public class Parser {
      *
      * @param listNode List node which contains all nodes in this context
      * @param lexer    Lexer holding tokens
+     * @param state
      */
-    private void parseList(ListNode listNode, Lexer lexer) throws TemplateParseException {
+    private void parseList(ListNode listNode, Lexer lexer, State state) throws TemplateParseException {
         loop:
         while (true) {
-            Token token = moveToNextToken(lexer);
+            Token token = moveToNextToken(lexer, state);
             switch (token.type()) {
                 case EOF:
                     return;
@@ -99,19 +94,19 @@ public class Parser {
                     listNode.append(commentNode);
                     break;
                 case LEFT_DELIM:
-                    token = moveToNextNonSpaceToken(lexer);
+                    token = moveToNextNonSpaceToken(lexer, state);
                     if (token == null) {
                         throwUnexpectError("unclosed delimiter: " + lexer.getLeftDelimiter());
                     }
 
                     if (token.type() == TokenType.DEFINE) {
-                        parseDefinition(lexer);
+                        parseDefinition(lexer, state);
                         continue;
                     }
 
-                    moveToPrevItem(lexer);
+                    moveToPrevItem(lexer, state);
 
-                    parseAction(listNode, lexer);
+                    parseAction(listNode, lexer, state);
 
                     // Stop parsing list in current context, keep the last node, let the method caller handles it
                     Node lastNode = listNode.getLast();
@@ -130,42 +125,42 @@ public class Parser {
     }
 
 
-    private void parseAction(ListNode listNode, Lexer lexer) throws TemplateParseException {
-        Token token = moveToNextNonSpaceToken(lexer);
+    private void parseAction(ListNode listNode, Lexer lexer, State state) throws TemplateParseException {
+        Token token = moveToNextNonSpaceToken(lexer, state);
         if (token == null) {
             throwUnexpectError("missing action token");
         }
 
         switch (token.type()) {
             case BLOCK:
-                parseBlock(listNode, lexer);
+                parseBlock(listNode, lexer, state);
                 break;
             case ELSE:
-                parseElse(listNode, lexer);
+                parseElse(listNode, lexer, state);
                 break;
             case END:
-                parseEnd(listNode, lexer);
+                parseEnd(listNode, lexer, state);
                 break;
             case IF:
-                parseIf(listNode, lexer);
+                parseIf(listNode, lexer, state);
                 break;
             case RANGE:
-                parseRange(listNode, lexer);
+                parseRange(listNode, lexer, state);
                 break;
             case TEMPLATE:
-                parseTemplate(listNode, lexer);
+                parseTemplate(listNode, lexer, state);
                 break;
             case WITH:
-                parseWith(listNode, lexer);
+                parseWith(listNode, lexer, state);
                 break;
             default:
-                moveToPrevItem(lexer);
+                moveToPrevItem(lexer, state);
 
                 // Just action
                 ActionNode actionNode = new ActionNode();
 
                 PipeNode pipeNode = new PipeNode("command");
-                parsePipe(pipeNode, lexer, TokenType.RIGHT_DELIM);
+                parsePipe(pipeNode, lexer, TokenType.RIGHT_DELIM, state);
                 actionNode.setPipeNode(pipeNode);
 
                 listNode.append(actionNode);
@@ -173,10 +168,10 @@ public class Parser {
     }
 
 
-    private void parseBlock(ListNode listNode, Lexer lexer) throws TemplateParseException {
+    private void parseBlock(ListNode listNode, Lexer lexer, State state) throws TemplateParseException {
         String context = "block clause";
 
-        Token token = moveToNextNonSpaceToken(lexer);
+        Token token = moveToNextNonSpaceToken(lexer, state);
         if (token == null) {
             throwUnexpectError("missing token");
         }
@@ -189,13 +184,13 @@ public class Parser {
         TemplateNode blockTemplateNode = new TemplateNode(blockTemplateName);
 
         PipeNode pipeNode = new PipeNode(context);
-        parsePipe(pipeNode, lexer, TokenType.RIGHT_DELIM);
+        parsePipe(pipeNode, lexer, TokenType.RIGHT_DELIM, state);
         blockTemplateNode.setPipeNode(pipeNode);
 
 
         // Parse block content as an associate template
         ListNode blockListNode = new ListNode();
-        parseList(blockListNode, lexer);
+        parseList(blockListNode, lexer, state);
 
         Node lastNode = blockListNode.getLast();
         if (lastNode instanceof ElseNode) {
@@ -207,14 +202,14 @@ public class Parser {
 
         listNode.append(blockTemplateNode);
 
-        rootNodes.put(blockTemplateName, blockListNode);
+        state.rootNodes.put(blockTemplateName, blockListNode);
     }
 
 
-    private void parseDefinition(Lexer lexer) throws TemplateParseException {
+    private void parseDefinition(Lexer lexer, State state) throws TemplateParseException {
         String context = "define clause";
 
-        Token token = moveToNextNonSpaceToken(lexer);
+        Token token = moveToNextNonSpaceToken(lexer, state);
         if (token == null) {
             throwUnexpectError("missing token");
         }
@@ -225,7 +220,7 @@ public class Parser {
 
         String definitionTemplateName = StringUtils.unquote(token.value());
 
-        token = moveToNextNonSpaceToken(lexer);
+        token = moveToNextNonSpaceToken(lexer, state);
         if (token == null) {
             throwUnexpectError("missing token");
         }
@@ -235,7 +230,7 @@ public class Parser {
         }
 
         ListNode definitionListNode = new ListNode();
-        parseList(definitionListNode, lexer);
+        parseList(definitionListNode, lexer, state);
 
         Node lastNode = definitionListNode.getLast();
         if (lastNode instanceof EndNode) {
@@ -245,19 +240,19 @@ public class Parser {
             return;
         }
 
-        rootNodes.put(definitionTemplateName, definitionListNode);
+        state.rootNodes.put(definitionTemplateName, definitionListNode);
     }
 
 
-    private void parseElse(ListNode listNode, Lexer lexer) throws TemplateParseException {
-        Token token = moveToNextNonSpaceToken(lexer);
+    private void parseElse(ListNode listNode, Lexer lexer, State state) throws TemplateParseException {
+        Token token = moveToNextNonSpaceToken(lexer, state);
         if (token == null) {
             throwUnexpectError("missing token");
         }
 
         switch (token.type()) {
             case IF:
-                moveToPrevItem(lexer);
+                moveToPrevItem(lexer, state);
                 listNode.append(new ElseNode());
                 break;
             case RIGHT_DELIM:
@@ -268,8 +263,8 @@ public class Parser {
         }
     }
 
-    private void parseEnd(ListNode listNode, Lexer lexer) throws TemplateParseException {
-        Token token = moveToNextNonSpaceToken(lexer);
+    private void parseEnd(ListNode listNode, Lexer lexer, State state) throws TemplateParseException {
+        Token token = moveToNextNonSpaceToken(lexer, state);
         if (token == null) {
             throwUnexpectError("missing token");
         }
@@ -280,28 +275,28 @@ public class Parser {
         listNode.append(new EndNode());
     }
 
-    private void parseIf(ListNode listNode, Lexer lexer) throws TemplateParseException {
-        moveToNextNonSpaceToken(lexer);
-        moveToPrevItem(lexer);
+    private void parseIf(ListNode listNode, Lexer lexer, State state) throws TemplateParseException {
+        moveToNextNonSpaceToken(lexer, state);
+        moveToPrevItem(lexer, state);
 
         IfNode ifNode = new IfNode();
-        parseBranch(ifNode, lexer, "if", true);
+        parseBranch(ifNode, lexer, "if", true, state);
         listNode.append(ifNode);
     }
 
-    private void parseRange(ListNode listNode, Lexer lexer) throws TemplateParseException {
-        moveToNextNonSpaceToken(lexer);
-        moveToPrevItem(lexer);
+    private void parseRange(ListNode listNode, Lexer lexer, State state) throws TemplateParseException {
+        moveToNextNonSpaceToken(lexer, state);
+        moveToPrevItem(lexer, state);
 
         RangeNode rangeNode = new RangeNode();
-        parseBranch(rangeNode, lexer, "range", true);
+        parseBranch(rangeNode, lexer, "range", true, state);
         listNode.append(rangeNode);
     }
 
-    private void parseTemplate(ListNode listNode, Lexer lexer) throws TemplateParseException {
+    private void parseTemplate(ListNode listNode, Lexer lexer, State state) throws TemplateParseException {
         String context = "template clause";
 
-        Token token = moveToNextNonSpaceToken(lexer);
+        Token token = moveToNextNonSpaceToken(lexer, state);
         if (token == null) {
             throwUnexpectError("missing token");
         }
@@ -313,42 +308,42 @@ public class Parser {
         String templateName = StringUtils.unquote(token.value());
         TemplateNode templateNode = new TemplateNode(templateName);
 
-        token = moveToNextNonSpaceToken(lexer);
+        token = moveToNextNonSpaceToken(lexer, state);
         if (token == null) {
             throwUnexpectError("missing token");
         }
 
         if (token.type() != TokenType.RIGHT_DELIM) {
-            moveToPrevItem(lexer);
+            moveToPrevItem(lexer, state);
 
             PipeNode pipeNode = new PipeNode(context);
-            parsePipe(pipeNode, lexer, TokenType.RIGHT_DELIM);
+            parsePipe(pipeNode, lexer, TokenType.RIGHT_DELIM, state);
             templateNode.setPipeNode(pipeNode);
         }
 
         listNode.append(templateNode);
     }
 
-    private void parseWith(ListNode listNode, Lexer lexer) throws TemplateParseException {
-        moveToNextNonSpaceToken(lexer);
-        moveToPrevItem(lexer);
+    private void parseWith(ListNode listNode, Lexer lexer, State state) throws TemplateParseException {
+        moveToNextNonSpaceToken(lexer, state);
+        moveToPrevItem(lexer, state);
 
         WithNode withNode = new WithNode();
-        parseBranch(withNode, lexer, "with", false);
+        parseBranch(withNode, lexer, "with", false, state);
         listNode.append(withNode);
     }
 
-    private void parseBranch(BranchNode branchNode, Lexer lexer, String context, boolean allowElseIf) throws TemplateParseException {
-        int variableCount = variables.size();
+    private void parseBranch(BranchNode branchNode, Lexer lexer, String context, boolean allowElseIf, State state) throws TemplateParseException {
+        int variableCount = state.variables.size();
 
         // Parse pipeline, the executable part
         PipeNode pipeNode = new PipeNode(context);
-        parsePipe(pipeNode, lexer, TokenType.RIGHT_DELIM);
+        parsePipe(pipeNode, lexer, TokenType.RIGHT_DELIM, state);
         branchNode.setPipeNode(pipeNode);
 
         // Parse 'if' clause
         ListNode ifListNode = new ListNode();
-        parseList(ifListNode, lexer);
+        parseList(ifListNode, lexer, state);
         branchNode.setIfListNode(ifListNode);
 
         // Parse if 'else' clause exists
@@ -358,16 +353,16 @@ public class Parser {
             listNode.removeLast();
 
             if (allowElseIf) {
-                Token token = lookNextNonSpaceToken(lexer);
+                Token token = lookNextNonSpaceToken(lexer, state);
                 if (token == null) {
                     throwUnexpectError("missing token");
                 }
 
                 if (token.type() == TokenType.IF) {
-                    moveToNextNonSpaceToken(lexer);
+                    moveToNextNonSpaceToken(lexer, state);
 
                     ListNode elseListNode = new ListNode();
-                    parseIf(elseListNode, lexer);
+                    parseIf(elseListNode, lexer, state);
                     branchNode.setElseListNode(elseListNode);
 
                     return;
@@ -375,7 +370,7 @@ public class Parser {
             }
 
             ListNode elseListNode = new ListNode();
-            parseList(elseListNode, lexer);
+            parseList(elseListNode, lexer, state);
             branchNode.setElseListNode(elseListNode);
 
             listNode = branchNode.getElseListNode();
@@ -389,21 +384,21 @@ public class Parser {
             throwUnexpectError("expected end, found " + lastNode);
         }
 
-        variables.subList(variableCount, variables.size()).clear();
+        state.variables.subList(variableCount, state.variables.size()).clear();
     }
 
-    private void parsePipe(PipeNode pipeNode, Lexer lexer, TokenType end) throws TemplateParseException {
-        Token token = lookNextNonSpaceToken(lexer);
+    private void parsePipe(PipeNode pipeNode, Lexer lexer, TokenType end, State state) throws TemplateParseException {
+        Token token = lookNextNonSpaceToken(lexer, state);
         if (token == null) {
             throwUnexpectError("missing token");
         }
 
         if (token.type() == TokenType.VARIABLE) {
-            parseVariable(pipeNode, lexer, token);
+            parseVariable(pipeNode, lexer, state, token);
         }
 
         while (true) {
-            token = moveToNextNonSpaceToken(lexer);
+            token = moveToNextNonSpaceToken(lexer, state);
             if (token == null) {
                 throwUnexpectError("missing token");
             }
@@ -442,8 +437,8 @@ public class Parser {
                 case STRING:
                 case VARIABLE:
                 case LEFT_PAREN:
-                    moveToPrevItem(lexer);
-                    parseCommand(pipeNode, lexer);
+                    moveToPrevItem(lexer, state);
+                    parseCommand(pipeNode, lexer, state);
                     break;
                 case ERROR:
                 default:
@@ -452,9 +447,9 @@ public class Parser {
         }
     }
 
-    private void parseVariable(PipeNode pipeNode, Lexer lexer, Token variableToken) throws TemplateParseException {
-        moveToNextNonSpaceToken(lexer);
-        Token nextToken = lookNextNonSpaceToken(lexer);
+    private void parseVariable(PipeNode pipeNode, Lexer lexer, State state, Token variableToken) throws TemplateParseException {
+        moveToNextNonSpaceToken(lexer, state);
+        Token nextToken = lookNextNonSpaceToken(lexer, state);
         if (nextToken == null) {
             throwUnexpectError("missing token");
         }
@@ -462,17 +457,17 @@ public class Parser {
         switch (nextToken.type()) {
             case ASSIGN:
             case DECLARE:
-                moveToNextNonSpaceToken(lexer);
+                moveToNextNonSpaceToken(lexer, state);
                 pipeNode.append(new VariableNode(variableToken.value()));
-                variables.add(variableToken.value());
+                state.variables.add(variableToken.value());
                 break;
             case CHAR:
                 if (",".equals(nextToken.value())) {
-                    moveToNextNonSpaceToken(lexer);
+                    moveToNextNonSpaceToken(lexer, state);
                     pipeNode.append(new VariableNode(variableToken.value()));
-                    variables.add(variableToken.value());
+                    state.variables.add(variableToken.value());
                     if ("range".equals(pipeNode.getContext()) && pipeNode.getVariableCount() < 2) {
-                        nextToken = lookNextNonSpaceToken(lexer);
+                        nextToken = lookNextNonSpaceToken(lexer, state);
                         if (nextToken == null) {
                             throwUnexpectError("missing token");
                         }
@@ -482,7 +477,7 @@ public class Parser {
                             case RIGHT_DELIM:
                             case RIGHT_PAREN:
                                 if (variableToken.type() == TokenType.VARIABLE) {
-                                    parseVariable(pipeNode, lexer, nextToken);
+                                    parseVariable(pipeNode, lexer, state, nextToken);
                                 }
                                 break;
                             default:
@@ -492,19 +487,19 @@ public class Parser {
                 }
                 break;
             default:
-                moveToPrevNonSpaceItem(lexer);
+                moveToPrevNonSpaceItem(lexer, state);
                 break;
         }
     }
 
-    private void parseCommand(PipeNode pipeNode, Lexer lexer) throws TemplateParseException {
+    private void parseCommand(PipeNode pipeNode, Lexer lexer, State state) throws TemplateParseException {
         CommandNode commandNode = new CommandNode();
 
         loop:
         while (true) {
             Node node = null;
 
-            Token token = moveToNextNonSpaceToken(lexer);
+            Token token = moveToNextNonSpaceToken(lexer, state);
             if (token == null) {
                 throwUnexpectError("missing token");
             }
@@ -524,7 +519,7 @@ public class Parser {
                     node = new NilNode();
                     break;
                 case VARIABLE:
-                    node = findVariable(token.value());
+                    node = findVariable(token.value(), state);
                     break;
                 case FIELD:
                     node = new FieldNode(token.value());
@@ -535,8 +530,9 @@ public class Parser {
                 case CHAR_CONSTANT:
                 case COMPLEX:
                 case NUMBER:
-                    moveToPrevItem(lexer);
-                    node = parseNumber(lexer);
+                    NumberNode numberNode = new NumberNode(token.value());
+                    parseNumber(numberNode, lexer, token);
+                    node = numberNode;
                     break;
                 case STRING:
                 case RAW_STRING:
@@ -544,25 +540,25 @@ public class Parser {
                     break;
                 case LEFT_PAREN:
                     PipeNode nestedPipeNode = new PipeNode("parenthesized pipeline");
-                    parsePipe(nestedPipeNode, lexer, TokenType.RIGHT_PAREN);
+                    parsePipe(nestedPipeNode, lexer, TokenType.RIGHT_PAREN, state);
                     node = nestedPipeNode;
                     break;
                 default:
-                    moveToPrevItem(lexer);
+                    moveToPrevItem(lexer, state);
             }
 
             if (node != null) {
-                token = lookNextItem(lexer);
+                token = lookNextItem(lexer, state);
                 if (token == null) {
                     throwUnexpectError("missing token");
                 }
 
                 if (token.type() == TokenType.FIELD) {
                     ChainNode chainNode = new ChainNode(node);
-                    for (token = moveToNextToken(lexer); token.type() == TokenType.FIELD; token = moveToNextToken(lexer)) {
+                    for (token = moveToNextToken(lexer, state); token.type() == TokenType.FIELD; token = moveToNextToken(lexer, state)) {
                         chainNode.append(token.value());
                     }
-                    moveToPrevItem(lexer);
+                    moveToPrevItem(lexer, state);
 
                     if (node instanceof FieldNode) {
                         node = new FieldNode(chainNode.toString());
@@ -585,13 +581,13 @@ public class Parser {
                 commandNode.append(node);
             }
 
-            token = moveToNextToken(lexer);
+            token = moveToNextToken(lexer, state);
             switch (token.type()) {
                 case SPACE:
                     continue loop;
                 case RIGHT_DELIM:
                 case RIGHT_PAREN:
-                    moveToPrevItem(lexer);
+                    moveToPrevItem(lexer, state);
                     break;
                 case PIPE:
                     break;
@@ -618,19 +614,18 @@ public class Parser {
      *
      * @return 下一个元素。第一次执行返回第一个元素，超出最后一个元素后返回null
      */
-    private Token lookNextItem(Lexer lexer) {
-        if (tokenIndex < lexer.getTokens().size()) {
-            return lexer.getTokens().get(tokenIndex);
+    private Token lookNextItem(Lexer lexer, State state) {
+        if (state.tokenIndex < lexer.getTokens().size()) {
+            return lexer.getTokens().get(state.tokenIndex);
         }
         return null;
     }
 
-    private Node parseNumber(Lexer lexer) throws TemplateParseException {
-        Token nextToken = moveToNextToken(lexer);
-        String value = nextToken.value();
-        int length = value.length();
+    private void parseNumber(NumberNode numberNode, Lexer lexer, Token token) throws TemplateParseException {
+        String value = token.value();
 
-        if (nextToken.type() == TokenType.CHAR_CONSTANT) {
+        TokenType type = token.type();
+        if (type == TokenType.CHAR_CONSTANT) {
             if (value.charAt(0) != '\'') {
                 throw new TemplateParseException(String.format("malformed character constant: %s", value));
             }
@@ -642,20 +637,22 @@ public class Parser {
                 throw new TemplateParseException("invalid syntax: " + value, e);
             }
 
-            return new NumberNode(value, ch);
+            new NumberNode(value, ch);
+            return;
         }
 
+        int length = value.length();
         if (length > 0 && value.charAt(length - 1) == 'i') {
             try {
                 double image = Double.parseDouble(value.substring(0, length - 1));
                 Complex complex = new Complex(0, image);
-                return new NumberNode(value, complex);
+                new NumberNode(value, complex);
+                return;
             } catch (NumberFormatException ignored) {
             }
         }
 
 
-        Node node;
         Number number = null;
         try {
             number = Long.valueOf(value);
@@ -680,7 +677,7 @@ public class Parser {
             throw new TemplateParseException(String.format("illegal number syntax: %s", value));
         }
 
-        NumberNode numberNode = new NumberNode(value, number);
+        Node node;
 
 //                    if (value.endsWith("i")) {
 //                        String numberString = value.substring(0, value.length() - 1);
@@ -692,30 +689,30 @@ public class Parser {
 //                    int i = Integer.parseInt(value);
 
         node = numberNode;
-        return node;
     }
 
     /**
-     * 获取上一个元素
-     *
-     * @return 上一个元素。第一次执行返回null，超出最后一个元素后执行返回最后的元素
+     * Retrieve previous token.
+     * <p>
+     * If the index is 0 (never run {@code moveToNextToken()}), then it won't change, this method will return null.
+     * If the index points to the last token, then return the last to
      */
-    private Token moveToPrevItem(Lexer lexer) {
-        if (tokenIndex > 0) {
-            return lexer.getTokens().get(--tokenIndex);
+    private Token moveToPrevItem(Lexer lexer, State state) {
+        if (state.tokenIndex > 0) {
+            return lexer.getTokens().get(--state.tokenIndex);
         }
         return null;
     }
 
     /**
-     * 获取下一个元素，并将查找标记后移一位，直到最后一个元素
-     *
-     * @return 下一个元素。第一次执行返回第一个元素，超出最后一个元素后返回null
+     * Retrieve next token, and move the index to the next token.
+     * <p>
+     * If current index points to the last token, then it won't change, this method will return null
      */
-    private Token moveToNextToken(Lexer lexer) {
-        Token token = lookNextItem(lexer);
+    private Token moveToNextToken(Lexer lexer, State state) {
+        Token token = lookNextItem(lexer, state);
         if (token != null) {
-            tokenIndex++;
+            state.tokenIndex++;
         }
         return token;
     }
@@ -725,16 +722,16 @@ public class Parser {
      *
      * @return 下一个元素。第一次执行返回第一个元素，超出最后一个元素后返回null
      */
-    private Token lookNextNonSpaceToken(Lexer lexer) {
+    private Token lookNextNonSpaceToken(Lexer lexer, State state) {
         int count = 0;
         while (true) {
-            Token token = moveToNextToken(lexer);
+            Token token = moveToNextToken(lexer, state);
             count++;
             if (token == null) {
                 return null;
             }
             if (token.type() != TokenType.SPACE) {
-                tokenIndex -= count;
+                state.tokenIndex -= count;
                 return token;
             }
         }
@@ -745,9 +742,9 @@ public class Parser {
      *
      * @return 上一个元素。第一次执行返回null，超出最后一个元素后执行返回最后的元素
      */
-    private Token moveToPrevNonSpaceItem(Lexer lexer) {
+    private Token moveToPrevNonSpaceItem(Lexer lexer, State state) {
         while (true) {
-            Token token = moveToPrevItem(lexer);
+            Token token = moveToPrevItem(lexer, state);
             if (token == null) {
                 return null;
             }
@@ -762,9 +759,9 @@ public class Parser {
      *
      * @return 下一个元素。第一次执行返回第一个元素，超出最后一个元素后返回null
      */
-    private Token moveToNextNonSpaceToken(Lexer lexer) {
+    private Token moveToNextNonSpaceToken(Lexer lexer, State state) {
         while (true) {
-            Token token = moveToNextToken(lexer);
+            Token token = moveToNextToken(lexer, state);
             if (token == null) {
                 return null;
             }
@@ -774,10 +771,10 @@ public class Parser {
         }
     }
 
-    private Node findVariable(String value) throws TemplateParseException {
+    private Node findVariable(String value, State state) throws TemplateParseException {
         VariableNode variableNode = new VariableNode(value);
         String name = variableNode.getIdentifier(0);
-        if (variables.contains(name)) {
+        if (state.variables.contains(name)) {
             return variableNode;
         }
         throwUnexpectError(String.format("undefined variable %s", name));
@@ -788,8 +785,20 @@ public class Parser {
         throw new TemplateParseException(message);
     }
 
-    public Node getRootNode(String name) {
-        return rootNodes.get(name);
-    }
 
+    private static class State {
+
+        private final Map<String, Node> rootNodes = new LinkedHashMap<>();
+
+        /**
+         * A list which contains all the variables in a branch context
+         */
+        private final List<String> variables = new ArrayList<>();
+
+        /**
+         * Position marker
+         */
+        private int tokenIndex;
+
+    }
 }

@@ -5,8 +5,12 @@ import io.github.verils.gotemplate.internal.lang.Complex;
 public class NumberNode implements Node {
 
     private final String text;
-    private final Number number;
-    private final Complex complex;
+    private Number number;
+    private Complex complex;
+
+    public NumberNode(String text) {
+        this.text = text;
+    }
 
     public NumberNode(String text, Number number) {
         this.text = text;
