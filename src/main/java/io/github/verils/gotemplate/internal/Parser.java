@@ -685,6 +685,10 @@ public class Parser {
             } catch (NumberFormatException ignoredAgain) {
             }
         }
+
+        if (!numberNode.isInt() && !numberNode.isFloat() && !numberNode.isComplex()) {
+            throw new TemplateParseException(String.format("illegal number syntax: %s", text));
+        }
     }
 
     private long parseIntValue(String text) {

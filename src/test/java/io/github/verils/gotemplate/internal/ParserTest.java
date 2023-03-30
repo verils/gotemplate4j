@@ -160,7 +160,7 @@ class ParserTest {
                 if (!test.error) {
                     log.log(Level.FINE, String.format("%s: got error: %s%n", test.name, e.getMessage()), e);
                 }
-                assertTrue(test.error);
+                assertTrue(test.error, String.format("%s: unexpected %s got %s", test.name, test.result, e));
             }
         }
     }
