@@ -15,6 +15,8 @@ This project is for experimental purpose, please **DON'T USE IN PRODUCTION** for
 
 Java Version: >= **1.8**
 
+No other dependency required except for *Vanilla Java*
+
 ## Installation
 
 For Maven, you can simply add dependency:
