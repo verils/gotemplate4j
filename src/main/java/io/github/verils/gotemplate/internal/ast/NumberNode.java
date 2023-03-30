@@ -19,16 +19,6 @@ public class NumberNode implements Node {
         this.text = text;
     }
 
-    public NumberNode(String text, Number number) {
-        this.text = text;
-        this.complexValue = null;
-    }
-
-    public NumberNode(String text, Complex complex) {
-        this.text = text;
-        this.complexValue = complex;
-    }
-
     public boolean isComplex() {
         return isComplex;
     }
@@ -44,6 +34,10 @@ public class NumberNode implements Node {
 
     public void setIsInt(boolean isInt) {
         this.isInt = isInt;
+    }
+
+    public long getIntValue() {
+        return intValue;
     }
 
     public void setIntValue(long intValue) {
@@ -64,9 +58,6 @@ public class NumberNode implements Node {
 
     public void setIsComplex(boolean isComplex) {
         this.isComplex = isComplex;
-    }
-
-    public void setNumber(Number number) {
     }
 
     public void setComplex(Complex complex) {

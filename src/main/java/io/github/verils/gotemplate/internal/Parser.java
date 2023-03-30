@@ -627,17 +627,17 @@ public class Parser {
         parseNumber(numberNode, value, type);
     }
 
-    void parseNumber(NumberNode numberNode, String value, TokenType type) throws TemplateParseException {
+    void parseNumber(NumberNode numberNode, String text, TokenType type) throws TemplateParseException {
         if (type == TokenType.CHAR_CONSTANT) {
-            if (value.charAt(0) != '\'') {
-                throw new TemplateParseException(String.format("malformed character constant: %s", value));
+            if (text.charAt(0) != '\'') {
+                throw new TemplateParseException(String.format("malformed character constant: %s", text));
             }
 
             int ch;
             try {
-                ch = CharUtils.unquotedChar(value);
+                ch = CharUtils.unquotedChar(text);
             } catch (IllegalArgumentException e) {
-                throw new TemplateParseException("invalid syntax: " + value, e);
+                throw new TemplateParseException("invalid syntax: " + text, e);
             }
 
             numberNode.setIsInt(true);
@@ -648,45 +648,113 @@ public class Parser {
         }
 
         if (type == TokenType.COMPLEX) {
-            throw new TemplateParseException(String.format("complex number is unsupported: %s", value));
-        }
-
-        int length = value.length();
-        if (length > 0 && value.charAt(length - 1) == 'i') {
             try {
-                double image = Double.parseDouble(value.substring(0, length - 1));
-                Complex complex = new Complex(0, image);
+                Complex complex = parseComplexValue(text);
+                numberNode.setIsComplex(true);
                 numberNode.setComplex(complex);
+                simplifyComplex(numberNode, complex);
                 return;
             } catch (NumberFormatException ignored) {
             }
         }
 
+        int length = text.length();
+        if (length > 0 && text.charAt(length - 1) == 'i') {
+            try {
+                Complex complex = parseComplexValue(text);
+                numberNode.setIsComplex(true);
+                numberNode.setComplex(complex);
+                simplifyComplex(numberNode, complex);
+                return;
+            } catch (NumberFormatException ignored) {
+            }
+        }
 
         try {
-            long intValue = Long.parseLong(value.replace("_", ""));
+            long intValue = parseIntValue(text);
             numberNode.setIsInt(true);
             numberNode.setIntValue(intValue);
+            numberNode.setIsFloat(true);
+            numberNode.setFloatValue(intValue);
         } catch (NumberFormatException ignored) {
+            try {
+                double floatValue = parseFloatValue(text);
+                numberNode.setIsFloat(true);
+                numberNode.setFloatValue(floatValue);
+                simplifyFloat(numberNode, floatValue);
+            } catch (NumberFormatException ignoredAgain) {
+            }
+        }
+    }
+
+    private long parseIntValue(String text) {
+        boolean signed = false;
+        boolean negative = false;
+
+        char firstChar = text.charAt(0);
+        if (firstChar == '+') {
+            signed = true;
+        }
+        if (firstChar == '-') {
+            signed = true;
+            negative = true;
         }
 
-        try {
-            double floatValue = Double.parseDouble(value.replace("_", ""));
+        long intValue = parseIntValue(text, signed);
+        if (intValue != 0) {
+            return negative ? intValue : -intValue;
+        }
+        return 0;
+    }
+
+    private long parseIntValue(String text, boolean signed) {
+        int offset = signed ? 1 : 0;
+        String trimUnderscore = trimUnderscore(text);
+
+        if (text.startsWith("0b", offset) || text.startsWith("0B", offset)) {
+            return Long.parseLong(trimUnderscore.substring(offset + 2), 2);
+        }
+
+        if (text.startsWith("0o", offset) || text.startsWith("0O", offset)) {
+            return Long.parseLong(trimUnderscore.substring(offset + 2), 8);
+        }
+
+        if (text.startsWith("0x", offset) || text.startsWith("0X", offset)) {
+            return Long.parseLong(trimUnderscore.substring(offset + 2), 16);
+        }
+
+        return Long.parseLong(trimUnderscore, 10);
+    }
+
+    private double parseFloatValue(String text) {
+        return Double.parseDouble(trimUnderscore(text));
+    }
+
+    private Complex parseComplexValue(String text) {
+        return Complex.parseComplex(text);
+    }
+
+    private void simplifyComplex(NumberNode numberNode, Complex complex) {
+        if (complex.getImaginary() == 0) {
+            double floatValue = complex.getReal();
             numberNode.setIsFloat(true);
             numberNode.setFloatValue(floatValue);
-        } catch (NumberFormatException ignored) {
+
+            long intValue = (long) floatValue;
+            simplifyFloat(numberNode, floatValue);
         }
+    }
 
+    private void simplifyFloat(NumberNode numberNode, double floatValue) {
+        long intValue = (long) floatValue;
+        if (floatValue == intValue) {
+            numberNode.setIsInt(true);
+            numberNode.setIntValue(intValue);
+        }
+    }
 
-//                    if (value.endsWith("i")) {
-//                        String numberString = value.substring(0, value.length() - 1);
-//                        double number = Double.parseDouble(numberString);
-//                    } else {
-//                        numberNode
-//                    }
-//
-//                    int i = Integer.parseInt(value);
-
+    private String trimUnderscore(String text) {
+        return text.replace("_", "");
     }
 
     /**

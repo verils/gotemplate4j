@@ -81,13 +81,35 @@ public final class CharUtils {
         return valid.chars().anyMatch(c -> c == ch);
     }
 
-    public static char unquotedChar(String character) {
-        if (character.length() == 0) {
-            throw new IllegalArgumentException("invalid character: " + character);
+    /**
+     * Remove the leading and tailing quote characters.
+     *
+     * @param text quoted character string
+     * @return unquoted character
+     * @throws IllegalArgumentException if quotes is unclosed
+     */
+    public static char unquotedChar(String text) throws IllegalArgumentException {
+        if (text.length() == 0) {
+            throw new IllegalArgumentException("invalid syntax: " + text);
         }
-        if (character.charAt(0) != '\'' && character.charAt(2) != '\'') {
-            throw new IllegalArgumentException("invalid character: " + character);
+        if (text.charAt(0) != '\'') {
+            throw new IllegalArgumentException("invalid syntax: " + text);
         }
-        return character.charAt(1);
+        if (text.charAt(text.length() - 1) != '\'') {
+            throw new IllegalArgumentException("invalid syntax: " + text);
+        }
+
+        String unquoted = text.substring(1, text.length() - 1);
+        char ch = unquoted.charAt(0);
+        if (ch != '\\') {
+            // thx not a backslash
+            if (text.length() > 3) {
+                throw new IllegalArgumentException("invalid syntax: " + text);
+            }
+            return ch;
+        }
+
+        // do the awful things
+        return ch;
     }
 }
