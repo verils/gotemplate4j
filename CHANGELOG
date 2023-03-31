@@ -1,3 +1,8 @@
+v0.3.0 (2023-03-30)
+
+- Refactor the internal components, change their package from "runtime" to "internal"
+- Improve the lexer and parser, make support for complex number and regular number, with well tests
+
 v0.2.1 (2023-03-28)
 
 Features
