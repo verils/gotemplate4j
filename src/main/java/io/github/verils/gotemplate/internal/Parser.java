@@ -635,7 +635,7 @@ public class Parser {
 
             int ch;
             try {
-                ch = CharUtils.unquotedChar(text);
+                ch = CharUtils.unquoteChar(text);
             } catch (IllegalArgumentException e) {
                 throw new TemplateParseException("invalid syntax: " + text, e);
             }

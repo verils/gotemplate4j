@@ -7,9 +7,9 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 class CharUtilsTest {
 
     @Test
-    void unquotedChar() {
-        assertThrows(IllegalArgumentException.class, () -> CharUtils.unquotedChar("\\'x"));
-        assertThrows(IllegalArgumentException.class, () -> CharUtils.unquotedChar("'xx'"));
+    void unquoteChar() {
+        assertThrows(IllegalArgumentException.class, () -> CharUtils.unquoteChar("\\'x"));
+        assertThrows(IllegalArgumentException.class, () -> CharUtils.unquoteChar("'xx'"));
     }
 
 }

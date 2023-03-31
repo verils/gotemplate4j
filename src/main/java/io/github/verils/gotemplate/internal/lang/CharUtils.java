@@ -88,7 +88,7 @@ public final class CharUtils {
      * @return unquoted character
      * @throws IllegalArgumentException if quotes is unclosed
      */
-    public static char unquotedChar(String text) throws IllegalArgumentException {
+    public static char unquoteChar(String text) throws IllegalArgumentException {
         if (text.length() == 0) {
             throw new IllegalArgumentException("invalid syntax: " + text);
         }
