@@ -172,7 +172,7 @@ public class Executor {
 
         Object value = null;
         for (CommandNode command : pipeNode.getCommands()) {
-            value = executeCommand(command, data, beanInfo);
+            value = executeCommand(command, data, beanInfo, value);
         }
 
         for (VariableNode variable : pipeNode.getVariables()) {
@@ -181,14 +181,14 @@ public class Executor {
         return value;
     }
 
-    private Object executeCommand(CommandNode command, Object data, BeanInfo beanInfo)
+    private Object executeCommand(CommandNode command, Object data, BeanInfo beanInfo, Object currentPipelineValue)
             throws TemplateExecutionException {
         Node firstArgument = command.getFirstArgument();
         if (firstArgument instanceof FieldNode) {
             return executeField((FieldNode) firstArgument, data, beanInfo);
         }
         if (firstArgument instanceof IdentifierNode) {
-            return executeFunction((IdentifierNode) firstArgument, command.getArguments(), data, beanInfo);
+            return executeFunction((IdentifierNode) firstArgument, command.getArguments(), data, beanInfo, currentPipelineValue);
         }
 
 
@@ -241,7 +241,7 @@ public class Executor {
         return null;
     }
 
-    private Object executeFunction(IdentifierNode identifierNode, List<Node> arguments, Object data, BeanInfo beanInfo)
+    private Object executeFunction(IdentifierNode identifierNode, List<Node> arguments, Object data, BeanInfo beanInfo, Object currentPipelineValue)
             throws TemplateExecutionException {
         String identifier = identifierNode.getIdentifier();
 
@@ -251,13 +251,18 @@ public class Executor {
                 throw new TemplateExecutionException("call of null for " + identifier);
             }
 
+            // per https://pkg.go.dev/text/template, "In a chained pipeline, the result of
+            // each command is passed as the last argument of the following command." (This is necessary
+            // when implementing functions like 'default', for example.)
+
             List<Node> args = arguments.subList(1, arguments.size());
 
-            Object[] argumentValues = new Object[args.size()];
+            Object[] argumentValues = new Object[args.size()+1];
             for (int i = 0; i < args.size(); i++) {
                 Object value = executeArgument(args.get(i), data, beanInfo);
                 argumentValues[i] = value;
             }
+            argumentValues[args.size()] = currentPipelineValue;
 
             return function.invoke(argumentValues);
         }
