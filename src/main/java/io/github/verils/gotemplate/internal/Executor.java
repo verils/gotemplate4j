@@ -241,8 +241,8 @@ public class Executor {
         return null;
     }
 
-    private Object executeFunction(IdentifierNode identifierNode, List<Node> arguments, Object data, BeanInfo beanInfo, Object currentPipelineValue)
-            throws TemplateExecutionException {
+    private Object executeFunction(IdentifierNode identifierNode, List<Node> arguments, Object data, BeanInfo beanInfo,
+                                   Object finalValue) throws TemplateExecutionException {
         String identifier = identifierNode.getIdentifier();
 
         if (functions.containsKey(identifier)) {
@@ -251,23 +251,34 @@ public class Executor {
                 throw new TemplateExecutionException("call of null for " + identifier);
             }
 
-            // per https://pkg.go.dev/text/template, "In a chained pipeline, the result of
-            // each command is passed as the last argument of the following command." (This is necessary
-            // when implementing functions like 'default', for example.)
-
             List<Node> args = arguments.subList(1, arguments.size());
+            Object[] argumentValues;
 
-            Object[] argumentValues = new Object[args.size()+1];
-            for (int i = 0; i < args.size(); i++) {
-                Object value = executeArgument(args.get(i), data, beanInfo);
-                argumentValues[i] = value;
+            if (finalValue != null) {
+
+                // per https://pkg.go.dev/text/template, "In a chained pipeline, the result of
+                // each command is passed as the last argument of the following command." (This is necessary
+                // when implementing functions like 'default', for example.)
+
+                argumentValues = new Object[args.size() + 1];
+                executeArguments(data, beanInfo, args, argumentValues);
+                argumentValues[args.size()] = finalValue;
+            } else {
+                argumentValues = new Object[args.size()];
+                executeArguments(data, beanInfo, args, argumentValues);
             }
-            argumentValues[args.size()] = currentPipelineValue;
 
             return function.invoke(argumentValues);
         }
 
         throw new TemplateExecutionException(String.format("%s is not a defined function", identifier));
+    }
+
+    private void executeArguments(Object data, BeanInfo beanInfo, List<Node> args, Object[] argumentValues) throws TemplateExecutionException {
+        for (int i = 0; i < args.size(); i++) {
+            Object value = executeArgument(args.get(i), data, beanInfo);
+            argumentValues[i] = value;
+        }
     }
 
     private Object executeArgument(Node argument, Object data, BeanInfo beanInfo) throws TemplateExecutionException {
