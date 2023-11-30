@@ -28,6 +28,20 @@ class TemplateTest {
         assertEquals("Bob", writer.toString());
     }
 
+    @Test
+    void testPipe() throws IOException, TemplateException {
+        Template template = new Template("demo");
+        template.parse("{{ .Name | print | print }}");
+
+        StringWriter writer = new StringWriter();
+
+        User user = new User();
+        user.setName("Bob");
+
+        template.execute(writer, user);
+        assertEquals("Bob", writer.toString());
+    }
+
     public static class User {
         private String name;
 
