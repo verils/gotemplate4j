@@ -58,7 +58,7 @@ goTemplate.execute(data,writer);
 ## Limitations
 
 - The format of **print** functions in Java are different from Golang
-- Achieved only a few built-in fuctions
+- Achieved only a few built-in functions
 - The procedure of PipeNode is weak
 
 ## Waht is Next?
