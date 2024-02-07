@@ -12,6 +12,9 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+/**
+ * @deprecated Redundant factory object
+ */
 public class GoTemplateFactory {
 
     private final Map<String, Function> functions;

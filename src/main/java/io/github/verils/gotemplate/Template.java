@@ -3,11 +3,16 @@ package io.github.verils.gotemplate;
 import io.github.verils.gotemplate.internal.Executor;
 import io.github.verils.gotemplate.internal.IOUtils;
 import io.github.verils.gotemplate.internal.Parser;
+import io.github.verils.gotemplate.internal.ast.ListNode;
 import io.github.verils.gotemplate.internal.ast.Node;
+import io.github.verils.gotemplate.internal.ast.TextNode;
 
 import java.io.*;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Golang-like template api
@@ -26,7 +31,7 @@ public class Template {
      * @param name The template name
      */
     public Template(String name) {
-        this(name, Functions.BUILTIN);
+        this(name, Collections.emptyMap());
     }
 
     /**
@@ -37,7 +42,8 @@ public class Template {
      */
     public Template(String name, Map<String, Function> functions) {
         this.name = name;
-        this.functions = functions;
+        this.functions = Stream.concat(Functions.BUILTIN.entrySet().stream(), functions.entrySet().stream())
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (v1, v2) -> v2));
         this.nodes = new LinkedHashMap<>();
     }
 
@@ -52,7 +58,33 @@ public class Template {
     public void parse(String template) throws TemplateParseException {
         Parser parser = new Parser(functions);
         Map<String, Node> nodes = parser.parse(name, template);
-        this.nodes.putAll(nodes);
+        nodes.forEach((name, node) -> {
+            if (!this.nodes.containsKey(name)) {
+                this.nodes.put(name, node);
+                return;
+            }
+
+            if (!isEmpty(node)) {
+                this.nodes.put(name, node);
+            }
+        });
+    }
+
+    private boolean isEmpty(Node currentNode) {
+        if (currentNode instanceof ListNode) {
+            ListNode listNode = (ListNode) currentNode;
+            for (Node node : listNode) {
+                if (!isEmpty(node)) {
+                    return false;
+                }
+            }
+            return true;
+        }
+        if (currentNode instanceof TextNode) {
+            TextNode textNode = (TextNode) currentNode;
+            return textNode.getText().trim().isEmpty();
+        }
+        return false;
     }
 
     /**

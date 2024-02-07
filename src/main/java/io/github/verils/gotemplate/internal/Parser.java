@@ -40,34 +40,34 @@ public class Parser {
      */
     public Map<String, Node> parse(String name, String text) throws TemplateParseException {
         // Parse the template text, build a list node as the root node
-        ListNode rootNode = new ListNode();
+        ListNode listNode = new ListNode();
 
         Lexer lexer = new Lexer(text);
 
         State state = new State();
         state.variables.add("$");
 
-        parseList(rootNode, lexer, state);
+        parseList(listNode, lexer, state);
 
         // Can not have ELSE and END node as the last in root list node
-        Node lastNode = rootNode.getLast();
+        Node lastNode = listNode.getLast();
         if (lastNode instanceof ElseNode) {
-            throwUnexpectError("unexpected " + rootNode);
+            throwUnexpectError("unexpected " + listNode);
         }
         if (lastNode instanceof EndNode) {
-            throwUnexpectError("unexpected " + rootNode);
+            throwUnexpectError("unexpected " + listNode);
         }
 
-        ListNode root = (ListNode) state.rootNodes.get(name);
-        if (root == null) {
-            state.rootNodes.put(name, rootNode);
-        } else {
+        ListNode root = (ListNode) state.nodes.get(name);
+        if (root != null) {
             for (Node node : root) {
-                rootNode.append(node);
+                listNode.append(node);
             }
+        } else {
+            state.nodes.put(name, listNode);
         }
 
-        return state.rootNodes;
+        return state.nodes;
     }
 
 
@@ -202,7 +202,7 @@ public class Parser {
 
         listNode.append(blockTemplateNode);
 
-        state.rootNodes.put(blockTemplateName, blockListNode);
+        state.nodes.put(blockTemplateName, blockListNode);
     }
 
 
@@ -240,7 +240,7 @@ public class Parser {
             return;
         }
 
-        state.rootNodes.put(definitionTemplateName, definitionListNode);
+        state.nodes.put(definitionTemplateName, definitionListNode);
     }
 
 
@@ -858,7 +858,7 @@ public class Parser {
 
     private static class State {
 
-        private final Map<String, Node> rootNodes = new LinkedHashMap<>();
+        private final Map<String, Node> nodes = new LinkedHashMap<>();
 
         /**
          * A list which contains all the variables in a branch context
