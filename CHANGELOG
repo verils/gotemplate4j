@@ -1,13 +1,27 @@
+v0.3.2 (2024-02-08)
+
+========
+
+- Support a new `Template` implementation which is more like Golang template API. The `GoTemplate` idea is from
+  some Java template engine, but keeping the original Go template API style can be easier to understand
+- Fix some issues when parsing a definition block
+
 v0.3.1 (2023-11-30)
+
+========
 
 - Fix the pipeline value processing
 
 v0.3.0 (2023-03-30)
 
+========
+
 - Refactor the internal components, change their package from "runtime" to "internal"
 - Improve the lexer and parser, make support for complex number and regular number, with well tests
 
 v0.2.1 (2023-03-28)
+
+========
 
 Features
 
@@ -19,8 +33,6 @@ Fix some executor issues
 - Process Map object correctly
 
 ========
-
-To be done...
 
 v0.2.0 (2022-06-04)
 
