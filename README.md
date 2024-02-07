@@ -24,7 +24,6 @@ No other dependency required except for *Vanilla Java*
 For Maven, you can simply add dependency:
 
 ```xml
-
 <dependency>
     <groupId>io.github.verils</groupId>
     <artifactId>gotemplate4j</artifactId>

@@ -1,3 +1,7 @@
+v0.3.1 (2023-11-30)
+
+- Fix the pipeline value processing
+
 v0.3.0 (2023-03-30)
 
 - Refactor the internal components, change their package from "runtime" to "internal"
