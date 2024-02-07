@@ -35,24 +35,18 @@ For Maven, you can simply add dependency:
 ## Usage
 
 ```java
-// Prepare your data. In Golang it uses UpperCamelCase naming method, in Java we should use camelCase.
-Map<String, Object> data=new HashMap<>();
-data.put("name","World");
+// Create a user as the input data
+User user = new User();
+user.setName("Bob");
 
-// Create a template factory, you can make it singleton, but it is better to use individually in each context
-GoTemplateFactory goTemplateFactory=new GoTemplateFactory();
+// Prepare you template
+Template template = new Template("demo");
+template.parse("Hello, {{ .Name }}!");
 
-// Parse your template, don't forget the template name: "example"
-goTemplateFactory.parse("example","Hello {{.name}}!");
-
-// Get "example" template from factory
-GoTemplate goTemplate=goTemplateFactory.getTemplate("example");
-
-// Execute and do output
-StringWriter writer=new OutputStreamWriter(System.out);
-goTemplate.execute(data,writer);
-
-// Then it prints "Hello World!" on console
+// Execute and print out the result text
+StringWriter writer = new StringWriter();
+template.execute(writer, user);
+System.out.print(writer.toString());  // "Hello Bob!"
 ```
 
 ## Limitations
