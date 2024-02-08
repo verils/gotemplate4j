@@ -293,7 +293,7 @@ public class Lexer {
         if (posAtRightDelimWithTrimMarker) {
             char ch = getCurrentChar();
             if (ch != CharUtils.EOF) {
-                goToNoneSpace();
+                goUntilNoneSpace();
                 moveStartToPos();
             }
         }
@@ -499,7 +499,7 @@ public class Lexer {
     }
 
     private void lookForNumber() {
-        goUntilNot("+-");
+        goIf("+-");
 
         String digits = CharUtils.DECIMAL_DIGITS;
 
@@ -524,18 +524,18 @@ public class Lexer {
         if (digits.length() == 10 + 1 && CharUtils.isAnyOf(ch, "eE")) {
             pos++;
 
-            goUntilNot("+-");
+            goIf("+-");
             ch = goUntilNot(CharUtils.DECIMAL_DIGITS);
         }
 
         if (digits.length() == 16 + 6 + 1 && CharUtils.isAnyOf(ch, "pP")) {
             pos++;
 
-            goUntilNot("+-");
+            goIf("+-");
             goUntilNot(CharUtils.DECIMAL_DIGITS);
         }
 
-        goUntilNot("i");
+        goIf("i");
     }
 
     private void moveStartToPos() {
@@ -547,7 +547,14 @@ public class Lexer {
         pos = start;
     }
 
-    private void goToNoneSpace() {
+    private void goIf(CharSequence chars) {
+        char ch = getCurrentChar();
+        if (CharUtils.isAnyOf(ch, chars)) {
+            pos++;
+        }
+    }
+
+    private void goUntilNoneSpace() {
         while (true) {
             char ch = getCurrentChar();
 
