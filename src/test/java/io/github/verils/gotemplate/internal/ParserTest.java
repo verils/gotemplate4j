@@ -257,7 +257,7 @@ class ParserTest {
 
 
             try {
-                parser.parseNumber(numberNode, text, type);
+                parser.parseNumber(numberNode, new Token(type, text, 0, 0, 0));
                 assertEquals(test.isInt, numberNode.isInt(), String.format("invalid number: %s", test.text));
                 assertEquals(test.isFloat, numberNode.isFloat(), String.format("invalid number: %s", test.text));
                 assertEquals(test.isComplex, numberNode.isComplex(), String.format("invalid number: %s", test.text));

@@ -18,10 +18,6 @@ public class Lexer {
     private static final char TRIM_MARKER = '-';
     private static final int TRIM_MARKER_LENGTH = 2;
 
-    private static final int AT_RIGHT_DELIM_STATUS_UNREACHED = 0;
-    private static final int AT_RIGHT_DELIM_STATUS_REACHED_WITHOUT_TRIM_MARKER = 1;
-    private static final int AT_RIGHT_DELIM_STATUS_REACHED_WITH_TRIM_MARKER = 2;
-
 
     private static final Map<String, TokenType> KEY_MAP = new LinkedHashMap<>();
 
@@ -49,16 +45,38 @@ public class Lexer {
     private final String rightComment;
 
 
-    /* Position markers */
-
-    private int start = 0;
+    /**
+     * Current position of the input
+     */
     private int pos = 0;
+
+    /**
+     * Start position of current token
+     */
+    private int start = 0;
+
+
     private int parenDepth = 0;
+
+
+    /**
+     * The count of newline have met + 1
+     */
+    private int line = 1;
+
+    /**
+     * Start line of current token
+     */
+    private int startLine = line;
+
+    private int column = 0;
+
+    private int lineStart = 0;
 
 
     /* Result tokens */
 
-    private final List<Token> tokens = new ArrayList<>(32);
+    private final List<Token> tokens = new ArrayList<>(8);
 
 
     public Lexer(String input) {
@@ -81,13 +99,13 @@ public class Lexer {
         this.leftComment = leftComment;
         this.rightComment = rightComment;
 
-        parseInput();
+        parse();
     }
 
     /**
      * Parse and handle states
      */
-    private void parseInput() {
+    private void parse() {
         State state = parseText();
         while (state != null) {
             state = state.run();
@@ -95,39 +113,60 @@ public class Lexer {
     }
 
     private State parseText() {
-        int n = input.indexOf(leftDelimiter, pos);
-        boolean hasLeftDelim = n >= 0;
-        if (hasLeftDelim) {
-            pos = n;
+        moveStartToPos();
 
-            boolean atLeftTrimMarker = atLeftTrimMarker();
-            if (atLeftTrimMarker) {
-                pos -= ltrimLength();
+        int leftDelimPos = input.indexOf(leftDelimiter, pos);
+        if (leftDelimPos == -1) {
+            if (input.length() > pos) {
+                int startLine = line;
+
+                int eolPos;
+                while ((eolPos = input.indexOf(CharUtils.NEW_LINE, pos)) != -1) {
+                    line++;
+                    pos = eolPos + 1;
+                }
+
+                String text = input.substring(start);
+                addToken(TokenType.TEXT, text, start, startLine);
             }
 
-            if (pos > start) {
-                addItem(TokenType.TEXT);
+            pos = input.length();
+            addToken(TokenType.EOF, "", input.length(), line);
+
+            return null;
+        } else {
+            pos = leftDelimPos;
+
+            int eotPos = pos;
+
+            boolean posAtLeftDelimWithTrimMarker = isPosAtLeftDelimWithTrimMarker();
+            if (posAtLeftDelimWithTrimMarker) {
+                for (; eotPos >= start; eotPos--) {
+                    char ch = input.charAt(eotPos - 1);
+
+                    if (CharUtils.isNewline(ch)) {
+                        line++;
+                    }
+
+                    if (!CharUtils.isSpace(ch)) {
+                        break;
+                    }
+                }
             }
 
-            pos = n;
+            if (eotPos > start) {
+                String text = input.substring(start, eotPos);
+                addToken(TokenType.TEXT, text);
+            }
+
             moveStartToPos();
 
             return this::parseLeftDelim;
         }
-
-        if (input.length() > pos) {
-            pos = input.length();
-            addItem(TokenType.TEXT);
-        }
-
-        moveStartToPos();
-        addItem(TokenType.EOF);
-
-        return null;
     }
 
     private State parseLeftDelim() {
-        boolean atLeftTrimMarker = atLeftTrimMarker();
+        boolean atLeftTrimMarker = isPosAtLeftDelimWithTrimMarker();
         pos += leftDelimiter.length();
 
         int parseStart = atLeftTrimMarker ? pos + 2 : pos;
@@ -140,7 +179,7 @@ public class Lexer {
             return this::parseComment;
         }
 
-        addItem(TokenType.LEFT_DELIM);
+        addToken(TokenType.LEFT_DELIM);
 
         pos = parseStart;
         moveStartToPos();
@@ -157,20 +196,27 @@ public class Lexer {
 
         pos = n + rightComment.length();
 
-        int atRightDelimStatus = atRightDelimStatus();
-        if (atRightDelimStatus == AT_RIGHT_DELIM_STATUS_UNREACHED) {
+        boolean posAtRightDelim = isPosAtRightDelim();
+        if (!posAtRightDelim) {
             return parseError("comment closed leaving delim still open");
         }
 
         if (keepComments) {
-            addItem(TokenType.COMMENT);
+            addToken(TokenType.COMMENT);
         }
 
-        if (atRightDelimStatus == AT_RIGHT_DELIM_STATUS_REACHED_WITH_TRIM_MARKER) {
+        if (isPosAtRightDelimWithTrimMarker()) {
             pos += TRIM_MARKER_LENGTH + rightDelimiter.length();
-            pos += rtrimLength();
+            int sotPos = pos;
+            for (; sotPos < input.length(); sotPos++) {
+                char ch = input.charAt(sotPos);
+                if (!CharUtils.isSpace(ch)) {
+                    break;
+                }
+            }
+            pos += sotPos - pos;
         }
-        if (atRightDelimStatus == AT_RIGHT_DELIM_STATUS_REACHED_WITHOUT_TRIM_MARKER) {
+        if (isPosAtRightDelimWithoutTrimMarker()) {
             pos += rightDelimiter.length();
         }
         moveStartToPos();
@@ -179,8 +225,8 @@ public class Lexer {
     }
 
     private State parseInsideAction() {
-        int atRightDelimStatus = atRightDelimStatus();
-        if (atRightDelimStatus != AT_RIGHT_DELIM_STATUS_UNREACHED) {
+        boolean posAtRightDelim = isPosAtRightDelim();
+        if (posAtRightDelim) {
             if (parenDepth != 0) {
                 return parseError("unclosed left paren");
             }
@@ -188,7 +234,7 @@ public class Lexer {
             return this::parseRightDelim;
         }
 
-        char ch = nextChar();
+        char ch = getCurrentCharAndGoToNext();
         if (ch == CharUtils.EOF) {
             return parseError("unclosed action");
         } else if (CharUtils.isSpace(ch)) {
@@ -207,20 +253,23 @@ public class Lexer {
             return this::parseChar;
         } else if (ch == '.') {
             return this::parseDot;
-        } else if (CharUtils.isValid(ch, "+-") || CharUtils.isNumeric(ch)) {
+        } else if (CharUtils.isAnyOf(ch, "+-") || CharUtils.isNumeric(ch)) {
             movePosToStart();
             return this::parseNumber;
         } else if (CharUtils.isAlphabetic(ch)) {
             movePosToStart();
             return this::parseIdentifier;
         } else if (ch == '(') {
-            addItem(TokenType.LEFT_PAREN);
             parenDepth++;
+            addToken(TokenType.LEFT_PAREN);
         } else if (ch == ')') {
-            addItem(TokenType.RIGHT_PAREN);
             parenDepth--;
+            if (parenDepth < 0) {
+                return parseError("unexpected right paren");
+            }
+            addToken(TokenType.RIGHT_PAREN);
         } else if (CharUtils.isAscii(ch) && CharUtils.isVisible(ch)) {
-            addItem(TokenType.CHAR);
+            addToken(TokenType.CHAR);
         } else {
             return parseError("bad character in action: " + ch);
         }
@@ -230,49 +279,49 @@ public class Lexer {
         return this::parseInsideAction;
     }
 
-    @SuppressWarnings("StatementWithEmptyBody")
     private State parseRightDelim() {
-        boolean atRightTrimMarker = atRightTrimMarker();
-        if (atRightTrimMarker) {
+        boolean posAtRightDelimWithTrimMarker = isPosAtRightDelimWithTrimMarker();
+        if (posAtRightDelimWithTrimMarker) {
             pos += 2;
             moveStartToPos();
         }
 
         pos = start + rightDelimiter.length();
-        addItem(TokenType.RIGHT_DELIM);
+        addToken(TokenType.RIGHT_DELIM);
         moveStartToPos();
 
-        if (atRightTrimMarker) {
-            while (CharUtils.isSpace(nextChar())) {
+        if (posAtRightDelimWithTrimMarker) {
+            char ch = getCurrentChar();
+            if (ch != CharUtils.EOF) {
+                goToNoneSpace();
+                moveStartToPos();
             }
-            pos--;
-            moveStartToPos();
         }
 
         return this::parseText;
     }
 
     private State parseSpace() {
-        addItem(TokenType.SPACE);
+        addToken(TokenType.SPACE);
         moveStartToPos();
 
         return this::parseInsideAction;
     }
 
     private State parseDeclare() {
-        char ch = nextChar();
+        char ch = getCurrentCharAndGoToNext();
         if (ch != '=') {
             return () -> parseError("expected :=");
         }
 
-        addItem(TokenType.DECLARE);
+        addToken(TokenType.DECLARE);
         moveStartToPos();
 
         return this::parseInsideAction;
     }
 
     private State parsePipe() {
-        addItem(TokenType.PIPE);
+        addToken(TokenType.PIPE);
         moveStartToPos();
 
         return this::parseInsideAction;
@@ -280,15 +329,15 @@ public class Lexer {
 
     private State parseQuote() {
         while (true) {
-            char ch = nextChar();
+            char ch = getCurrentCharAndGoToNext();
             if (ch == '\\') {
-                ch = nextChar();
-                if (!CharUtils.isValid(ch, CharUtils.EOF, CharUtils.NEW_LINE)) {
+                ch = getCurrentCharAndGoToNext();
+                if (!CharUtils.isAnyOf(ch, CharUtils.EOF, CharUtils.NEW_LINE)) {
                     continue;
                 }
             }
 
-            if (CharUtils.isValid(ch, CharUtils.EOF, CharUtils.NEW_LINE)) {
+            if (CharUtils.isAnyOf(ch, CharUtils.EOF, CharUtils.NEW_LINE)) {
                 return parseError("unterminated quoted string");
             }
 
@@ -297,7 +346,7 @@ public class Lexer {
             }
         }
 
-        addItem(TokenType.STRING);
+        addToken(TokenType.STRING);
         moveStartToPos();
 
         return this::parseInsideAction;
@@ -305,7 +354,7 @@ public class Lexer {
 
     private State parseRawQuote() {
         while (true) {
-            char ch = nextChar();
+            char ch = getCurrentCharAndGoToNext();
             if (ch == CharUtils.EOF) {
                 return parseError("unclosed raw quote");
             }
@@ -315,26 +364,26 @@ public class Lexer {
             }
         }
 
-        addItem(TokenType.STRING);
+        addToken(TokenType.RAW_STRING);
         moveStartToPos();
 
         return this::parseInsideAction;
     }
 
     private State parseVariable() {
-        if (atWordTerminator()) {
-            addItem(TokenType.VARIABLE);
+        if (isPosAtWordTerminator()) {
+            addToken(TokenType.VARIABLE);
             moveStartToPos();
 
             return this::parseInsideAction;
         }
 
         char ch = goUntil(c -> !CharUtils.isAlphabetic(c));
-        if (!atWordTerminator()) {
+        if (!isPosAtWordTerminator()) {
             return () -> parseError("bad character: " + ch);
         }
 
-        addItem(TokenType.VARIABLE);
+        addToken(TokenType.VARIABLE);
         moveStartToPos();
 
         return this::parseInsideAction;
@@ -342,16 +391,16 @@ public class Lexer {
 
     private State parseChar() {
         while (true) {
-            char ch = nextChar();
+            char ch = getCurrentCharAndGoToNext();
             if (ch == '\\') {
-                ch = nextChar();
+                ch = getCurrentCharAndGoToNext();
 
-                if (!CharUtils.isValid(ch, CharUtils.EOF, CharUtils.NEW_LINE)) {
+                if (!CharUtils.isAnyOf(ch, CharUtils.EOF, CharUtils.NEW_LINE)) {
                     continue;
                 }
             }
 
-            if (CharUtils.isValid(ch, CharUtils.EOF, CharUtils.NEW_LINE)) {
+            if (CharUtils.isAnyOf(ch, CharUtils.EOF, CharUtils.NEW_LINE)) {
                 return parseError("unclosed character constant");
             }
 
@@ -360,14 +409,14 @@ public class Lexer {
             }
         }
 
-        addItem(TokenType.CHAR_CONSTANT);
+        addToken(TokenType.CHAR_CONSTANT);
         moveStartToPos();
 
         return this::parseInsideAction;
     }
 
     private State parseDot() {
-        char ch = getChar();
+        char ch = getCurrentChar();
         if (ch < '0' || '9' < ch) {
             return this::parseField;
         }
@@ -376,19 +425,19 @@ public class Lexer {
     }
 
     private State parseField() {
-        if (atWordTerminator()) {
-            addItem(TokenType.DOT);
+        if (isPosAtWordTerminator()) {
+            addToken(TokenType.DOT);
             moveStartToPos();
 
             return this::parseInsideAction;
         }
 
         char ch = goUntil(c -> !CharUtils.isAlphabetic(c));
-        if (!atWordTerminator()) {
+        if (!isPosAtWordTerminator()) {
             return () -> parseError("bad character: " + ch);
         }
 
-        addItem(TokenType.FIELD);
+        addToken(TokenType.FIELD);
         moveStartToPos();
 
         return this::parseInsideAction;
@@ -397,18 +446,18 @@ public class Lexer {
     private State parseNumber() {
         lookForNumber();
 
-        char ch = getChar();
+        char ch = getCurrentChar();
         if (CharUtils.isAlphabetic(ch)) {
             pos++;
-            return parseError("bad number: " + getValue());
+            return parseError("bad number: " + getText());
         }
 
-        if (CharUtils.isValid(ch, "+-")) {
+        if (CharUtils.isAnyOf(ch, "+-")) {
             lookForNumber();
 
-            addItem(TokenType.COMPLEX);
+            addToken(TokenType.COMPLEX);
         } else {
-            addItem(TokenType.NUMBER);
+            addToken(TokenType.NUMBER);
         }
 
         moveStartToPos();
@@ -418,7 +467,7 @@ public class Lexer {
 
     private State parseIdentifier() {
         while (true) {
-            char ch = nextChar();
+            char ch = getCurrentCharAndGoToNext();
             if (ch == CharUtils.EOF) {
                 break;
             }
@@ -427,16 +476,16 @@ public class Lexer {
                 break;
             }
         }
-        String word = getValue();
+        String word = getText();
 
         if (KEY_MAP.containsKey(word)) {
-            addItem(KEY_MAP.get(word));
+            addToken(KEY_MAP.get(word));
         } else if (word.charAt(0) == '.') {
-            addItem(TokenType.FIELD);
+            addToken(TokenType.FIELD);
         } else if ("true".equals(word) || "false".equals(word)) {
-            addItem(TokenType.BOOL);
+            addToken(TokenType.BOOL);
         } else {
-            addItem(TokenType.IDENTIFIER);
+            addToken(TokenType.IDENTIFIER);
         }
 
         moveStartToPos();
@@ -445,23 +494,23 @@ public class Lexer {
     }
 
     private State parseError(String error) {
-        addErrorItem(error);
+        addToken(TokenType.ERROR, error);
         return null;
     }
 
     private void lookForNumber() {
-        goIf("+-");
+        goUntilNot("+-");
 
         String digits = CharUtils.DECIMAL_DIGITS;
 
-        char ch = nextChar();
+        char ch = getCurrentCharAndGoToNext();
         if (ch == '0') {
-            ch = nextChar();
-            if (CharUtils.isValid(ch, "xX")) {
+            ch = getCurrentCharAndGoToNext();
+            if (CharUtils.isAnyOf(ch, "xX")) {
                 digits = CharUtils.HEX_DIGITS;
-            } else if (CharUtils.isValid(ch, "oO")) {
+            } else if (CharUtils.isAnyOf(ch, "oO")) {
                 digits = CharUtils.OCTET_DIGITS;
-            } else if (CharUtils.isValid(ch, "bB")) {
+            } else if (CharUtils.isAnyOf(ch, "bB")) {
                 digits = CharUtils.BINARY_DIGITS;
             }
         }
@@ -472,141 +521,147 @@ public class Lexer {
             ch = goUntilNot(digits);
         }
 
-        if (digits.length() == 10 + 1 && CharUtils.isValid(ch, "eE")) {
+        if (digits.length() == 10 + 1 && CharUtils.isAnyOf(ch, "eE")) {
             pos++;
 
-            goIf("+-");
+            goUntilNot("+-");
             ch = goUntilNot(CharUtils.DECIMAL_DIGITS);
         }
 
-        if (digits.length() == 16 + 6 + 1 && CharUtils.isValid(ch, "pP")) {
+        if (digits.length() == 16 + 6 + 1 && CharUtils.isAnyOf(ch, "pP")) {
             pos++;
 
-            goIf("+-");
+            goUntilNot("+-");
             goUntilNot(CharUtils.DECIMAL_DIGITS);
         }
 
-        goIf("i");
+        goUntilNot("i");
     }
 
     private void moveStartToPos() {
         start = pos;
+        startLine = line;
     }
 
     private void movePosToStart() {
         pos = start;
     }
 
-    private void goIf(CharSequence want) {
-        char ch = getChar();
-        if (CharUtils.isValid(ch, want)) {
+    private void goToNoneSpace() {
+        while (true) {
+            char ch = getCurrentChar();
+
+            if (CharUtils.isNewline(ch)) {
+                line++;
+            }
+
+            if (!CharUtils.isSpace(ch)) {
+                return;
+            }
             pos++;
         }
     }
 
-    private char goUntilNot(String valid) {
-        Predicate<Character> predicate = c -> !CharUtils.isValid(c, valid);
-        return goUntil(predicate);
+    private char goUntilNot(CharSequence chars) {
+        return goUntil(ch -> !CharUtils.isAnyOf(ch, chars));
     }
 
     private char goUntil(Predicate<Character> predicate) {
         while (true) {
-            char ch = nextChar();
+            char ch = getCurrentChar();
             if (predicate.test(ch)) {
-                pos--;
                 return ch;
             }
+            pos++;
         }
     }
 
-    private char nextChar() {
-        if (pos >= input.length()) {
+    private char getCurrentCharAndGoToNext() {
+        if (pos < input.length()) {
+            char ch = input.charAt(pos);
+            pos++;
+            return ch;
+        } else {
             return CharUtils.EOF;
         }
-
-        char ch = input.charAt(pos);
-        pos++;
-        return ch;
     }
 
-    private char getChar() {
-        char ch = nextChar();
-        pos--;
-        return ch;
+    private char getCurrentChar() {
+        return pos < input.length() ? input.charAt(pos) : CharUtils.EOF;
     }
 
-    private boolean atLeftTrimMarker() {
+    private boolean isPosAtLeftDelimWithTrimMarker() {
         int leftDelimLength = leftDelimiter.length();
         if (pos + leftDelimLength + TRIM_MARKER_LENGTH > input.length()) {
             return false;
         }
-        return input.indexOf(leftDelimiter, pos) == pos &&
-                TRIM_MARKER == input.charAt(pos + leftDelimLength) &&
-                CharUtils.isSpace(input.charAt(pos + leftDelimLength + 1));
+
+        if (input.indexOf(leftDelimiter, pos) != pos) {
+            return false;
+        }
+
+        if (TRIM_MARKER != input.charAt(pos + leftDelimLength)) {
+            return false;
+        }
+
+        return CharUtils.isSpace(input.charAt(pos + leftDelimLength + 1));
     }
 
-    private boolean atRightTrimMarker() {
+    private boolean isPosAtRightDelim() {
+        return isPosAtRightDelimWithTrimMarker() || isPosAtRightDelimWithoutTrimMarker();
+    }
+
+    private boolean isPosAtRightDelimWithTrimMarker() {
         if (pos + TRIM_MARKER_LENGTH > input.length()) {
             return false;
         }
-        return CharUtils.isSpace(input.charAt(pos)) && TRIM_MARKER == input.charAt(pos + 1);
-    }
 
-    private int atRightDelimStatus() {
-        if (atRightTrimMarker() && atRightDelim(pos + TRIM_MARKER_LENGTH)) {
-            return AT_RIGHT_DELIM_STATUS_REACHED_WITH_TRIM_MARKER;
+        if (!CharUtils.isSpace(input.charAt(pos))) {
+            return false;
         }
-        if (atRightDelim(pos)) {
-            return AT_RIGHT_DELIM_STATUS_REACHED_WITHOUT_TRIM_MARKER;
+
+        if (TRIM_MARKER != input.charAt(pos + 1)) {
+            return false;
         }
-        return AT_RIGHT_DELIM_STATUS_UNREACHED;
+
+        return isPosAtRightDelim(pos + TRIM_MARKER_LENGTH);
     }
 
-    private boolean atRightDelim(int checkPos) {
-        return input.indexOf(rightDelimiter, checkPos) == checkPos;
+    private boolean isPosAtRightDelimWithoutTrimMarker() {
+        return isPosAtRightDelim(pos);
     }
 
-    private boolean atWordTerminator() {
-        char ch = getChar();
-        if (CharUtils.isSpace(ch) || CharUtils.isValid(ch, CharUtils.EOF + ".,|:()")) {
+    private boolean isPosAtRightDelim(int pos) {
+        return input.indexOf(rightDelimiter, pos) == pos;
+    }
+
+    private boolean isPosAtWordTerminator() {
+        char ch = getCurrentChar();
+        if (CharUtils.isSpace(ch) || CharUtils.isAnyOf(ch, CharUtils.EOF + ".,|:()")) {
             return true;
         }
-        return atRightDelimStatus() != AT_RIGHT_DELIM_STATUS_UNREACHED;
+        return isPosAtRightDelim();
     }
 
-    private String getValue() {
+    private String getText() {
         return input.substring(start, pos);
     }
 
-    private int ltrimLength() {
-        int i = pos;
-        for (; i > 0; i--) {
-            char ch = input.charAt(i - 1);
-            if (!CharUtils.isSpace(ch)) {
-                break;
-            }
-        }
-        return pos - i;
+    private int getColumn() {
+        return start - lineStart + 1;
     }
 
-    private int rtrimLength() {
-        int i = pos;
-        for (; i < input.length(); i++) {
-            char ch = input.charAt(i);
-            if (!CharUtils.isSpace(ch)) {
-                break;
-            }
-        }
-        return i - pos;
+    private void addToken(TokenType type) {
+        addToken(type, getText(), start, line);
     }
 
-    private void addItem(TokenType type) {
-        String value = getValue();
-        tokens.add(new Token(type, value, start));
+    private void addToken(TokenType type, String value) {
+        addToken(type, value, start, line);
     }
 
-    private void addErrorItem(String error) {
-        tokens.add(new Token(TokenType.ERROR, error, start));
+    private void addToken(TokenType type, String text, int start, int startLine) {
+        Token token = new Token(type, text, start, startLine, getColumn());
+        tokens.add(token);
     }
 
     public List<Token> getTokens() {
@@ -617,6 +672,9 @@ public class Lexer {
         return leftDelimiter;
     }
 
+    public String getRightDelimiter() {
+        return rightDelimiter;
+    }
 
     private interface State {
 

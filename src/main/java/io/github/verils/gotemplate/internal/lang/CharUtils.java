@@ -18,7 +18,11 @@ public final class CharUtils {
     }
 
     public static boolean isSpace(char ch) {
-        return ch == SPACE || ch == TAB || ch == RETURN || ch == NEW_LINE;
+        return ch == SPACE || ch == TAB || ch == RETURN || isNewline(ch);
+    }
+
+    public static boolean isNewline(char ch) {
+        return ch == NEW_LINE;
     }
 
     public static boolean isAscii(char ch) {
@@ -56,11 +60,11 @@ public final class CharUtils {
      * Check if single character is one of the characters you expect
      *
      * @param ch    Character to be checked
-     * @param valid An array including characters which you expect
+     * @param chars An array including characters which you expect
      * @return true if ch is what you want
      */
-    public static boolean isValid(char ch, char... valid) {
-        for (char c : valid) {
+    public static boolean isAnyOf(char ch, char... chars) {
+        for (char c : chars) {
             if (c == ch) {
                 return true;
             }
@@ -71,14 +75,14 @@ public final class CharUtils {
     /**
      * Check if single character is one of the characters you expect
      * <p>
-     * This is same with {@link CharUtils#isValid(char, char...)} but accept a CharSequence to indicate expected characters
+     * This is same with {@link CharUtils#isAnyOf(char, char...)} but accept a CharSequence to indicate expected characters
      *
      * @param ch    Character to be checked
-     * @param valid A CharSequence including characters which you expect
+     * @param chars A CharSequence including characters which you expect
      * @return true if ch is what you want
      */
-    public static boolean isValid(char ch, CharSequence valid) {
-        return valid.chars().anyMatch(c -> c == ch);
+    public static boolean isAnyOf(char ch, CharSequence chars) {
+        return chars.chars().anyMatch(c -> c == ch);
     }
 
     /**
@@ -89,7 +93,7 @@ public final class CharUtils {
      * @throws IllegalArgumentException if quotes is unclosed
      */
     public static char unquoteChar(String text) throws IllegalArgumentException {
-        if (text.length() == 0) {
+        if (text.isEmpty()) {
             throw new IllegalArgumentException("invalid syntax: " + text);
         }
         if (text.charAt(0) != '\'') {

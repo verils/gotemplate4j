@@ -621,13 +621,9 @@ public class Parser {
         return null;
     }
 
-    private void parseNumber(NumberNode numberNode, Token token) throws TemplateParseException {
-        String value = token.value();
+    void parseNumber(NumberNode numberNode, Token token) throws TemplateParseException {
+        String text = token.value();
         TokenType type = token.type();
-        parseNumber(numberNode, value, type);
-    }
-
-    void parseNumber(NumberNode numberNode, String text, TokenType type) throws TemplateParseException {
         if (type == TokenType.CHAR_CONSTANT) {
             if (text.charAt(0) != '\'') {
                 throw new TemplateParseException(String.format("malformed character constant: %s", text));
@@ -687,7 +683,8 @@ public class Parser {
         }
 
         if (!numberNode.isInt() && !numberNode.isFloat() && !numberNode.isComplex()) {
-            throw new TemplateParseException(String.format("illegal number syntax: %s", text));
+            throw new TemplateParseException(String.format("illegal number syntax: %s, line: %d, column: %d",
+                    text, token.line(), token.column()));
         }
     }
 
