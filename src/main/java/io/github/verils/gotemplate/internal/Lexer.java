@@ -69,8 +69,6 @@ public class Lexer {
      */
     private int startLine = line;
 
-    private int column = 0;
-
     private int lineStart = 0;
 
 
@@ -117,37 +115,26 @@ public class Lexer {
 
         int leftDelimPos = input.indexOf(leftDelimiter, pos);
         if (leftDelimPos == -1) {
-            if (input.length() > pos) {
-                int startLine = line;
+            if (pos < input.length()) {
+                goUntil(ch -> pos == input.length());
 
-                int eolPos;
-                while ((eolPos = input.indexOf(CharUtils.NEW_LINE, pos)) != -1) {
-                    line++;
-                    pos = eolPos + 1;
-                }
-
-                String text = input.substring(start);
-                addToken(TokenType.TEXT, text, start, startLine);
+                addToken(TokenType.TEXT, getText());
             }
 
-            pos = input.length();
-            addToken(TokenType.EOF, "", input.length(), line);
+            moveStartToPos();
+
+            addToken(TokenType.EOF, "");
 
             return null;
         } else {
-            pos = leftDelimPos;
+            goUntil(ch -> pos == leftDelimPos);
 
-            int eotPos = pos;
+            int eotPos = leftDelimPos;
 
             boolean posAtLeftDelimWithTrimMarker = isPosAtLeftDelimWithTrimMarker();
             if (posAtLeftDelimWithTrimMarker) {
                 for (; eotPos >= start; eotPos--) {
                     char ch = input.charAt(eotPos - 1);
-
-                    if (CharUtils.isNewline(ch)) {
-                        line++;
-                    }
-
                     if (!CharUtils.isSpace(ch)) {
                         break;
                     }
@@ -291,9 +278,9 @@ public class Lexer {
         moveStartToPos();
 
         if (posAtRightDelimWithTrimMarker) {
-            char ch = getCurrentChar();
-            if (ch != CharUtils.EOF) {
-                goUntilNoneSpace();
+            char current = getCurrentChar();
+            if (current != CharUtils.EOF) {
+                goUntil(ch -> !CharUtils.isSpace(ch));
                 moveStartToPos();
             }
         }
@@ -494,6 +481,7 @@ public class Lexer {
     }
 
     private State parseError(String error) {
+        startLine = line;
         addToken(TokenType.ERROR, error);
         return null;
     }
@@ -554,21 +542,6 @@ public class Lexer {
         }
     }
 
-    private void goUntilNoneSpace() {
-        while (true) {
-            char ch = getCurrentChar();
-
-            if (CharUtils.isNewline(ch)) {
-                line++;
-            }
-
-            if (!CharUtils.isSpace(ch)) {
-                return;
-            }
-            pos++;
-        }
-    }
-
     private char goUntilNot(CharSequence chars) {
         return goUntil(ch -> !CharUtils.isAnyOf(ch, chars));
     }
@@ -576,9 +549,15 @@ public class Lexer {
     private char goUntil(Predicate<Character> predicate) {
         while (true) {
             char ch = getCurrentChar();
+
+            if (CharUtils.isNewline(ch)) {
+                addLine();
+            }
+
             if (predicate.test(ch)) {
                 return ch;
             }
+
             pos++;
         }
     }
@@ -658,16 +637,21 @@ public class Lexer {
         return start - lineStart + 1;
     }
 
+    private void addLine() {
+        line++;
+        lineStart = pos + 1;
+    }
+
     private void addToken(TokenType type) {
-        addToken(type, getText(), start, line);
+        addToken(type, getText(), start, line, getColumn());
     }
 
     private void addToken(TokenType type, String value) {
-        addToken(type, value, start, line);
+        addToken(type, value, start, startLine, getColumn());
     }
 
-    private void addToken(TokenType type, String text, int start, int startLine) {
-        Token token = new Token(type, text, start, startLine, getColumn());
+    private void addToken(TokenType type, String text, int start, int startLine, int column) {
+        Token token = new Token(type, text, start, startLine, column);
         tokens.add(token);
     }
 
