@@ -64,12 +64,24 @@ public class Lexer {
      */
     private int line = 1;
 
+
     /**
      * Start line of current token
      */
     private int startLine = line;
 
+
+    /**
+     * Start line of current token
+     */
     private int lineStart = 0;
+
+
+    /**
+     * Start line of current token
+     */
+    private int startLineStart = 1;
+
 
 
     /* Result tokens */
@@ -118,12 +130,12 @@ public class Lexer {
             if (pos < input.length()) {
                 goUntil(ch -> pos == input.length());
 
-                addToken(TokenType.TEXT, getText());
+                addToken(TokenType.TEXT, getText(), start, startLine, start + 1);
             }
 
             moveStartToPos();
 
-            addToken(TokenType.EOF, "");
+            addToken(TokenType.EOF, "", start, startLine, start - lineStart + 1);
 
             return null;
         } else {
@@ -143,7 +155,7 @@ public class Lexer {
 
             if (eotPos > start) {
                 String text = input.substring(start, eotPos);
-                addToken(TokenType.TEXT, text);
+                addToken(TokenType.TEXT, text, start, startLine, start + 1);
             }
 
             moveStartToPos();
@@ -633,21 +645,17 @@ public class Lexer {
         return input.substring(start, pos);
     }
 
-    private int getColumn() {
-        return start - lineStart + 1;
-    }
-
     private void addLine() {
         line++;
         lineStart = pos + 1;
     }
 
     private void addToken(TokenType type) {
-        addToken(type, getText(), start, line, getColumn());
+        addToken(type, getText(), start, line, start - lineStart + 1);
     }
 
     private void addToken(TokenType type, String value) {
-        addToken(type, value, start, startLine, getColumn());
+        addToken(type, value, start, startLine, start - lineStart + 1);
     }
 
     private void addToken(TokenType type, String text, int start, int startLine, int column) {
