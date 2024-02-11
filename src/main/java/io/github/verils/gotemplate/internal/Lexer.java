@@ -505,13 +505,16 @@ public class Lexer {
 
         char ch = getCurrentCharAndGoToNext();
         if (ch == '0') {
-            ch = getCurrentCharAndGoToNext();
+            ch = getCurrentChar();
             if (CharUtils.isAnyOf(ch, "xX")) {
                 digits = CharUtils.HEX_DIGITS;
+                pos++;
             } else if (CharUtils.isAnyOf(ch, "oO")) {
                 digits = CharUtils.OCTET_DIGITS;
+                pos++;
             } else if (CharUtils.isAnyOf(ch, "bB")) {
                 digits = CharUtils.BINARY_DIGITS;
+                pos++;
             }
         }
 
