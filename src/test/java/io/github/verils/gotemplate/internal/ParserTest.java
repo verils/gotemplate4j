@@ -21,148 +21,470 @@ class ParserTest {
 
 
     @Test
-    void test() {
-        class Test {
-            private final String name;
+    void testEmpty() throws TemplateParseException {
+        assertOK("empty", "", "");
+    }
 
-            private final String input;
-            private final String result;
+    @Test
+    void testComment() throws TemplateParseException {
+        assertOK("comment", "{{/*\n\n\n*/}}", "");
+    }
 
-            private final boolean error;
-            private final String errorMessage;
+    @Test
+    void testSpace() throws TemplateParseException {
+        assertOK("spaces", " \t\n", "\" \t\n\"");
+    }
 
-            public Test(String name, String input, String result, boolean error, String errorMessage) {
-                this.name = name;
-                this.input = input;
-                this.result = result;
-                this.error = error;
-                this.errorMessage = errorMessage;
-            }
+    @Test
+    void testText() throws TemplateParseException {
+        assertOK("text", "some text", "\"some text\"");
+    }
+
+    @Test
+    void testEmptyAction() {
+        Parser parser = createParser();
+        try {
+            parser.parse("empty action", "{{}}");
+        } catch (TemplateParseException e) {
+            assertEquals("missing value for command", e.getMessage());
         }
+    }
 
-        Test[] tests = {
-                new Test("empty", "", "", false, null),
-                new Test("comment", "{{/*\n\n\n*/}}", "", false, null),
-                new Test("spaces", " \t\n", "\" \t\n\"", false, null),
-                new Test("text", "some text", "\"some text\"", false, null),
-                new Test("empty action", "{{}}", "{{}}", true, "missing value for command"),
-                new Test("field", "{{.X}}", "{{.X}}", false, null),
-                new Test("simple command", "{{printf}}", "{{printf}}", false, null),
-                new Test("$ invocation", "{{$}}", "{{$}}", false, null),
-                new Test("variable invocation", "{{with $x := 3}}{{$x 23}}{{end}}", "{{with $x := 3}}{{$x 23}}{{end}}", false, null),
-                new Test("variable with fields", "{{$.I}}", "{{$.I}}", false, null),
-                new Test("multi-word command", "{{printf `%d` 23}}", "{{printf `%d` 23}}", false, null),
-                new Test("pipeline", "{{.X|.Y}}", "{{.X | .Y}}", false, null),
-                new Test("pipeline with decl", "{{$x := .X|.Y}}", "{{$x := .X | .Y}}", false, null),
-                new Test("nested pipeline", "{{.X (.Y .Z) (.A | .B .C) (.E)}}", "{{.X (.Y .Z) (.A | .B .C) (.E)}}", false, null),
-                new Test("field applied to parentheses", "{{(.Y .Z).Field}}", "{{(.Y .Z).Field}}", false, null),
-                new Test("simple if", "{{if .X}}hello{{end}}", "{{if .X}}\"hello\"{{end}}", false, null),
-                new Test("if with else", "{{if .X}}true{{else}}false{{end}}", "{{if .X}}\"true\"{{else}}\"false\"{{end}}", false, null),
-                new Test("if with else if", "{{if .X}}true{{else if .Y}}false{{end}}", "{{if .X}}\"true\"{{else}}{{if .Y}}\"false\"{{end}}{{end}}", false, null),
-                new Test("if else chain", "+{{if .X}}X{{else if .Y}}Y{{else if .Z}}Z{{end}}+", "\"+\"{{if .X}}\"X\"{{else}}{{if .Y}}\"Y\"{{else}}{{if .Z}}\"Z\"{{end}}{{end}}{{end}}\"+\"", false, null),
-                new Test("simple range", "{{range .X}}hello{{end}}", "{{range .X}}\"hello\"{{end}}", false, null),
-                new Test("chained field range", "{{range .X.Y.Z}}hello{{end}}", "{{range .X.Y.Z}}\"hello\"{{end}}", false, null),
-                new Test("nested range", "{{range .X}}hello{{range .Y}}goodbye{{end}}{{end}}", "{{range .X}}\"hello\"{{range .Y}}\"goodbye\"{{end}}{{end}}", false, null),
-                new Test("range with else", "{{range .X}}true{{else}}false{{end}}", "{{range .X}}\"true\"{{else}}\"false\"{{end}}", false, null),
-                new Test("range over pipeline", "{{range .X|.M}}true{{else}}false{{end}}", "{{range .X | .M}}\"true\"{{else}}\"false\"{{end}}", false, null),
-                new Test("range []int", "{{range .SI}}{{.}}{{end}}", "{{range .SI}}{{.}}{{end}}", false, null),
-                new Test("range 1 var", "{{range $x := .SI}}{{.}}{{end}}", "{{range $x := .SI}}{{.}}{{end}}", false, null),
-                new Test("range 2 var", "{{range $x, $y := .SI}}{{.}}{{end}}", "{{range $x, $y := .SI}}{{.}}{{end}}", false, null),
-                new Test("constants", "{{range .SI 1 -3.2i true false 'a' nil}}{{end}}", "{{range .SI 1 -3.2i true false 'a' nil}}{{end}}", false, null),
-                new Test("template", "{{template `x`}}", "{{template \"x\"}}", false, null),
-                new Test("template with arg", "{{template `x` .Y}}", "{{template \"x\" .Y}}", false, null),
-                new Test("with", "{{with .X}}hello{{end}}", "{{with .X}}\"hello\"{{end}}", false, null),
-                new Test("with with else", "{{with .X}}hello{{else}}goodbye{{end}}", "{{with .X}}\"hello\"{{else}}\"goodbye\"{{end}}", false, null),
+    @Test
+    void testField() throws TemplateParseException {
+        assertOK("field", "{{.X}}", "{{.X}}");
+    }
 
-                new Test("trim left", "x \r\n\t{{- 3}}", "\"x\"{{3}}", false, null),
-                new Test("trim right", "{{3 -}}\n\n\ty", "{{3}}\"y\"", false, null),
-                new Test("trim left and right", "x \r\n\t{{- 3 -}}\n\n\ty", "\"x\"{{3}}\"y\"", false, null),
-                new Test("trim with extra spaces", "x\n{{-  3   -}}\ny", "\"x\"{{3}}\"y\"", false, null),
-                new Test("comment trim left", "x \r\n\t{{- /* hi */}}", "\"x\"", false, null),
-                new Test("comment trim right", "{{/* hi */ -}}\n\n\ty", "\"y\"", false, null),
-                new Test("comment trim left and right", "x \r\n\t{{- /* */ -}}\n\n\ty", "\"x\"\"y\"", false, null),
-                new Test("block definition", "{{block \"foo\" .}}hello{{end}}", "{{template \"foo\" .}}", false, null),
+    @Test
+    void testSimpleCommand() throws TemplateParseException {
+        assertOK("simple command", "{{printf}}", "{{printf}}");
+    }
 
-                new Test("newline in assignment", "{{ $x \n := \n 1 \n }}", "{{$x := 1}}", false, null),
-                new Test("newline in empty action", "{{\n}}", "{{\n}}", true, null),
-                new Test("newline in pipeline", "{{\n\"x\"\n|\nprintf\n}}", "{{\"x\" | printf}}", false, null),
-                new Test("newline in comment", "{{/*\nhello\n*/}}", "", false, null),
-                new Test("newline in comment", "{{-\n/*\nhello\n*/\n-}}", "", false, null),
+    @Test
+    void testInvocation() throws TemplateParseException {
+        assertOK("$ invocation", "{{$}}", "{{$}}");
+    }
 
-                new Test("unclosed action", "hello{{range", "", true, null),
-                new Test("unmatched end", "{{end}}", "", true, null),
-                new Test("unmatched else", "{{else}}", "", true, null),
-                new Test("unmatched else after if", "{{if .X}}hello{{end}}{{else}}", "", true, null),
-                new Test("multiple else", "{{if .X}}1{{else}}2{{else}}3{{end}}", "", true, null),
-                new Test("missing end", "hello{{range .x}}", "", true, null),
-                new Test("missing end after else", "hello{{range .x}}{{else}}", "", true, null),
-                new Test("undefined function", "hello{{undefined}}", "", true, null),
-                new Test("undefined variable", "{{$x}}", "", true, null),
-                new Test("variable undefined after end", "{{with $x := 4}}{{end}}{{$x}}", "", true, null),
-                new Test("variable undefined in template", "{{template $v}}", "", true, null),
-                new Test("declare with field", "{{with $x.Y := 4}}{{end}}", "", true, null),
-                new Test("template with field ref", "{{template .X}}", "", true, null),
-                new Test("template with var", "{{template $v}}", "", true, null),
-                new Test("invalid punctuation", "{{printf 3, 4}}", "", true, null),
-                new Test("multidecl outside range", "{{with $v, $u := 3}}{{end}}", "", true, null),
-                new Test("too many decls in range", "{{range $u, $v, $w := 3}}{{end}}", "", true, null),
-                new Test("dot applied to parentheses", "{{printf (printf .).}}", "", true, null),
-                new Test("adjacent args", "{{printf 3`x`}}", "", true, null),
-                new Test("adjacent args with .", "{{printf `x`.}}", "", true, null),
-                new Test("extra end after if", "{{if .X}}a{{else if .Y}}b{{end}}{{end}}", "", true, null),
+    @Test
+    void testVariableInvocation() throws TemplateParseException {
+        assertOK("variable invocation", "{{with $x := 3}}{{$x 23}}{{end}}", "{{with $x := 3}}{{$x 23}}{{end}}");
+    }
 
-                new Test("bug0a", "{{$x := 0}}{{$x}}", "", true, null),
-                new Test("bug0b", "{{$x += 1}}{{$x}}", "", true, null),
-                new Test("bug0c", "{{$x ! 2}}{{$x}}", "", true, null),
-                new Test("bug0d", "{{$x % 3}}{{$x}}", "", true, null),
+    @Test
+    void testVariableWithField() throws TemplateParseException {
+        assertOK("variable with fields", "{{$.I}}", "{{$.I}}");
+    }
 
-                new Test("bug0e", "{{range $x := $y := 3}}{{end}}", "", true, null),
+    @Test
+    void testMultiWordCommand() throws TemplateParseException {
+        assertOK("multi-word command", "{{printf `%d` 23}}", "{{printf `%d` 23}}");
+    }
 
-                new Test("bug1a", "{{$x:=.}}{{$x!2}}", "", true, null),
-                new Test("bug1b", "{{$x:=.}}{{$x+2}}", "", true, null),
-                new Test("bug1c", "{{$x:=.}}{{$x +2}}", "{{$x := .}}{{$x +2}}", false, null),
+    @Test
+    void testPipeline() throws TemplateParseException {
+        assertOK("pipeline", "{{.X|.Y}}", "{{.X | .Y}}");
+    }
 
-                new Test("dot after integer", "{{1.E}}", "", true, null),
-                new Test("dot after float", "{{0.1.E}}", "", true, null),
-                new Test("dot after boolean", "{{true.E}}", "", true, null),
-                new Test("dot after char", "{{'a'.any}}", "", true, null),
-                new Test("dot after string", "{{\"hello\".guys}}", "", true, null),
-                new Test("dot after dot", "{{..E}}", "", true, null),
-                new Test("dot after nil", "{{nil.E}}", "", true, null),
+    @Test
+    void testPipelineWithDecl() throws TemplateParseException {
+        assertOK("pipeline with decl", "{{$x := .X|.Y}}", "{{$x := .X | .Y}}");
+    }
 
-                new Test("wrong pipeline dot", "{{12|.}}", "", true, null),
-                new Test("wrong pipeline number", "{{.|12|printf}}", "", true, null),
-                new Test("wrong pipeline string", "{{.|printf|\"error\"}}", "", true, null),
-                new Test("wrong pipeline char", "{{12|printf|'e'}}", "", true, null),
-                new Test("wrong pipeline boolean", "{{.|true}}", "", true, null),
-                new Test("wrong pipeline nil", "{{'c'|nil}}", "", true, null),
-                new Test("empty pipeline", "{{printf \"%d\" ( ) }}", "", true, null),
+    @Test
+    void testNestedPipeline() throws TemplateParseException {
+        assertOK("nested pipeline", "{{.X (.Y .Z) (.A | .B .C) (.E)}}", "{{.X (.Y .Z) (.A | .B .C) (.E)}}");
+    }
 
-                new Test("block definition", "{{block \"foo\"}}hello{{end}}", "", true, null),
-        };
+    @Test
+    void testFieldForParen() throws TemplateParseException {
+        assertOK("field applied to parentheses", "{{(.Y .Z).Field}}", "{{(.Y .Z).Field}}");
+    }
+
+    @Test
+    void testSimpleIf() throws TemplateParseException {
+        assertOK("simple if", "{{if .X}}hello{{end}}", "{{if .X}}\"hello\"{{end}}");
+    }
+
+    @Test
+    void testIfElse() throws TemplateParseException {
+        assertOK("if with else", "{{if .X}}true{{else}}false{{end}}", "{{if .X}}\"true\"{{else}}\"false\"{{end}}");
+    }
+
+    @Test
+    void testIfElseIf() throws TemplateParseException {
+        assertOK("if with else if", "{{if .X}}true{{else if .Y}}false{{end}}", "{{if .X}}\"true\"{{else}}{{if .Y}}\"false\"{{end}}{{end}}");
+    }
+
+    @Test
+    void testIfElseChain() throws TemplateParseException {
+        assertOK("if else chain", "+{{if .X}}X{{else if .Y}}Y{{else if .Z}}Z{{end}}+", "\"+\"{{if .X}}\"X\"{{else}}{{if .Y}}\"Y\"{{else}}{{if .Z}}\"Z\"{{end}}{{end}}{{end}}\"+\"");
+    }
+
+    @Test
+    void testSimpleRange() throws TemplateParseException {
+        assertOK("simple range", "{{range .X}}hello{{end}}", "{{range .X}}\"hello\"{{end}}");
+    }
+
+    @Test
+    void testChainedFieldRange() throws TemplateParseException {
+        assertOK("chained field range", "{{range .X.Y.Z}}hello{{end}}", "{{range .X.Y.Z}}\"hello\"{{end}}");
+    }
+
+    @Test
+    void testNestedRange() throws TemplateParseException {
+        assertOK("nested range", "{{range .X}}hello{{range .Y}}goodbye{{end}}{{end}}", "{{range .X}}\"hello\"{{range .Y}}\"goodbye\"{{end}}{{end}}");
+    }
+
+    @Test
+    void testRangeElse() throws TemplateParseException {
+        assertOK("range with else", "{{range .X}}true{{else}}false{{end}}", "{{range .X}}\"true\"{{else}}\"false\"{{end}}");
+    }
+
+    @Test
+    void testRangeOverPipeline() throws TemplateParseException {
+        assertOK("range over pipeline", "{{range .X|.M}}true{{else}}false{{end}}", "{{range .X | .M}}\"true\"{{else}}\"false\"{{end}}");
+    }
+
+    @Test
+    void testRangeArray() throws TemplateParseException {
+        assertOK("range []int", "{{range .SI}}{{.}}{{end}}", "{{range .SI}}{{.}}{{end}}");
+    }
+
+    @Test
+    void testRange1Variable() throws TemplateParseException {
+        assertOK("range 1 var", "{{range $x := .SI}}{{.}}{{end}}", "{{range $x := .SI}}{{.}}{{end}}");
+    }
+
+    @Test
+    void testRange2Variables() throws TemplateParseException {
+        assertOK("range 2 var", "{{range $x, $y := .SI}}{{.}}{{end}}", "{{range $x, $y := .SI}}{{.}}{{end}}");
+    }
+
+    @Test
+    void testConstants() throws TemplateParseException {
+        assertOK("constants", "{{range .SI 1 -3.2i true false 'a' nil}}{{end}}", "{{range .SI 1 -3.2i true false 'a' nil}}{{end}}");
+    }
+
+    @Test
+    void testTemplate() throws TemplateParseException {
+        assertOK("template", "{{template `x`}}", "{{template \"x\"}}");
+    }
+
+    @Test
+    void testTemplateWithArg() throws TemplateParseException {
+        assertOK("template with arg", "{{template `x` .Y}}", "{{template \"x\" .Y}}");
+    }
+
+    @Test
+    void testWith() throws TemplateParseException {
+        assertOK("with", "{{with .X}}hello{{end}}", "{{with .X}}\"hello\"{{end}}");
+    }
+
+    @Test
+    void testWithElse() throws TemplateParseException {
+        assertOK("with with else", "{{with .X}}hello{{else}}goodbye{{end}}", "{{with .X}}\"hello\"{{else}}\"goodbye\"{{end}}");
+    }
+
+    @Test
+    void testTrimLeft() throws TemplateParseException {
+        assertOK("trim left", "x \r\n\t{{- 3}}", "\"x\"{{3}}");
+    }
+
+    @Test
+    void testTrimRight() throws TemplateParseException {
+        assertOK("trim right", "{{3 -}}\n\n\ty", "{{3}}\"y\"");
+    }
+
+    @Test
+    void testTrimLeftAndRight() throws TemplateParseException {
+        assertOK("trim left and right", "x \r\n\t{{- 3 -}}\n\n\ty", "\"x\"{{3}}\"y\"");
+    }
+
+    @Test
+    void testTrimExtra() throws TemplateParseException {
+        assertOK("trim with extra spaces", "x\n{{-  3   -}}\ny", "\"x\"{{3}}\"y\"");
+    }
+
+    @Test
+    void testCommentTrimLeft() throws TemplateParseException {
+        assertOK("comment trim left", "x \r\n\t{{- /* hi */}}", "\"x\"");
+    }
+
+    @Test
+    void testCommentTrimRight() throws TemplateParseException {
+        assertOK("comment trim right", "{{/* hi */ -}}\n\n\ty", "\"y\"");
+    }
+
+    @Test
+    void testCommentTrimLeftAndRight() throws TemplateParseException {
+        assertOK("comment trim left and right", "x \r\n\t{{- /* */ -}}\n\n\ty", "\"x\"\"y\"");
+    }
+
+    @Test
+    void testBlockDefinition() throws TemplateParseException {
+        assertOK("block definition", "{{block \"foo\" .}}hello{{end}}", "{{template \"foo\" .}}");
+    }
+
+    @Test
+    void testNewlineInAssignment() throws TemplateParseException {
+        assertOK("newline in assignment", "{{ $x \n := \n 1 \n }}", "{{$x := 1}}");
+    }
+
+    @Test
+    void testNewlineInEmptyAction() {
+        assertError("newline in empty action", "{{\n}}");
+    }
+
+    @Test
+    void testNewlineInPipeline() throws TemplateParseException {
+        assertOK("newline in pipeline", "{{\n\"x\"\n|\nprintf\n}}", "{{\"x\" | printf}}");
+    }
+
+    @Test
+    void testNewlineInComment() throws TemplateParseException {
+        assertOK("newline in comment", "{{/*\nhello\n*/}}", "");
+    }
+
+    @Test
+    void testNewlineInComment1() {
+        assertError("newline in empty action", "{{\n}}");
+    }
+
+    @Test
+    void testUnclosedAction() {
+        assertError("unclosed action", "hello{{range");
+    }
+
+    @Test
+    void testUnmatchedEnd() {
+        assertError("unmatched end", "{{end}}");
+    }
+
+    @Test
+    void testUnmatchedElse() {
+        assertError("unmatched else", "{{else}}");
+    }
+
+    @Test
+    void testUnmatchedElseAfterIf() {
+        assertError("unmatched else after if", "{{if .X}}hello{{end}}{{else}}");
+    }
+
+    @Test
+    void testMultipleElse() {
+        assertError("multiple else", "{{if .X}}1{{else}}2{{else}}3{{end}}");
+    }
+
+    @Test
+    void testMissingEnd() {
+        assertError("missing end", "hello{{range .x}}");
+    }
+
+    @Test
+    void testMissingEndAfterElse() {
+        assertError("missing end after else", "hello{{range .x}}{{else}}");
+    }
+
+    @Test
+    void testUndefinedFunction() {
+        assertError("undefined function", "hello{{undefined}}");
+    }
+
+    @Test
+    void testUndefinedVariable() {
+        assertError("undefined variable", "{{$x}}");
+    }
+
+    @Test
+    void testUndefinedVariableAfterEnd() {
+        assertError("variable undefined after end", "{{with $x := 4}}{{end}}{{$x}}");
+    }
+
+    @Test
+    void testUndefinedInTemplate() {
+        assertError("variable undefined in template", "{{template $v}}");
+    }
+
+    @Test
+    void testDeclareWithField() {
+        assertError("declare with field", "{{with $x.Y := 4}}{{end}}");
+    }
+
+    @Test
+    void testDeclareWithFieldRef() {
+        assertError("template with field ref", "{{template .X}}");
+    }
+
+    @Test
+    void testDeclareWithVar() {
+        assertError("template with var", "{{template $v}}");
+    }
+
+    @Test
+    void testDeclareOutsideRange() {
+        assertError("multidecl outside range", "{{with $v, $u := 3}}{{end}}");
+    }
+
+    @Test
+    void testTooManyDeclares() {
+        assertError("too many decls in range", "{{range $u, $v, $w := 3}}{{end}}");
+    }
+
+    @Test
+    void testParen() {
+        assertError("dot applied to parentheses", "{{printf (printf .).}}");
+    }
+
+    @Test
+    void testAdjacentArg() {
+        assertError("adjacent args", "{{printf 3`x`}}");
+    }
+
+    @Test
+    void testAdjacentArgWithDot() {
+        assertError("adjacent args with .", "{{printf `x`.}}");
+    }
+
+    @Test
+    void testBug0a() {
+        assertError("bug0a", "{{$x := 0}}{{$x}}");
+    }
+
+    @Test
+    void testBug0b() {
+        assertError("bug0b", "{{$x += 1}}{{$x}}");
+    }
+
+    @Test
+    void testBug0c() {
+        assertError("bug0c", "{{$x ! 2}}{{$x}}");
+    }
+
+    @Test
+    void testBug0d() {
+        assertError("bug0d", "{{$x % 3}}{{$x}}");
+    }
+
+    @Test
+    void testBug0e() {
+        assertError("bug0e", "{{range $x := $y := 3}}{{end}}");
+    }
+
+    @Test
+    void testBug1a() {
+        assertError("bug1a", "{{$x:=.}}{{$x!2}}");
+    }
+
+    @Test
+    void testBug1b() {
+        assertError("bug1b", "{{$x:=.}}{{$x+2}}");
+    }
+
+    @Test
+    void testBug1c() throws TemplateParseException {
+        assertOK("bug1c", "{{$x:=.}}{{$x +2}}", "{{$x := .}}{{$x +2}}");
+    }
+
+    @Test
+    void testBug1d() {
+        assertError("extra end after if", "{{if .X}}a{{else if .Y}}b{{end}}{{end}}");
+    }
+
+    @Test
+    void testDotAfterInteger() throws TemplateParseException {
+        assertError("dot after integer", "{{1.E}}");
+    }
+
+    @Test
+    void testDotAfterFloat() throws TemplateParseException {
+        assertError("dot after float", "{{0.1.E}}");
+    }
+
+    @Test
+    void testDotAfterBoolean() throws TemplateParseException {
+        assertError("dot after boolean", "{{true.E}}");
+    }
+
+    @Test
+    void testDotAfterChar() throws TemplateParseException {
+        assertError("dot after char", "{{'a'.any}}");
+    }
+
+    @Test
+    void testDotAfterString() throws TemplateParseException {
+        assertError("dot after string", "{{\"hello\".guys}}");
+    }
+
+    @Test
+    void testDotAfterDot() throws TemplateParseException {
+        assertError("dot after dot", "{{..E}}");
+    }
+
+    @Test
+    void testDotAfterNil() throws TemplateParseException {
+        assertError("dot after nil", "{{nil.E}}");
+    }
+
+    @Test
+    void testWrongPipelineDot() throws TemplateParseException {
+        assertError("wrong pipeline dot", "{{12|.}}");
+    }
+
+    @Test
+    void testWrongPipelineNumber() throws TemplateParseException {
+        assertError("wrong pipeline number", "{{.|12|printf}}");
+    }
+
+    @Test
+    void testWrongPipelineString() throws TemplateParseException {
+        assertError("wrong pipeline string", "{{.|printf|\"error\"}}");
+    }
+
+    @Test
+    void testWrongPipelineChar() throws TemplateParseException {
+        assertError("wrong pipeline char", "{{12|printf|'e'}}");
+    }
+
+    @Test
+    void testWrongPipelineBoolean() throws TemplateParseException {
+        assertError("wrong pipeline boolean", "{{.|true}}");
+    }
+
+    @Test
+    void testWrongPipelineNil() throws TemplateParseException {
+        assertError("wrong pipeline nil", "{{'c'|nil}}");
+    }
+
+    @Test
+    void testEmptyPipeline() throws TemplateParseException {
+        assertError("empty pipeline", "{{printf \"%d\" ( ) }}");
+    }
+
+    @Test
+    void testInvalidBlockDefinition() throws TemplateParseException {
+        assertError("block definition", "{{block \"foo\"}}hello{{end}}");
+    }
 
 
+    private void assertOK(String name, String input, String result) throws TemplateParseException {
+        Parser parser = createParser();
+        Map<String, Node> nodes = parser.parse(name, input);
+        Node node = nodes.get(name);
+        assertNotNull(node);
+        assertInstanceOf(ListNode.class, node);
+        assertEquals(result, node.toString());
+    }
+
+    private void assertError(String newline_in_empty_action, String text) {
+        Parser parser = createParser();
+        assertThrows(TemplateParseException.class, () -> parser.parse(newline_in_empty_action, text));
+    }
+
+    private Parser createParser() {
         Map<String, Function> functions = new LinkedHashMap<>();
         functions.put("printf", null);
         functions.put("contains", null);
-
-
-        for (Test test : tests) {
-            try {
-                Parser parser = new Parser(functions);
-                Map<String, Node> rootNodes = parser.parse(test.name, test.input);
-
-                Node node = rootNodes.get(test.name);
-                assertNotNull(node);
-                assertTrue(node instanceof ListNode);
-                assertEquals(test.result, node.toString(), String.format("%s: expected %s got %s", test.name, test.result, node));
-            } catch (Exception e) {
-                if (!test.error) {
-                    log.log(Level.FINE, String.format("%s: got error: %s%n", test.name, e.getMessage()), e);
-                }
-                assertTrue(test.error, String.format("%s: unexpected %s got %s", test.name, test.result, e));
-            }
-        }
+        return new Parser(functions);
     }
 
     @Test
