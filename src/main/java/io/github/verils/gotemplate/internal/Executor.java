@@ -241,7 +241,7 @@ public class Executor {
         return null;
     }
 
-    private Object executeFunction(IdentifierNode identifierNode, List<Node> arguments, Object data, BeanInfo beanInfo,
+    private Object executeFunction(IdentifierNode identifierNode, List<Node> cmdArgNodes, Object data, BeanInfo beanInfo,
                                    Object finalValue) throws TemplateExecutionException {
         String identifier = identifierNode.getIdentifier();
 
@@ -251,24 +251,24 @@ public class Executor {
                 throw new TemplateExecutionException("call of null for " + identifier);
             }
 
-            List<Node> args = arguments.subList(1, arguments.size());
-            Object[] argumentValues;
+            List<Node> functionArgNodes = cmdArgNodes.subList(1, cmdArgNodes.size());
 
+            Object[] functionArgs;
             if (finalValue != null) {
 
                 // per https://pkg.go.dev/text/template, "In a chained pipeline, the result of
                 // each command is passed as the last argument of the following command." (This is necessary
                 // when implementing functions like 'default', for example.)
 
-                argumentValues = new Object[args.size() + 1];
-                executeArguments(data, beanInfo, args, argumentValues);
-                argumentValues[args.size()] = finalValue;
+                functionArgs = new Object[functionArgNodes.size() + 1];
+                executeArguments(data, beanInfo, functionArgNodes, functionArgs);
+                functionArgs[functionArgNodes.size()] = finalValue;
             } else {
-                argumentValues = new Object[args.size()];
-                executeArguments(data, beanInfo, args, argumentValues);
+                functionArgs = new Object[functionArgNodes.size()];
+                executeArguments(data, beanInfo, functionArgNodes, functionArgs);
             }
 
-            return function.invoke(argumentValues);
+            return function.invoke(functionArgs);
         }
 
         throw new TemplateExecutionException(String.format("%s is not a defined function", identifier));
@@ -290,6 +290,28 @@ public class Executor {
             StringNode stringNode = (StringNode) argument;
             return stringNode.getText();
         }
+
+        if (argument instanceof NumberNode) {
+            NumberNode numberNode = (NumberNode) argument;
+            if (numberNode.isInt()) {
+                return numberNode.getIntValue();
+            }
+            if (numberNode.isFloat()) {
+                return numberNode.getFloatValue();
+            }
+            return 0;
+        }
+
+        if (argument instanceof FieldNode) {
+            FieldNode fieldNode = (FieldNode) argument;
+            return executeField(fieldNode, data, beanInfo);
+        }
+
+        if (argument instanceof PipeNode) {
+            PipeNode pipeNode = (PipeNode) argument;
+            return executePipe(pipeNode, data, beanInfo);
+        }
+
         throw new TemplateExecutionException(String.format("can't extract value of argument %s", argument));
     }
 

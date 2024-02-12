@@ -52,6 +52,10 @@ public class NumberNode implements Node {
         this.isFloat = isFloat;
     }
 
+    public double getFloatValue() {
+        return floatValue;
+    }
+
     public void setFloatValue(double floatValue) {
         this.floatValue = floatValue;
     }

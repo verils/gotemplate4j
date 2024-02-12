@@ -530,9 +530,7 @@ public class Parser {
                 case CHAR_CONSTANT:
                 case COMPLEX:
                 case NUMBER:
-                    NumberNode numberNode = new NumberNode(token.value());
-                    parseNumber(numberNode, token);
-                    node = numberNode;
+                    node = parseNumber(token);
                     break;
                 case STRING:
                 case RAW_STRING:
@@ -605,6 +603,12 @@ public class Parser {
         pipeNode.append(commandNode);
     }
 
+    NumberNode parseNumber(Token token) throws TemplateParseException {
+        NumberNode numberNode = new NumberNode(token.value());
+        parseNumber(numberNode, token);
+        return numberNode;
+    }
+
     private boolean hasFunction(String name) {
         return functions.containsKey(name);
     }
@@ -640,6 +644,7 @@ public class Parser {
             numberNode.setIntValue(ch);
             numberNode.setIsFloat(true);
             numberNode.setFloatValue(ch);
+
             return;
         }
 
@@ -670,8 +675,6 @@ public class Parser {
             long intValue = parseIntValue(text);
             numberNode.setIsInt(true);
             numberNode.setIntValue(intValue);
-            numberNode.setIsFloat(true);
-            numberNode.setFloatValue(intValue);
         } catch (NumberFormatException ignored) {
             try {
                 double floatValue = parseFloatValue(text);

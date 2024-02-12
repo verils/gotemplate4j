@@ -346,8 +346,8 @@ class ParserTest {
     }
 
     @Test
-    void testBug0a() {
-        assertError("bug0a", "{{$x := 0}}{{$x}}");
+    void testBug0a() throws TemplateParseException {
+        assertOK("bug0a", "{{$x := 0}}{{$x}}", "{{$x := 0}}{{$x}}");
     }
 
     @Test
@@ -475,9 +475,9 @@ class ParserTest {
         assertEquals(result, node.toString());
     }
 
-    private void assertError(String newline_in_empty_action, String text) {
+    private void assertError(String name, String text) {
         Parser parser = createParser();
-        assertThrows(TemplateParseException.class, () -> parser.parse(newline_in_empty_action, text));
+        assertThrows(TemplateParseException.class, () -> parser.parse(name, text));
     }
 
     private Parser createParser() {
@@ -485,6 +485,16 @@ class ParserTest {
         functions.put("printf", null);
         functions.put("contains", null);
         return new Parser(functions);
+    }
+
+    @Test
+    void testParseZero() throws TemplateParseException {
+        Token token = new Token(TokenType.NUMBER, "0", 0, 0, 0);
+        Parser parser = new Parser();
+        NumberNode numberNode = parser.parseNumber(token);
+        assertTrue(numberNode.isInt(), String.format("invalid number: %s", "0"));
+        assertTrue(numberNode.isFloat(), String.format("invalid number: %s", "0"));
+        assertFalse(numberNode.isComplex(), String.format("invalid number: %s", "0"));
     }
 
     @Test
@@ -579,7 +589,7 @@ class ParserTest {
 
 
             try {
-                parser.parseNumber(numberNode, new Token(type, text, 0, 0, 0));
+                numberNode = parser.parseNumber(new Token(type, text, 0, 0, 0));
                 assertEquals(test.isInt, numberNode.isInt(), String.format("invalid number: %s", test.text));
                 assertEquals(test.isFloat, numberNode.isFloat(), String.format("invalid number: %s", test.text));
                 assertEquals(test.isComplex, numberNode.isComplex(), String.format("invalid number: %s", test.text));
