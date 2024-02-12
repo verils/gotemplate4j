@@ -675,6 +675,8 @@ public class Parser {
             long intValue = parseIntValue(text);
             numberNode.setIsInt(true);
             numberNode.setIntValue(intValue);
+            numberNode.setIsFloat(true);
+            numberNode.setFloatValue(intValue);
         } catch (NumberFormatException ignored) {
             try {
                 double floatValue = parseFloatValue(text);
