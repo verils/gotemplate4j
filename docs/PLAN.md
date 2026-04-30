@@ -1,7 +1,7 @@
 # gotemplate4j Long-Term Development Plan
 
 **Last Updated**: 2026-04-30  
-**Current Version**: 0.3.3-SNAPSHOT  
+**Current Version**: 0.4.0-SNAPSHOT  
 **Status**: Experimental - NOT FOR PRODUCTION USE
 
 ---
@@ -23,7 +23,7 @@ Transform gotemplate4j from an experimental Go template engine for Java into a p
 - Pipeline: Basic pipe operator support
 
 ### ⚠️ Known Limitations
-- ~~**Built-in Functions**: Only 4/18 fully implemented (`print`, `printf`, `println`, `not`)~~ **COMPLETED v0.3.3**
+- ~~**Built-in Functions**: Only 4/18 fully implemented (`print`, `printf`, `println`, `not`)~~ **COMPLETED v0.4.0**
 - **PipeNode**: Variable handling incomplete, weak multi-stage pipeline support
 - ~~**Error Messages**: Generic, lack context (line/column numbers)~~ **PARTIALLY COMPLETED - Parser errors include line/column**
 - ~~**Test Coverage**: Unknown, likely <50%~~ **COMPLETED - 82% instruction coverage, 80% branch coverage**
@@ -31,7 +31,7 @@ Transform gotemplate4j from an experimental Go template engine for Java into a p
 - **Documentation**: Minimal Javadoc, no advanced usage guides
 
 ### 🔴 Production Blockers
-1. ~~Incomplete built-in function implementations~~ **RESOLVED v0.3.3**
+1. ~~Incomplete built-in function implementations~~ **RESOLVED v0.4.0**
 2. Weak PipeNode processing
 3. ~~Insufficient test coverage~~ **RESOLVED - 82% coverage achieved**
 4. ~~Missing error diagnostics~~ **PARTIALLY RESOLVED - Parser includes line/column info**
@@ -44,7 +44,7 @@ Transform gotemplate4j from an experimental Go template engine for Java into a p
 **Goal**: Remove "DON'T USE IN PRODUCTION" warning
 
 #### 1.1 Complete Critical Built-in Functions
-**Priority**: CRITICAL | **Effort**: 2-3 weeks | **Status**: ✅ COMPLETED v0.3.3
+**Priority**: CRITICAL | **Effort**: 2-3 weeks | **Status**: ✅ COMPLETED v0.4.0
 
 ~~Implement in order of usage frequency:~~
 
@@ -175,7 +175,7 @@ After:  "Parse error at line 5, column 12: unexpected 'else' without matching 'i
 ---
 
 #### 2.3 Remaining Built-in Functions
-**Priority**: MEDIUM | **Effort**: 1-2 weeks | **Status**: ✅ COMPLETED v0.3.3
+**Priority**: MEDIUM | **Effort**: 1-2 weeks | **Status**: ✅ COMPLETED v0.4.0
 
 ~~**Functions to Implement**:~~
 - ~~`deepEqual` - Deep equality comparison~~ **DONE**
