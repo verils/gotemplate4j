@@ -6,10 +6,47 @@
 - Check ./CHANGELOG for recent updates and development direction
 
 ## Development Environment
-- Java Version: >= 1.8
+- Java Version: 1.8 (Project targets Java 8 compatibility)
 - Build Tool: Maven (ALWAYS use `./mvnw` wrapper, NOT `mvn` directly)
 - No additional dependencies except Vanilla Java
 - IMPORTANT: Use `./mvnw` to avoid JAVA_HOME configuration issues
+
+### Java Version Management
+**CRITICAL**: The project requires Java 8 for compilation and testing. If your default Java version is not 8:
+
+1. **Check current Java version:**
+   ```bash
+   java -version
+   ```
+
+2. **Find available Java 8 installation:**
+   - Windows: Check `C:\Program Files\Eclipse Adoptium\` or `C:\Program Files\Java\`
+   - Look for directories like `jdk-8.0.xxx.x-hotspot` or `jdk1.8.0_xxx`
+
+3. **Set JAVA_HOME temporarily for this project:**
+   ```bash
+   # Windows PowerShell
+   $env:JAVA_HOME="C:\Program Files\Eclipse Adoptium\jdk-8.0.482.8-hotspot"
+   $env:PATH="$env:JAVA_HOME\bin;$env:PATH"
+   
+   # Windows CMD
+   set JAVA_HOME=C:\Program Files\Eclipse Adoptium\jdk-8.0.482.8-hotspot
+   set PATH=%JAVA_HOME%\bin;%PATH%
+   
+   # Linux/Mac
+   export JAVA_HOME=/usr/lib/jvm/java-8-openjdk
+   export PATH=$JAVA_HOME/bin:$PATH
+   ```
+
+4. **Verify Java 8 is active:**
+   ```bash
+   java -version
+   # Should show: openjdk version "1.8.x" or "8.x.x"
+   ```
+
+5. **Alternative: Configure Maven toolchains** (recommended for multi-JDK environments)
+   - Create `.mvn/toolchains.xml` to specify JDK 8 for this project
+   - This allows Maven to use Java 8 even when your system default is different
 
 ## Code Style Guidelines
 - Follow standard Java naming conventions (camelCase for variables/methods, PascalCase for classes)
@@ -20,20 +57,53 @@
 
 ## Testing Requirements
 - All new features must include unit tests
-- Run tests with: `mvn test`
+- Run tests with: `./mvnw test`
 - Test files located in: `src/test/java/io/github/verils/gotemplate/`
 - Use JUnit 5 (Jupiter) for testing
 - Maintain existing test patterns and structure
 - **All existing tests and new tests must succeed** - no test failures are acceptable
 - **Code coverage must not be lower than 80%** - ensure comprehensive test coverage for all new code
 
+### Code Coverage Verification
+The project uses JaCoCo for code coverage analysis with automatic enforcement:
+
+1. **Run tests and generate coverage report:**
+   ```bash
+   ./mvnw clean test jacoco:report
+   ```
+
+2. **Run full build with coverage check (enforces 80% minimum):**
+   ```bash
+   # Skip GPG signing for local builds
+   ./mvnw clean verify "-Dgpg.skip=true"
+   ```
+
+3. **View coverage reports:**
+   - HTML Report: Open `target/site/jacoco/index.html` in browser
+   - XML Report: `target/site/jacoco/jacoco.xml` (for CI/CD integration)
+   - CSV Report: `target/site/jacoco/jacoco.csv` (for quick analysis)
+
+4. **Coverage thresholds enforced:**
+   - Instruction Coverage: ≥ 80%
+   - Branch Coverage: ≥ 80%
+   - Build will FAIL if thresholds are not met
+
+5. **Improving coverage:**
+   - Focus on classes with low branch coverage (check CSV report)
+   - Add tests for edge cases and error handling paths
+   - Use HTML report to identify uncovered lines (marked in red)
+
 ## Build & Deployment Commands
 - Compile: `./mvnw compile`
-- Run tests: `./mvnw test` 
+- Run tests: `./mvnw test`
+- Generate coverage report: `./mvnw test jacoco:report`
+- Verify with coverage check: `./mvnw verify "-Dgpg.skip=true"`
 - Package: `./mvnw package`
 - Full build with signing: `./mvnw verify`
 - Deploy to Nexus: `./mvnw deploy`
 - Clean build: `./mvnw clean`
+
+**Note**: When running locally without GPG keys, always add `"-Dgpg.skip=true"` to skip artifact signing.
 
 ## Task Management Rules
 - For changes >200 lines: create detailed plan before implementation
