@@ -378,6 +378,8 @@ public class Executor {
             writer.write(unescaped);
         } else if (value instanceof Number) {
             writer.write(String.valueOf(value));
+        } else if (value instanceof Boolean) {
+            writer.write(String.valueOf(value));
         }
     }
 }

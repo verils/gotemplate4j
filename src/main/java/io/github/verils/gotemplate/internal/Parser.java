@@ -707,10 +707,7 @@ public class Parser {
         }
 
         long intValue = parseIntValue(text, signed);
-        if (intValue != 0) {
-            return negative ? intValue : -intValue;
-        }
-        return 0;
+        return negative ? -intValue : intValue;
     }
 
     private long parseIntValue(String text, boolean signed) {
