@@ -7,8 +7,9 @@
 
 ## Development Environment
 - Java Version: >= 1.8
-- Build Tool: Maven (use `mvn` commands, not Gradle)
+- Build Tool: Maven (ALWAYS use `./mvnw` wrapper, NOT `mvn` directly)
 - No additional dependencies except Vanilla Java
+- IMPORTANT: Use `./mvnw` to avoid JAVA_HOME configuration issues
 
 ## Code Style Guidelines
 - Follow standard Java naming conventions (camelCase for variables/methods, PascalCase for classes)
@@ -25,11 +26,12 @@
 - Maintain existing test patterns and structure
 
 ## Build & Deployment Commands
-- Compile: `mvn compile`
-- Run tests: `mvn test` 
-- Package: `mvn package`
-- Full build with signing: `mvn verify`
-- Deploy to Nexus: `mvn deploy`
+- Compile: `./mvnw compile`
+- Run tests: `./mvnw test` 
+- Package: `./mvnw package`
+- Full build with signing: `./mvnw verify`
+- Deploy to Nexus: `./mvnw deploy`
+- Clean build: `./mvnw clean`
 
 ## Task Management Rules
 - For changes >200 lines: create detailed plan before implementation
