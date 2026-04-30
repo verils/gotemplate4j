@@ -7,10 +7,8 @@ on:
     branches: [ "master" ]
 
 jobs:
-  build:
-
+  test:
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v5
       - name: Set up JDK 8
@@ -21,9 +19,7 @@ jobs:
           cache: maven
       - name: Test with Maven
         run: mvn -B test --file pom.xml
-
       - name: Verify with Maven (including coverage check)
         run: mvn -B verify --file pom.xml -Dgpg.skip=true
-
       - name: Update dependency graph
         uses: advanced-security/maven-dependency-submission-action@v4
