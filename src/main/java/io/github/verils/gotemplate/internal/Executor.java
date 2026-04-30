@@ -302,6 +302,11 @@ public class Executor {
             return 0;
         }
 
+        if (argument instanceof BoolNode) {
+            BoolNode boolNode = (BoolNode) argument;
+            return boolNode.getValue();
+        }
+
         if (argument instanceof FieldNode) {
             FieldNode fieldNode = (FieldNode) argument;
             return executeField(fieldNode, data, beanInfo);

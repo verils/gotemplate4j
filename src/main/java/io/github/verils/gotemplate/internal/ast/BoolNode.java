@@ -8,6 +8,10 @@ public class BoolNode implements Node {
         this.value = Boolean.parseBoolean(text);
     }
 
+    public boolean getValue() {
+        return value;
+    }
+
     @Override
     public String toString() {
         return String.valueOf(value);
