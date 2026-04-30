@@ -4,26 +4,15 @@
 
 [中文文档](./README_zh.md)
 
-Evaluate go templates and make textual output.
+A Go template engine implementation for Java that evaluates Go templates and generates textual output.
 
-Before then, there is another fine library with a name not so
-intuitive: [Java Template Engine](https://github.com/proninyaroslav/java-template-engine), you can choose that if you
-like.
+> ⚠️ **Experimental Status**: This project is currently experimental. **DO NOT USE IN PRODUCTION** yet, as support for complex numbers and built-in functions is incomplete.
 
-This project is for experimental purpose, please **DON'T USE IN PRODUCTION** for now because the support for complex
-number and builtin functions is incomplete. Wish I can finish them ASAP.
+## Quick Start
 
-You can see the [changelog](./CHANGELOG) to know what's happening.
+### Installation
 
-## Requirements
-
-Java Version: >= **1.8**
-
-No other dependency required except for *Vanilla Java*
-
-## Installation
-
-For Maven, you can simply add dependency:
+Add the dependency to your Maven project:
 
 ```xml
 <dependency>
@@ -33,14 +22,14 @@ For Maven, you can simply add dependency:
 </dependency>
 ```
 
-## Usage
+### Basic Usage
 
 ```java
 // Create a user as the input data
 User user = new User();
 user.setName("Bob");
 
-// Prepare you template
+// Prepare your template
 Template template = new Template("demo");
 template.parse("Hello, {{ .Name }}!");
 
@@ -50,14 +39,65 @@ template.execute(writer, user);
 System.out.print(writer.toString());  // "Hello Bob!"
 ```
 
-## Limitations
+## Requirements
 
-- The format of **print** functions in Java are different from Golang
-- Achieved only a few built-in functions
-- The procedure of PipeNode is weak
+- Java Version: >= **1.8**
+- No additional dependencies required (pure Java)
 
-## Waht is Next?
+## Current Limitations
+
+- The format of **print** functions in Java differs from Golang
+- Only a subset of built-in functions are implemented
+- PipeNode processing has limited capabilities
+
+## Roadmap
 
 - [x] Support complex number format
 - [ ] Support all *built-in* functions in Golang
 - [ ] Complete PipeNode for all types of identifiers
+
+See [docs/PLAN.md](./docs/PLAN.md) for the detailed development roadmap.
+
+## References
+
+- [Go text/template Documentation](https://pkg.go.dev/text/template)
+- [Go template Source Code](https://github.com/golang/go/tree/master/src/text/template)
+- [Java Template Engine (Alternative)](https://github.com/proninyaroslav/java-template-engine)
+- [Changelog](./CHANGELOG)
+- [Development Plan](./docs/PLAN.md)
+
+## Contributing
+
+Contributions are welcome! Here's how you can help:
+
+### Priority Areas
+
+1. **Built-in function implementations** - Help complete the remaining Go built-in functions
+2. **Test case development** - Improve test coverage to >80%
+3. **Documentation improvements** - Add Javadoc, examples, and guides
+4. **Performance profiling** - Identify and optimize bottlenecks
+
+### Development Setup
+
+```bash
+# Clone the repository
+git clone https://github.com/verils/gotemplate4j.git
+cd gotemplate4j
+
+# Build the project
+./mvnw clean install
+
+# Run tests
+./mvnw test
+```
+
+### Guidelines
+
+- Java Version: >= 1.8
+- Build Tool: Maven (use `./mvnw` wrapper)
+- No additional dependencies except Vanilla Java
+- Follow standard Java naming conventions
+- Add unit tests for all new features
+- Maintain backward compatibility
+
+For detailed development plan, see [docs/PLAN.md](./docs/PLAN.md).
