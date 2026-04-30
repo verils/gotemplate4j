@@ -24,6 +24,8 @@
 - Test files located in: `src/test/java/io/github/verils/gotemplate/`
 - Use JUnit 5 (Jupiter) for testing
 - Maintain existing test patterns and structure
+- **All existing tests and new tests must succeed** - no test failures are acceptable
+- **Code coverage must not be lower than 80%** - ensure comprehensive test coverage for all new code
 
 ## Build & Deployment Commands
 - Compile: `./mvnw compile`
