@@ -176,6 +176,7 @@ public class Executor {
         }
 
         for (VariableNode variable : pipeNode.getVariables()) {
+            // TODO Complete this logic
         }
 
         return value;
