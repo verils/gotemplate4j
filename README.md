@@ -2,6 +2,8 @@
 
 [![Testing](https://github.com/verils/gotemplate4j/actions/workflows/maven.yml/badge.svg)](https://github.com/verils/gotemplate4j/actions/workflows/maven.yml)
 
+[中文文档](./README_zh.md)
+
 Evaluate go templates and make textual output.
 
 Before then, there is another fine library with a name not so
