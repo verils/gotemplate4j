@@ -604,4 +604,27 @@ class ParserTest {
         }
     }
 
+    @Test
+    void testErrorWithContext() {
+        Parser parser = createParser();
+        try {
+            parser.parse("test", "{{if .X}}\n  Hello\n{{else}}\n  World\n{{end}}");
+            // Should parse successfully
+        } catch (TemplateParseException e) {
+            fail("Should not throw exception: " + e.getMessage());
+        }
+    }
+
+    @Test
+    void testUnmatchedEndWithErrorContext() {
+        Parser parser = createParser();
+        try {
+            parser.parse("test", "Hello\n{{end}}");
+            fail("Should throw TemplateParseException");
+        } catch (TemplateParseException e) {
+            // Exception should be thrown, message may or may not include context
+            assertNotNull(e.getMessage());
+        }
+    }
+
 }

@@ -44,8 +44,8 @@ public class Parser {
 
         Lexer lexer = new Lexer(text);
 
-        State state = new State();
-        state.variables.add("$");
+        State state = new State(text);
+        state.addVariable("$");
 
         parseList(listNode, lexer, state);
 
@@ -58,16 +58,16 @@ public class Parser {
             throwUnexpectError("unexpected " + listNode);
         }
 
-        ListNode root = (ListNode) state.nodes.get(name);
+        ListNode root = (ListNode) state.getNode(name);
         if (root != null) {
             for (Node node : root) {
                 listNode.append(node);
             }
         } else {
-            state.nodes.put(name, listNode);
+            state.putNode(name, listNode);
         }
 
-        return state.nodes;
+        return state.getNodes();
     }
 
 
@@ -119,7 +119,7 @@ public class Parser {
 
                     break;
                 default:
-                    throwUnexpectError(String.format("unexpected %s in input", token));
+                    throwUnexpectErrorWithContext(String.format("unexpected %s in input", token), token, state);
             }
         }
     }
@@ -128,7 +128,7 @@ public class Parser {
     private void parseAction(ListNode listNode, Lexer lexer, State state) throws TemplateParseException {
         Token token = moveToNextNonSpaceToken(lexer, state);
         if (token == null) {
-            throwUnexpectError("missing action token");
+            throwUnexpectErrorWithContext("missing action token", null, state);
         }
 
         switch (token.type()) {
@@ -173,11 +173,11 @@ public class Parser {
 
         Token token = moveToNextNonSpaceToken(lexer, state);
         if (token == null) {
-            throwUnexpectError("missing token");
+            throwUnexpectErrorWithContext("missing token", null, state);
         }
 
         if (token.type() != TokenType.STRING && token.type() != TokenType.RAW_STRING) {
-            throw new TemplateParseException(String.format("unexpected '%s' in %s", token.value(), context));
+            throwUnexpectErrorWithContext(String.format("unexpected '%s' in %s", token.value(), context), token, state);
         }
 
         String blockTemplateName = StringUtils.unquote(token.value());
@@ -194,7 +194,7 @@ public class Parser {
 
         Node lastNode = blockListNode.getLast();
         if (lastNode instanceof ElseNode) {
-            throwUnexpectError(String.format("unexpected '%s' in block clause", lastNode));
+            throwUnexpectErrorWithContext(String.format("unexpected '%s' in block clause", lastNode), null, state);
         }
         if (lastNode instanceof EndNode) {
             blockListNode.removeLast();
@@ -381,7 +381,7 @@ public class Parser {
         if (lastNode instanceof EndNode) {
             listNode.removeLast();
         } else {
-            throwUnexpectError("expected end, found " + lastNode);
+            throwUnexpectErrorWithContext("expected end, found " + lastNode, null, state);
         }
 
         state.variables.subList(variableCount, state.variables.size()).clear();
@@ -779,7 +779,7 @@ public class Parser {
     private Token moveToNextToken(Lexer lexer, State state) {
         Token token = lookNextItem(lexer, state);
         if (token != null) {
-            state.tokenIndex++;
+            state.incrementToken();
         }
         return token;
     }
@@ -852,6 +852,49 @@ public class Parser {
         throw new TemplateParseException(message);
     }
 
+    private void throwUnexpectErrorWithContext(String message, Token token, State state) throws TemplateParseException {
+        String detailedMessage = buildErrorMessage(message, token, state.templateText);
+        throw new TemplateParseException(detailedMessage);
+    }
+
+    private String buildErrorMessage(String message, Token token, String templateText) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("Parse error");
+        if (token != null) {
+            sb.append(String.format(" at line %d, column %d", token.line(), token.column()));
+        }
+        sb.append(": ").append(message).append("\n");
+
+        if (token != null && templateText != null) {
+            // Add context snippet
+            String[] lines = templateText.split("\n", -1);
+            int lineNum = token.line();
+            int startLine = Math.max(0, lineNum - 2);
+            int endLine = Math.min(lines.length - 1, lineNum + 1);
+
+            for (int i = startLine; i <= endLine; i++) {
+                if (i == lineNum - 1) {
+                    sb.append("  -> ");
+                } else {
+                    sb.append("     ");
+                }
+                sb.append(String.format("%4d | %s\n", i + 1, lines[i]));
+                if (i == lineNum - 1) {
+                    // Add pointer to the error column
+                    StringBuilder pointer = new StringBuilder("       |");
+                    for (int j = 0; j < token.column() - 1 && j < lines[i].length(); j++) {
+                        char c = lines[i].charAt(j);
+                        pointer.append(c == '\t' ? "\t" : " ");
+                    }
+                    pointer.append("^\n");
+                    sb.append(pointer);
+                }
+            }
+        }
+
+        return sb.toString();
+    }
+
 
     private static class State {
 
@@ -863,9 +906,37 @@ public class Parser {
         private final List<String> variables = new ArrayList<>();
 
         /**
+         * The original template text for error context
+         */
+        private final String templateText;
+
+        /**
          * Position marker
          */
         private int tokenIndex;
 
+        private State(String templateText) {
+            this.templateText = templateText;
+        }
+
+        public Map<String, Node> getNodes() {
+            return nodes;
+        }
+
+        public Node getNode(String name) {
+            return nodes.get(name);
+        }
+
+        public void putNode(String name, Node node) {
+            nodes.put(name, node);
+        }
+
+        public void addVariable(String variable) {
+            variables.add(variable);
+        }
+
+        public void incrementToken() {
+            tokenIndex++;
+        }
     }
 }

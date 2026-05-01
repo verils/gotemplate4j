@@ -23,18 +23,16 @@ Transform gotemplate4j from an experimental Go template engine for Java into a p
 - Pipeline: Basic pipe operator support
 
 ### ⚠️ Known Limitations
-- **Built-in Functions**: Only 4/18 fully implemented (`print`, `printf`, `println`, `not`)~~ **COMPLETED v0.4.0**
-- ~~**PipeNode**: Variable handling incomplete, weak multi-stage pipeline support~~ **COMPLETED v0.4.0**
-- ~~**Error Messages**: Generic, lack context (line/column numbers)~~ **PARTIALLY COMPLETED - Parser errors include line/column**
-- ~~**Test Coverage**: Unknown, likely <50%~~ **COMPLETED - 82% instruction coverage, 80% branch coverage**
 - **Performance**: No caching or optimization strategies
-- **Documentation**: Minimal Javadoc, no advanced usage guides
+- **Documentation**: Javadoc added for public APIs, but advanced usage guides still needed
+- **Test Coverage**: 80% instruction coverage, 79% branch coverage (slightly below 80% target due to new error context code)
+- **Error Diagnostics**: Line/column info and context snippets implemented, but suggestions and error codes pending
 
 ### 🔴 Production Blockers
 1. ~~Incomplete built-in function implementations~~ **RESOLVED v0.4.0**
 2. ~~Weak PipeNode processing~~ **RESOLVED v0.4.0**
-3. ~~Insufficient test coverage~~ **RESOLVED - 82% coverage achieved**
-4. ~~Missing error diagnostics~~ **PARTIALLY RESOLVED - Parser includes line/column info**
+3. ~~Insufficient test coverage~~ **MOSTLY RESOLVED - 80% instruction coverage, 79% branch coverage**
+4. ~~Missing error diagnostics~~ **PARTIALLY RESOLVED - Parser includes line/column info and context snippets**
 
 ---
 
@@ -113,9 +111,20 @@ Transform gotemplate4j from an experimental Go template engine for Java into a p
 
 ~~**Improvements**:~~
 - ~~Add line/column numbers to all parse errors~~ **DONE - Parser.java includes line/column info**
-- Include context snippets in error messages
+- ~~Include context snippets in error messages~~ **DONE - Added buildErrorMessage() method with template context**
 - Provide suggestions for common mistakes
 - Create error code system for documentation
+
+**Implementation Details**:
+- Added `buildErrorMessage()` method in Parser.java to generate detailed error messages
+- Added `throwUnexpectErrorWithContext()` for context-aware error reporting
+- Error messages now include line/column numbers and template snippet with pointer
+- Updated critical error locations to use context-aware error throwing
+
+**Known Issues**:
+- Branch coverage dropped to 79% (from 80%) due to new error handling code
+- Additional tests needed to cover all error context paths
+- Target: Add tests in v0.5.0 to restore 80%+ coverage
 
 **Example**:
 ```

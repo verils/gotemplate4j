@@ -13,7 +13,31 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
- * @deprecated Redundant factory object
+ * Factory for creating and managing multiple templates with shared functions.
+ * <p>
+ * This class provides a way to parse and manage a collection of related templates that can
+ * reference each other. It's useful for template libraries or when you need to share custom
+ * functions across multiple templates.
+ * <p>
+ * Example usage:
+ * <pre>{@code
+ * GoTemplateFactory factory = new GoTemplateFactory();
+ * 
+ * // Parse multiple templates
+ * factory.parse("header", "{{define \"header\"}}<h1>{{.Title}}</h1>{{end}}");
+ * factory.parse("footer", "{{define \"footer\"}}<footer>{{.Copyright}}</footer>{{end}}");
+ * factory.parse("layout", "{{template \"header\" .}}<div>{{.Content}}</div>{{template \"footer\" .}}");
+ * 
+ * // Get and execute a specific template
+ * GoTemplate template = factory.getTemplate("layout");
+ * StringWriter writer = new StringWriter();
+ * template.execute(data, writer);
+ * }</pre>
+ * <p>
+ * Note: This class is marked as @Deprecated. Consider using {@link Template} directly for simpler use cases.
+ *
+ * @see Template for the recommended API
+ * @deprecated Redundant factory object - use {@link Template} directly instead
  */
 public class GoTemplateFactory {
 
@@ -23,16 +47,21 @@ public class GoTemplateFactory {
 
 
     /**
-     * Factory constructor, using default settings
+     * Creates a factory with default settings and all built-in functions.
      */
     public GoTemplateFactory() {
         this(null);
     }
 
     /**
-     * Factory constructor, you can configure the available functions
+     * Creates a factory with custom functions in addition to built-in functions.
+     * <p>
+     * Custom functions will be merged with the built-in functions. If a custom function
+     * has the same name as a built-in function, the custom function takes precedence.
      *
-     * @param functions The functions map, will merge the builtin functions
+     * @param functions A map of custom functions where the key is the function name
+     *                  Can be null to use only built-in functions
+     * @see Function for implementing custom template functions
      */
     public GoTemplateFactory(Map<String, Function> functions) {
         LinkedHashMap<String, Function> map = new LinkedHashMap<>(Functions.BUILTIN);
@@ -45,21 +74,30 @@ public class GoTemplateFactory {
 
 
     /**
-     * Parse an unnamed template. Some templates contain names in their contents, like {@code define}, {@code block} etc.
-     * They are treated as library templates.
+     * Parses an unnamed template from text content.
+     * <p>
+     * Templates defined within the content using {{define}} or {{block}} actions will be
+     * registered and available for use. The main content (outside of definitions) will be
+     * associated with an empty string name.
      *
-     * @param text Template text
+     * @param text Template text content to parse
+     * @throws TemplateParseException if the template contains syntax errors
+     * @see #parse(String, String) for named templates
      */
     public void parse(String text) throws TemplateParseException {
         parse("", text);
     }
 
     /**
-     * Parse a named template, then you can obtain the template using
-     * {@link GoTemplateFactory#getTemplate(String)} by its name
+     * Parses a named template from text content.
+     * <p>
+     * The parsed template can be retrieved later using {@link #getTemplate(String)}.
+     * Any templates defined within the content using {{define}} or {{block}} will also be registered.
      *
-     * @param name The template name
-     * @param text Template text
+     * @param name The template name for later retrieval
+     * @param text Template text content to parse
+     * @throws TemplateParseException if the template contains syntax errors
+     * @see #getTemplate(String)
      */
     public void parse(String name, String text) throws TemplateParseException {
         Parser parser = new Parser(functions);
@@ -68,23 +106,30 @@ public class GoTemplateFactory {
     }
 
     /**
-     * Parse a named template, then you can obtain the template using
-     * {@link GoTemplateFactory#getTemplate(String)} by its name
+     * Parses a named template from an InputStream.
+     * <p>
+     * The stream is read using UTF-8 encoding and processed as template text.
      *
-     * @param name The template name
-     * @param in   Template text input stream
+     * @param name The template name for later retrieval
+     * @param in   InputStream providing the template content
+     * @throws TemplateParseException if the template contains syntax errors
+     * @throws IOException            if the stream cannot be read
+     * @see #parse(String, String)
      */
     public void parse(String name, InputStream in) throws TemplateParseException, IOException {
         parse(name, new InputStreamReader(in));
     }
 
     /**
-     * Parse a named template from a {@link Reader}, then you can obtain the template using
-     * {@link GoTemplateFactory#getTemplate(String)} by its name
+     * Parses a named template from a Reader.
+     * <p>
+     * The reader's content is read completely and processed as template text.
      *
-     * @param name   The template name
-     * @param reader Template text reader
-     * @throws IOException if fail on reading the content
+     * @param name   The template name for later retrieval
+     * @param reader Reader providing the template content
+     * @throws TemplateParseException if the template contains syntax errors
+     * @throws IOException            if the reader cannot be read
+     * @see #parse(String, String)
      */
     public void parse(String name, Reader reader) throws TemplateParseException, IOException {
         String text = IOUtils.read(reader);
@@ -92,11 +137,16 @@ public class GoTemplateFactory {
     }
 
     /**
-     * Get a named template
+     * Retrieves a previously parsed template by name.
+     * <p>
+     * The template must have been parsed using one of the parse() methods before calling this method.
      *
-     * @param name Template name
-     * @return the template with the name
-     * @throws TemplateNotFoundException if template is missing. Did you put or parse it?
+     * @param name The name of the template to retrieve
+     * @return The GoTemplate instance for execution
+     * @throws TemplateNotFoundException if no template with the given name has been parsed
+     * @see #parse(String, String)
+     * @see #parse(String, InputStream)
+     * @see #parse(String, Reader)
      */
     public GoTemplate getTemplate(String name) throws TemplateNotFoundException {
         Node rootNode = rootNodes.get(name);

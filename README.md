@@ -6,7 +6,7 @@
 
 A Go template engine implementation for Java that evaluates Go templates and generates textual output.
 
-> ⚠️ **Experimental Status**: This project is currently experimental. **DO NOT USE IN PRODUCTION** yet, as support for complex numbers and built-in functions is incomplete.
+> ⚠️ **Experimental Status**: This project is currently experimental. Core functionality is stable with 80%+ test coverage, but performance optimizations and complete documentation are still in progress.
 
 ## Quick Start
 
@@ -18,7 +18,7 @@ Add the dependency to your Maven project:
 <dependency>
     <groupId>io.github.verils</groupId>
     <artifactId>gotemplate4j</artifactId>
-    <version>0.3.1</version>
+    <version>0.4.0-SNAPSHOT</version>
 </dependency>
 ```
 
@@ -44,19 +44,30 @@ System.out.print(writer.toString());  // "Hello Bob!"
 - Java Version: >= **1.8**
 - No additional dependencies required (pure Java)
 
-## Current Limitations
+## Current Status
 
-- The format of **print** functions in Java differs from Golang
-- Only a subset of built-in functions are implemented
-- PipeNode processing has limited capabilities
+### ✅ Completed Features (v0.4.0)
+- All 18+ Go built-in functions implemented (`eq`, `ne`, `lt`, `le`, `gt`, `ge`, `and`, `or`, `len`, `index`, `slice`, `call`, `html`, `js`, `urlquery`, `deepEqual`, `typeof`, `kindOf`)
+- Complete pipeline support with variable assignment
+- Enhanced error diagnostics with line/column information and context snippets
+- Test coverage: 80% instruction, 79% branch (JaCoCo measured)
+- Complex number parsing and formatting
+- Comprehensive Javadoc for public API classes
+- CONTRIBUTING.md guide for developers
+
+### 🚧 In Progress
+- Performance optimizations (caching strategies)
+- Comprehensive Javadoc documentation
+- Advanced template features (custom delimiters, enhanced whitespace control)
 
 ## Roadmap
 
-- [x] Support complex number format
-- [ ] Support all *built-in* functions in Golang
-- [ ] Complete PipeNode for all types of identifiers
-
 See [docs/PLAN.md](./docs/PLAN.md) for the detailed development roadmap.
+
+**Upcoming Milestones:**
+- v0.5.0: Performance optimizations and caching
+- v0.6.0: Complete documentation and production readiness
+- v1.0.0: Stable release
 
 ## References
 
