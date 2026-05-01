@@ -115,7 +115,7 @@ class ExecutorEdgeCaseTest {
     }
 
     @Test
-    void testExecuteRangeWithNullCollection() throws IOException, TemplateException {
+    void testExecuteRangeWithNullCollection() throws TemplateException {
         Template template = new Template("test");
         template.parse("{{range .Items}}item{{else}}empty{{end}}");
         
@@ -124,9 +124,7 @@ class ExecutorEdgeCaseTest {
         data.put("Items", null);
         
         // Range with null collection causes NPE - this tests that code path
-        assertThrows(NullPointerException.class, () -> {
-            template.execute(writer, data);
-        });
+        assertThrows(NullPointerException.class, () -> template.execute(writer, data));
     }
 
     @Test

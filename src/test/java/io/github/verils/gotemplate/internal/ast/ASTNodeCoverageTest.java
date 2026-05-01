@@ -68,7 +68,7 @@ class ASTNodeCoverageTest {
     @Test
     void testCommentNodeImplementsNode() {
         CommentNode node = new CommentNode("test");
-        assertTrue(node instanceof Node);
+        assertInstanceOf(Node.class, node);
     }
 
     @Test

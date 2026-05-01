@@ -34,8 +34,8 @@ class CharUtilsCoverageTest {
         assertTrue(CharUtils.isAscii('0'));
         assertTrue(CharUtils.isAscii('@'));
         assertTrue(CharUtils.isAscii('~'));
-        assertFalse(CharUtils.isAscii('\u00E9')); // é
-        assertFalse(CharUtils.isAscii('\u4E2D')); // 中
+        assertFalse(CharUtils.isAscii('é')); // é
+        assertFalse(CharUtils.isAscii('中')); // 中
     }
 
     @Test
@@ -99,30 +99,22 @@ class CharUtilsCoverageTest {
 
     @Test
     void testUnquoteCharThrowsExceptionForEmpty() {
-        assertThrows(IllegalArgumentException.class, () -> {
-            CharUtils.unquoteChar("");
-        });
+        assertThrows(IllegalArgumentException.class, () -> CharUtils.unquoteChar(""));
     }
 
     @Test
     void testUnquoteCharThrowsExceptionForNoLeadingQuote() {
-        assertThrows(IllegalArgumentException.class, () -> {
-            CharUtils.unquoteChar("a'");
-        });
+        assertThrows(IllegalArgumentException.class, () -> CharUtils.unquoteChar("a'"));
     }
 
     @Test
     void testUnquoteCharThrowsExceptionForNoTrailingQuote() {
-        assertThrows(IllegalArgumentException.class, () -> {
-            CharUtils.unquoteChar("'a");
-        });
+        assertThrows(IllegalArgumentException.class, () -> CharUtils.unquoteChar("'a"));
     }
 
     @Test
     void testUnquoteCharThrowsExceptionForTooLong() {
-        assertThrows(IllegalArgumentException.class, () -> {
-            CharUtils.unquoteChar("'abc'");
-        });
+        assertThrows(IllegalArgumentException.class, () -> CharUtils.unquoteChar("'abc'"));
     }
 
     @Test

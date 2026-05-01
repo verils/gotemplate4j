@@ -2,10 +2,6 @@ package io.github.verils.gotemplate;
 
 import org.junit.jupiter.api.Test;
 
-import java.io.IOException;
-import java.io.StringWriter;
-import java.io.Writer;
-
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
@@ -72,8 +68,8 @@ class ExceptionCoverageTest {
     @Test
     void testExceptionHierarchy() {
         // Verify that all specific exceptions are instances of TemplateException
-        assertTrue(new TemplateNotFoundException("test") instanceof TemplateException);
-        assertTrue(new TemplateExecutionException("test") instanceof TemplateException);
-        assertTrue(new TemplateParseException("test") instanceof TemplateException);
+        assertInstanceOf(TemplateException.class, new TemplateNotFoundException("test"));
+        assertInstanceOf(TemplateException.class, new TemplateExecutionException("test"));
+        assertInstanceOf(TemplateException.class, new TemplateParseException("test"));
     }
 }

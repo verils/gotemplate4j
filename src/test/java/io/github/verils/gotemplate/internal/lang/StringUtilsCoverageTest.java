@@ -51,36 +51,26 @@ class StringUtilsCoverageTest {
 
     @Test
     void testUnquoteThrowsExceptionForTooShort() {
-        assertThrows(IllegalArgumentException.class, () -> {
-            StringUtils.unquote("a");
-        });
+        assertThrows(IllegalArgumentException.class, () -> StringUtils.unquote("a"));
     }
 
     @Test
     void testUnquoteThrowsExceptionForMismatchedQuotes() {
-        assertThrows(IllegalArgumentException.class, () -> {
-            StringUtils.unquote("\"hello'");
-        });
+        assertThrows(IllegalArgumentException.class, () -> StringUtils.unquote("\"hello'"));
     }
 
     @Test
     void testUnquoteThrowsExceptionForInvalidQuoteChar() {
-        assertThrows(IllegalArgumentException.class, () -> {
-            StringUtils.unquote("#hello#");
-        });
+        assertThrows(IllegalArgumentException.class, () -> StringUtils.unquote("#hello#"));
     }
 
     @Test
     void testUnquoteThrowsExceptionForNewlineInDoubleQuotes() {
-        assertThrows(IllegalArgumentException.class, () -> {
-            StringUtils.unquote("\"hello\nworld\"");
-        });
+        assertThrows(IllegalArgumentException.class, () -> StringUtils.unquote("\"hello\nworld\""));
     }
 
     @Test
     void testUnquoteThrowsExceptionForBacktickInsideBackticks() {
-        assertThrows(IllegalArgumentException.class, () -> {
-            StringUtils.unquote("`hello`world`");
-        });
+        assertThrows(IllegalArgumentException.class, () -> StringUtils.unquote("`hello`world`"));
     }
 }
