@@ -44,6 +44,23 @@ System.out.print(writer.toString());  // "Hello Bob!"
 - Java Version: >= **1.8**
 - No additional dependencies required (pure Java)
 
+## Contributing
+
+Contributions are welcome! Please see [CONTRIBUTING.md](./CONTRIBUTING.md) for detailed guidelines.
+
+### Quick Start for Contributors
+
+```bash
+# Clone the repository
+git clone https://github.com/verils/gotemplate4j.git
+cd gotemplate4j
+
+# Build and test
+./mvnw clean install
+```
+
+For more information on development setup, coding guidelines, and priority areas, see [CONTRIBUTING.md](./CONTRIBUTING.md).
+
 ## Current Status
 
 ### ✅ Completed Features (v0.4.0)
@@ -77,38 +94,4 @@ See [docs/PLAN.md](./docs/PLAN.md) for the detailed development roadmap.
 - [Changelog](./CHANGELOG)
 - [Development Plan](./docs/PLAN.md)
 
-## Contributing
 
-Contributions are welcome! Here's how you can help:
-
-### Priority Areas
-
-1. **Built-in function implementations** - Help complete the remaining Go built-in functions
-2. **Test case development** - Improve test coverage to >80%
-3. **Documentation improvements** - Add Javadoc, examples, and guides
-4. **Performance profiling** - Identify and optimize bottlenecks
-
-### Development Setup
-
-```bash
-# Clone the repository
-git clone https://github.com/verils/gotemplate4j.git
-cd gotemplate4j
-
-# Build the project
-./mvnw clean install
-
-# Run tests
-./mvnw test
-```
-
-### Guidelines
-
-- Java Version: >= 1.8
-- Build Tool: Maven (use `./mvnw` wrapper)
-- No additional dependencies except Vanilla Java
-- Follow standard Java naming conventions
-- Add unit tests for all new features
-- Maintain backward compatibility
-
-For detailed development plan, see [docs/PLAN.md](./docs/PLAN.md).
