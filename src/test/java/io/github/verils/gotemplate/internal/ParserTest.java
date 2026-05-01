@@ -391,77 +391,77 @@ class ParserTest {
     }
 
     @Test
-    void testDotAfterInteger() throws TemplateParseException {
+    void testDotAfterInteger() {
         assertError("dot after integer", "{{1.E}}");
     }
 
     @Test
-    void testDotAfterFloat() throws TemplateParseException {
+    void testDotAfterFloat() {
         assertError("dot after float", "{{0.1.E}}");
     }
 
     @Test
-    void testDotAfterBoolean() throws TemplateParseException {
+    void testDotAfterBoolean() {
         assertError("dot after boolean", "{{true.E}}");
     }
 
     @Test
-    void testDotAfterChar() throws TemplateParseException {
+    void testDotAfterChar() {
         assertError("dot after char", "{{'a'.any}}");
     }
 
     @Test
-    void testDotAfterString() throws TemplateParseException {
+    void testDotAfterString() {
         assertError("dot after string", "{{\"hello\".guys}}");
     }
 
     @Test
-    void testDotAfterDot() throws TemplateParseException {
+    void testDotAfterDot() {
         assertError("dot after dot", "{{..E}}");
     }
 
     @Test
-    void testDotAfterNil() throws TemplateParseException {
+    void testDotAfterNil() {
         assertError("dot after nil", "{{nil.E}}");
     }
 
     @Test
-    void testWrongPipelineDot() throws TemplateParseException {
+    void testWrongPipelineDot() {
         assertError("wrong pipeline dot", "{{12|.}}");
     }
 
     @Test
-    void testWrongPipelineNumber() throws TemplateParseException {
+    void testWrongPipelineNumber() {
         assertError("wrong pipeline number", "{{.|12|printf}}");
     }
 
     @Test
-    void testWrongPipelineString() throws TemplateParseException {
+    void testWrongPipelineString() {
         assertError("wrong pipeline string", "{{.|printf|\"error\"}}");
     }
 
     @Test
-    void testWrongPipelineChar() throws TemplateParseException {
+    void testWrongPipelineChar() {
         assertError("wrong pipeline char", "{{12|printf|'e'}}");
     }
 
     @Test
-    void testWrongPipelineBoolean() throws TemplateParseException {
+    void testWrongPipelineBoolean() {
         assertError("wrong pipeline boolean", "{{.|true}}");
     }
 
     @Test
-    void testWrongPipelineNil() throws TemplateParseException {
+    void testWrongPipelineNil() {
         assertError("wrong pipeline nil", "{{'c'|nil}}");
     }
 
     @Test
-    void testEmptyPipeline() throws TemplateParseException {
+    void testEmptyPipeline() {
         assertError("empty pipeline", "{{printf \"%d\" ( ) }}");
     }
 
     @Test
-    void testInvalidBlockDefinition() throws TemplateParseException {
+    void testInvalidBlockDefinition() {
         assertError("block definition", "{{block \"foo\"}}hello{{end}}");
     }
 
@@ -574,7 +574,6 @@ class ParserTest {
             Parser parser = new Parser();
 
             String text = test.text;
-            NumberNode numberNode = new NumberNode(text);
 
             TokenType type = TokenType.NUMBER;
             if (text.charAt(0) == '\'') {
@@ -589,7 +588,7 @@ class ParserTest {
 
 
             try {
-                numberNode = parser.parseNumber(new Token(type, text, 0, 0, 0));
+                NumberNode numberNode = parser.parseNumber(new Token(type, text, 0, 0, 0));
                 assertEquals(test.isInt, numberNode.isInt(), String.format("invalid number: %s", test.text));
                 assertEquals(test.isFloat, numberNode.isFloat(), String.format("invalid number: %s", test.text));
                 assertEquals(test.isComplex, numberNode.isComplex(), String.format("invalid number: %s", test.text));
