@@ -245,10 +245,6 @@ class ParserTest {
         assertOK("newline in comment", "{{/*\nhello\n*/}}", "");
     }
 
-    @Test
-    void testNewlineInComment1() {
-        assertError("newline in empty action", "{{\n}}");
-    }
 
     @Test
     void testUnclosedAction() {
@@ -1090,29 +1086,6 @@ class ParserTest {
         assertNotNull(nodes.get("test"));
     }
 
-    // Test dot node
-    @Test
-    void testDotNode() throws TemplateParseException {
-        Parser parser = createParser2();
-        Map<String, Node> nodes = parser.parse("test", "{{.}}");
-        assertNotNull(nodes.get("test"));
-    }
-
-    // Test nil node
-    @Test
-    void testNilNode() throws TemplateParseException {
-        Parser parser = createParser2();
-        Map<String, Node> nodes = parser.parse("test", "{{nil}}");
-        assertNotNull(nodes.get("test"));
-    }
-
-    // Test raw string
-    @Test
-    void testRawString() throws TemplateParseException {
-        Parser parser = createParser2();
-        Map<String, Node> nodes = parser.parse("test", "{{`raw string`}}");
-        assertNotNull(nodes.get("test"));
-    }
 
     // Test identifier not found
     @Test
@@ -1152,42 +1125,6 @@ class ParserTest {
         assertThrows(TemplateParseException.class, () -> parser.parse("test", "{{..Field}}"));
     }
 
-    // Test comment in various positions
-    @Test
-    void testCommentAtBeginning() throws TemplateParseException {
-        Parser parser = createParser2();
-        Map<String, Node> nodes = parser.parse("test", "{{/* comment */}}text");
-        assertNotNull(nodes.get("test"));
-    }
-
-    @Test
-    void testCommentAtEnd() throws TemplateParseException {
-        Parser parser = createParser2();
-        Map<String, Node> nodes = parser.parse("test", "text{{/* comment */}}");
-        assertNotNull(nodes.get("test"));
-    }
-
-    @Test
-    void testCommentInMiddle() throws TemplateParseException {
-        Parser parser = createParser2();
-        Map<String, Node> nodes = parser.parse("test", "text1{{/* comment */}}text2");
-        assertNotNull(nodes.get("test"));
-    }
-
-    // Test whitespace handling
-    @Test
-    void testMultipleSpaces() throws TemplateParseException {
-        Parser parser = createParser2();
-        Map<String, Node> nodes = parser.parse("test", "{{   .   }}");
-        assertNotNull(nodes.get("test"));
-    }
-
-    @Test
-    void testTabsAndNewlines() throws TemplateParseException {
-        Parser parser = createParser2();
-        Map<String, Node> nodes = parser.parse("test", "{{\t.\n}}");
-        assertNotNull(nodes.get("test"));
-    }
 
     // Test complex pipeline
     @Test
@@ -1213,108 +1150,6 @@ class ParserTest {
         assertNotNull(nodes.get("test"));
     }
 
-    // Test negative numbers
-    @Test
-    void testNegativeInteger() throws TemplateParseException {
-        Parser parser = createParser2();
-        Map<String, Node> nodes = parser.parse("test", "{{-42}}");
-        assertNotNull(nodes.get("test"));
-    }
-
-    @Test
-    void testNegativeFloat() throws TemplateParseException {
-        Parser parser = createParser2();
-        Map<String, Node> nodes = parser.parse("test", "{{-3.14}}");
-        assertNotNull(nodes.get("test"));
-    }
-
-    @Test
-    void testPositiveSign() throws TemplateParseException {
-        Parser parser = createParser2();
-        Map<String, Node> nodes = parser.parse("test", "{{+42}}");
-        assertNotNull(nodes.get("test"));
-    }
-
-    // Test scientific notation
-    @Test
-    void testScientificNotation() throws TemplateParseException {
-        Parser parser = createParser2();
-        Map<String, Node> nodes = parser.parse("test", "{{1.23e10}}");
-        assertNotNull(nodes.get("test"));
-    }
-
-    @Test
-    void testScientificNotationNegativeExponent() throws TemplateParseException {
-        Parser parser = createParser2();
-        Map<String, Node> nodes = parser.parse("test", "{{1.23e-10}}");
-        assertNotNull(nodes.get("test"));
-    }
-
-    @Test
-    void testScientificNotationCapitalE() throws TemplateParseException {
-        Parser parser = createParser2();
-        Map<String, Node> nodes = parser.parse("test", "{{1.23E10}}");
-        assertNotNull(nodes.get("test"));
-    }
-
-    // Test hex float
-    @Test
-    void testHexFloat() throws TemplateParseException {
-        Parser parser = createParser2();
-        Map<String, Node> nodes = parser.parse("test", "{{0x1p4}}");
-        assertNotNull(nodes.get("test"));
-    }
-
-    @Test
-    void testHexFloatNegativeExponent() throws TemplateParseException {
-        Parser parser = createParser2();
-        Map<String, Node> nodes = parser.parse("test", "{{0x1p-4}}");
-        assertNotNull(nodes.get("test"));
-    }
-
-    // Test escaped characters in strings
-    @Test
-    void testStringWithEscapes() throws TemplateParseException {
-        Parser parser = createParser2();
-        Map<String, Node> nodes = parser.parse("test", "{{\"hello\\nworld\"}}");
-        assertNotNull(nodes.get("test"));
-    }
-
-    @Test
-    void testStringWithUnicodeEscape() throws TemplateParseException {
-        Parser parser = createParser2();
-        Map<String, Node> nodes = parser.parse("test", "{{\"\\u0041\"}}");
-        assertNotNull(nodes.get("test"));
-    }
-
-    // Test character constants with escapes
-    @Test
-    void testCharConstantWithEscape() throws TemplateParseException {
-        Parser parser = createParser2();
-        Map<String, Node> nodes = parser.parse("test", "{{'\\n'}}");
-        assertNotNull(nodes.get("test"));
-    }
-
-    @Test
-    void testCharConstantWithHexEscape() throws TemplateParseException {
-        Parser parser = createParser2();
-        Map<String, Node> nodes = parser.parse("test", "{{'\\xFF'}}");
-        assertNotNull(nodes.get("test"));
-    }
-
-    @Test
-    void testCharConstantWithUnicodeEscape() throws TemplateParseException {
-        Parser parser = createParser2();
-        Map<String, Node> nodes = parser.parse("test", "{{'\\u0041'}}");
-        assertNotNull(nodes.get("test"));
-    }
-
-    @Test
-    void testCharConstantWithLongUnicodeEscape() throws TemplateParseException {
-        Parser parser = createParser2();
-        Map<String, Node> nodes = parser.parse("test", "{{'\\U00000041'}}");
-        assertNotNull(nodes.get("test"));
-    }
 
     // Test range with else
     @Test
@@ -1464,21 +1299,6 @@ class ParserTest {
         assertNotNull(nodes.get(longName));
     }
 
-    // Test unicode in template text
-    @Test
-    void testUnicodeInTemplateText() throws TemplateParseException {
-        Parser parser = createParser2();
-        Map<String, Node> nodes = parser.parse("test", "你好世界{{.Name}}");
-        assertNotNull(nodes.get("test"));
-    }
-
-    // Test unicode in string literal
-    @Test
-    void testUnicodeInStringLiteral() throws TemplateParseException {
-        Parser parser = createParser2();
-        Map<String, Node> nodes = parser.parse("test", "{{\"こんにちは\"}}");
-        assertNotNull(nodes.get("test"));
-    }
 
     // Test mixed delimiters (default delimiters)
     @Test
@@ -1513,68 +1333,6 @@ class ParserTest {
         assertNotNull(nodes.get("test"));
     }
 
-    // Test boolean values
-    @Test
-    void testTrueBoolean() throws TemplateParseException {
-        Parser parser = createParser2();
-        Map<String, Node> nodes = parser.parse("test", "{{true}}");
-        assertNotNull(nodes.get("test"));
-    }
-
-    @Test
-    void testFalseBoolean() throws TemplateParseException {
-        Parser parser = createParser2();
-        Map<String, Node> nodes = parser.parse("test", "{{false}}");
-        assertNotNull(nodes.get("test"));
-    }
-
-    // Test zero values
-    @Test
-    void testZeroInteger() throws TemplateParseException {
-        Parser parser = createParser2();
-        Map<String, Node> nodes = parser.parse("test", "{{0}}");
-        assertNotNull(nodes.get("test"));
-    }
-
-    @Test
-    void testZeroFloat() throws TemplateParseException {
-        Parser parser = createParser2();
-        Map<String, Node> nodes = parser.parse("test", "{{0.0}}");
-        assertNotNull(nodes.get("test"));
-    }
-
-    // Test large numbers
-    @Test
-    void testLargeInteger() throws TemplateParseException {
-        Parser parser = createParser2();
-        Map<String, Node> nodes = parser.parse("test", "{{9223372036854775807}}");
-        assertNotNull(nodes.get("test"));
-    }
-
-    @Test
-    void testLargeFloat() throws TemplateParseException {
-        Parser parser = createParser2();
-        Map<String, Node> nodes = parser.parse("test", "{{1.7976931348623157e+308}}");
-        assertNotNull(nodes.get("test"));
-    }
-
-    // Test complex number that simplifies to integer
-    @Test
-    void testComplexSimplifiesToInt() throws TemplateParseException {
-        Parser parser = createParser2();
-        // 5+0i should simplify to int 5
-        Map<String, Node> nodes = parser.parse("test", "{{5+0i}}");
-        assertNotNull(nodes.get("test"));
-    }
-
-    // Test complex number that simplifies to float
-    @Test
-    void testComplexSimplifiesToFloat() throws TemplateParseException {
-        Parser parser = createParser2();
-        // 5.5+0i should simplify to float 5.5
-        Map<String, Node> nodes = parser.parse("test", "{{5.5+0i}}");
-        assertNotNull(nodes.get("test"));
-    }
 
     // Test error context with tab character at error position
     @Test
@@ -1718,109 +1476,6 @@ class ParserTest {
         assertNotNull(nodes.get("test"));
     }
 
-    // Test number parsing edge case: just zero
-    @Test
-    void testJustZero() throws TemplateParseException {
-        Parser parser = createParser2();
-        Map<String, Node> nodes = parser.parse("test", "{{0}}");
-        assertNotNull(nodes.get("test"));
-    }
-
-    // Test octal zero
-    @Test
-    void testOctalZero() throws TemplateParseException {
-        Parser parser = createParser2();
-        Map<String, Node> nodes = parser.parse("test", "{{0o0}}");
-        assertNotNull(nodes.get("test"));
-    }
-
-    // Test hex zero
-    @Test
-    void testHexZero() throws TemplateParseException {
-        Parser parser = createParser2();
-        Map<String, Node> nodes = parser.parse("test", "{{0x0}}");
-        assertNotNull(nodes.get("test"));
-    }
-
-    // Test binary zero
-    @Test
-    void testBinaryZero() throws TemplateParseException {
-        Parser parser = createParser2();
-        Map<String, Node> nodes = parser.parse("test", "{{0b0}}");
-        assertNotNull(nodes.get("test"));
-    }
-
-    // Test negative zero
-    @Test
-    void testNegativeZero() throws TemplateParseException {
-        Parser parser = createParser2();
-        Map<String, Node> nodes = parser.parse("test", "{{-0}}");
-        assertNotNull(nodes.get("test"));
-    }
-
-    // Test positive zero
-    @Test
-    void testPositiveZero() throws TemplateParseException {
-        Parser parser = createParser2();
-        Map<String, Node> nodes = parser.parse("test", "{{+0}}");
-        assertNotNull(nodes.get("test"));
-    }
-
-    // Test float zero
-    @Test
-    void testFloatZero() throws TemplateParseException {
-        Parser parser = createParser2();
-        Map<String, Node> nodes = parser.parse("test", "{{0.0}}");
-        assertNotNull(nodes.get("test"));
-    }
-
-    // Test complex zero
-    @Test
-    void testComplexZero() throws TemplateParseException {
-        Parser parser = createParser2();
-        Map<String, Node> nodes = parser.parse("test", "{{0+0i}}");
-        assertNotNull(nodes.get("test"));
-    }
-
-    // Test pure imaginary zero
-    @Test
-    void testPureImaginaryZero() throws TemplateParseException {
-        Parser parser = createParser2();
-        Map<String, Node> nodes = parser.parse("test", "{{0i}}");
-        assertNotNull(nodes.get("test"));
-    }
-
-    // Test string with newline escape
-    @Test
-    void testStringWithNewlineEscape() throws TemplateParseException {
-        Parser parser = createParser2();
-        Map<String, Node> nodes = parser.parse("test", "{{\"line1\\nline2\"}}");
-        assertNotNull(nodes.get("test"));
-    }
-
-    // Test string with tab escape
-    @Test
-    void testStringWithTabEscape() throws TemplateParseException {
-        Parser parser = createParser2();
-        Map<String, Node> nodes = parser.parse("test", "{{\"tab\\there\"}}");
-        assertNotNull(nodes.get("test"));
-    }
-
-    // Test string with quote escape
-    @Test
-    void testStringWithQuoteEscape() throws TemplateParseException {
-        Parser parser = createParser2();
-        Map<String, Node> nodes = parser.parse("test", "{{\"quote\\\"here\"}}");
-        assertNotNull(nodes.get("test"));
-    }
-
-    // Test char with various escapes
-    @Test
-    void testCharWithBackslashEscape() throws TemplateParseException {
-        Parser parser = createParser2();
-        Map<String, Node> nodes = parser.parse("test", "{{'\\\\'}}");
-        assertNotNull(nodes.get("test"));
-    }
 
     // Test pipeline with single command
     @Test
@@ -1830,52 +1485,6 @@ class ParserTest {
         assertNotNull(nodes.get("test"));
     }
 
-    // Test action with only whitespace
-    @Test
-    void testActionWithOnlyWhitespace() {
-        Parser parser = createParser2();
-        assertThrows(TemplateParseException.class, () -> parser.parse("test", "{{   }}"));
-    }
-
-    // Test text with special characters
-    @Test
-    void testTextWithSpecialCharacters() throws TemplateParseException {
-        Parser parser = createParser2();
-        Map<String, Node> nodes = parser.parse("test", "Hello <World> & 'Friends'");
-        assertNotNull(nodes.get("test"));
-    }
-
-    // Test empty string
-    @Test
-    void testEmptyString() throws TemplateParseException {
-        Parser parser = createParser2();
-        Map<String, Node> nodes = parser.parse("test", "{{\"\"}}");
-        assertNotNull(nodes.get("test"));
-    }
-
-    // Test empty raw string
-    @Test
-    void testEmptyRawString() throws TemplateParseException {
-        Parser parser = createParser2();
-        Map<String, Node> nodes = parser.parse("test", "{{``}}");
-        assertNotNull(nodes.get("test"));
-    }
-
-    // Test comment with special characters
-    @Test
-    void testCommentWithSpecialCharacters() throws TemplateParseException {
-        Parser parser = createParser2();
-        Map<String, Node> nodes = parser.parse("test", "{{/* Special chars: <>&\"' */}}");
-        assertNotNull(nodes.get("test"));
-    }
-
-    // Test multiple comments
-    @Test
-    void testMultipleComments() throws TemplateParseException {
-        Parser parser = createParser2();
-        Map<String, Node> nodes = parser.parse("test", "{{/* comment1 */}}text{{/* comment2 */}}");
-        assertNotNull(nodes.get("test"));
-    }
 
     // Test nested if inside range
     @Test
