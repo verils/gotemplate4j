@@ -626,4 +626,55 @@ class ParserTest {
         }
     }
 
+    @Test
+    void testErrorContextWithNullToken() {
+        Parser parser = createParser();
+        try {
+            // Test error path where token is null in error context
+            parser.parse("test", "{{if .X}}hello");
+            fail("Should throw TemplateParseException for unclosed if");
+        } catch (TemplateParseException e) {
+            assertNotNull(e.getMessage());
+            // Message should contain parse error info
+            assertTrue(e.getMessage().contains("Parse error") || e.getMessage().contains("unexpected"));
+        }
+    }
+
+    @Test
+    void testErrorContextWithMultilineTemplate() {
+        Parser parser = createParser();
+        try {
+            parser.parse("test", "Line 1\nLine 2\n{{invalid syntax}}\nLine 4");
+            fail("Should throw TemplateParseException");
+        } catch (TemplateParseException e) {
+            assertNotNull(e.getMessage());
+            // Error message should be present, may or may not have line info depending on error type
+            assertFalse(e.getMessage().isEmpty());
+        }
+    }
+
+    @Test
+    void testUnclosedDelimiterError() {
+        Parser parser = createParser();
+        try {
+            parser.parse("test", "Hello {{");
+            fail("Should throw TemplateParseException for unclosed delimiter");
+        } catch (TemplateParseException e) {
+            assertNotNull(e.getMessage());
+            assertTrue(e.getMessage().contains("unclosed"));
+        }
+    }
+
+    @Test
+    void testMissingActionTokenError() {
+        Parser parser = createParser();
+        try {
+            // This should trigger missing action token error
+            parser.parse("test", "{{ ");
+            fail("Should throw TemplateParseException");
+        } catch (TemplateParseException e) {
+            assertNotNull(e.getMessage());
+        }
+    }
+
 }

@@ -862,4 +862,102 @@ class BuiltInFunctionsTest {
         template.execute(writer, null);
         assertEquals("hello", writer.toString());
     }
+
+    @Test
+    void testSliceWithString() throws IOException, TemplateException {
+        Template template = new Template("test");
+        template.parse("{{slice \"hello\" 1 4}}");
+        
+        Writer writer = new StringWriter();
+        template.execute(writer, null);
+        assertEquals("ell", writer.toString());
+    }
+
+    @Test
+    void testCallFunction() throws IOException, TemplateException {
+        Template template = new Template("test");
+        template.parse("{{call .Func}}");
+        
+        Writer writer = new StringWriter();
+        Map<String, Object> data = new HashMap<>();
+        data.put("Func", (Function) args -> "result");
+        template.execute(writer, data);
+        assertEquals("result", writer.toString());
+    }
+
+    @Test
+    void testHtmlEscape() throws IOException, TemplateException {
+        Template template = new Template("test");
+        template.parse("{{html .Text}}");
+        
+        Writer writer = new StringWriter();
+        Map<String, Object> data = new HashMap<>();
+        data.put("Text", "<script>alert('xss')</script>");
+        template.execute(writer, data);
+        assertTrue(writer.toString().contains("&lt;"));
+    }
+
+    @Test
+    void testJsEscape() throws IOException, TemplateException {
+        Template template = new Template("test");
+        template.parse("{{js .Text}}");
+        
+        Writer writer = new StringWriter();
+        Map<String, Object> data = new HashMap<>();
+        data.put("Text", "Hello \"World\"");
+        template.execute(writer, data);
+        assertTrue(writer.toString().contains("\\\""));
+    }
+
+    @Test
+    void testUrlQuery() throws IOException, TemplateException {
+        Template template = new Template("test");
+        template.parse("{{urlquery .Text}}");
+        
+        Writer writer = new StringWriter();
+        Map<String, Object> data = new HashMap<>();
+        data.put("Text", "hello world");
+        template.execute(writer, data);
+        assertTrue(writer.toString().contains("+") || writer.toString().contains("%20"));
+    }
+
+    @Test
+    void testDeepEqualWithSameObjects() throws IOException, TemplateException {
+        Template template = new Template("test");
+        template.parse("{{if deepEqual .A .B}}yes{{else}}no{{end}}");
+        
+        Writer writer = new StringWriter();
+        Map<String, Object> data = new HashMap<>();
+        List<String> list = Arrays.asList("a", "b");
+        data.put("A", list);
+        data.put("B", list);
+        template.execute(writer, data);
+        assertEquals("yes", writer.toString());
+    }
+
+    @Test
+    void testTypeOf() throws IOException, TemplateException {
+        Template template = new Template("test");
+        template.parse("{{typeof .Value}}");
+        
+        Writer writer = new StringWriter();
+        Map<String, Object> data = new HashMap<>();
+        data.put("Value", "hello");
+        template.execute(writer, data);
+        assertTrue(writer.toString().contains("String"));
+    }
+
+    @Test
+    void testKindOf() throws IOException, TemplateException {
+        Template template = new Template("test");
+        template.parse("{{kindOf .Value}}");
+        
+        Writer writer = new StringWriter();
+        Map<String, Object> data = new HashMap<>();
+        data.put("Value", 42);
+        template.execute(writer, data);
+        // kindOf returns the kind (e.g., "int", "string", etc.)
+        assertNotNull(writer.toString());
+        assertFalse(writer.toString().isEmpty());
+    }
 }

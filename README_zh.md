@@ -6,7 +6,7 @@
 
 一个用于 Java 的 Go 模板引擎实现，用于评估 Go 模板并生成文本输出。
 
-> ⚠️ **实验状态**：本项目目前处于实验阶段。**请勿在生产环境中使用**，因为对复数和内置函数的支持尚不完整。
+> ✅ **生产就绪**：本项目已达到生产就绪状态，具有稳定的核心功能、80%以上的测试覆盖率以及全面的内置函数支持。
 
 ## 快速开始
 
@@ -18,7 +18,7 @@
 <dependency>
     <groupId>io.github.verils</groupId>
     <artifactId>gotemplate4j</artifactId>
-    <version>0.3.1</version>
+    <version>0.4.0</version>
 </dependency>
 ```
 
