@@ -18,7 +18,7 @@ Add the dependency to your Maven project:
 <dependency>
     <groupId>io.github.verils</groupId>
     <artifactId>gotemplate4j</artifactId>
-    <version>0.4.0-SNAPSHOT</version>
+    <version>0.4.0</version>
 </dependency>
 ```
 

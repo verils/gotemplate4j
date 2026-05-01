@@ -1,7 +1,7 @@
 # gotemplate4j Long-Term Development Plan
 
 **Last Updated**: 2026-05-01  
-**Current Version**: 0.4.0-SNAPSHOT  
+**Current Version**: 0.4.0  
 **Status**: Production Ready
 
 ---
