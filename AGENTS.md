@@ -62,7 +62,7 @@
 - Use JUnit 5 (Jupiter) for testing
 - Maintain existing test patterns and structure
 - **All existing tests and new tests must succeed** - no test failures are acceptable
-- **Code coverage must not be lower than 80%** - ensure comprehensive test coverage for all new code
+- **Code coverage must not be lower than 90%** - template engines require exceptional test coverage due to complex parsing logic, security implications, and numerous edge cases
 
 ### Code Coverage Verification
 The project uses JaCoCo for code coverage analysis with automatic enforcement:
@@ -72,7 +72,7 @@ The project uses JaCoCo for code coverage analysis with automatic enforcement:
    ./mvnw clean test jacoco:report
    ```
 
-2. **Run full build with coverage check (enforces 80% minimum):**
+2. **Run full build with coverage check (enforces 90% minimum):**
    ```bash
    # Skip GPG signing for local builds
    ./mvnw clean verify "-Dgpg.skip=true"
@@ -84,9 +84,15 @@ The project uses JaCoCo for code coverage analysis with automatic enforcement:
    - CSV Report: `target/site/jacoco/jacoco.csv` (for quick analysis)
 
 4. **Coverage thresholds enforced:**
-   - Instruction Coverage: ≥ 80%
-   - Branch Coverage: ≥ 80%
+   - Instruction Coverage: ≥ 90%
+   - Branch Coverage: ≥ 85%
    - Build will FAIL if thresholds are not met
+   
+   **Rationale**: Template engines require higher coverage than typical applications because:
+   - Complex parsing logic with many edge cases must be thoroughly tested
+   - Security-critical code (template injection prevention) needs comprehensive validation
+   - 20+ AST node types each require extensive testing
+   - Library backward compatibility demands bulletproof execution paths
 
 5. **Improving coverage:**
    - Focus on classes with low branch coverage (check CSV report)
