@@ -1,6 +1,6 @@
 # gotemplate4j Long-Term Development Plan
 
-**Last Updated**: 2026-04-30  
+**Last Updated**: 2026-05-01  
 **Current Version**: 0.4.0-SNAPSHOT  
 **Status**: Experimental - NOT FOR PRODUCTION USE
 
@@ -23,8 +23,8 @@ Transform gotemplate4j from an experimental Go template engine for Java into a p
 - Pipeline: Basic pipe operator support
 
 ### ⚠️ Known Limitations
-- ~~**Built-in Functions**: Only 4/18 fully implemented (`print`, `printf`, `println`, `not`)~~ **COMPLETED v0.4.0**
-- **PipeNode**: Variable handling incomplete, weak multi-stage pipeline support
+- **Built-in Functions**: Only 4/18 fully implemented (`print`, `printf`, `println`, `not`)~~ **COMPLETED v0.4.0**
+- ~~**PipeNode**: Variable handling incomplete, weak multi-stage pipeline support~~ **COMPLETED v0.4.0**
 - ~~**Error Messages**: Generic, lack context (line/column numbers)~~ **PARTIALLY COMPLETED - Parser errors include line/column**
 - ~~**Test Coverage**: Unknown, likely <50%~~ **COMPLETED - 82% instruction coverage, 80% branch coverage**
 - **Performance**: No caching or optimization strategies
@@ -32,7 +32,7 @@ Transform gotemplate4j from an experimental Go template engine for Java into a p
 
 ### 🔴 Production Blockers
 1. ~~Incomplete built-in function implementations~~ **RESOLVED v0.4.0**
-2. Weak PipeNode processing
+2. ~~Weak PipeNode processing~~ **RESOLVED v0.4.0**
 3. ~~Insufficient test coverage~~ **RESOLVED - 82% coverage achieved**
 4. ~~Missing error diagnostics~~ **PARTIALLY RESOLVED - Parser includes line/column info**
 
@@ -84,25 +84,27 @@ Transform gotemplate4j from an experimental Go template engine for Java into a p
 ---
 
 #### 1.2 Fix PipeNode Processing
-**Priority**: CRITICAL | **Effort**: 2 weeks
+**Priority**: CRITICAL | **Effort**: 2 weeks | **Status**: ✅ COMPLETED v0.4.0
 
-**Tasks**:
-- Implement variable assignment in pipes: `{{$var := .Value | upper}}`
-- Support multi-stage pipeline transformations
-- Handle type conversions between pipeline stages
-- Add proper error propagation
+~~**Tasks**:~~
+- ~~Implement variable assignment in pipes: `{{$var := .Value | upper}}`~~
+- ~~Support multi-stage pipeline transformations~~
+- ~~Handle type conversions between pipeline stages~~
+- ~~Add proper error propagation~~
 
-**Current Issue** (Executor.java:178-179):
-```java
-for (VariableNode variable : pipeNode.getVariables()) {
-    // EMPTY - not implemented!
-}
-```
+**Implementation Details**:
+- Added variable storage mechanism using `Map<String, Object>` in Executor
+- Implemented variable assignment in `executePipe()` method
+- Added `executeVariable()` method for variable lookup at runtime
+- Maintained Go template's parse-time variable validation (Parser.findVariable)
+- Updated all execution methods to pass variable context through call chain
 
 **Acceptance Criteria**:
-- Variable declarations work in all contexts
-- Pipeline chains execute correctly
-- Type errors produce clear messages
+- ✅ Variable declarations work in all contexts
+- ✅ Pipeline chains execute correctly
+- ✅ Type errors produce clear messages
+- ✅ 16 comprehensive tests added (PipeNodeVariableTest)
+- ✅ All 245 tests pass with >80% coverage maintained
 
 ---
 
