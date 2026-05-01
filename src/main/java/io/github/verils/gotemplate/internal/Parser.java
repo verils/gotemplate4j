@@ -495,7 +495,6 @@ public class Parser {
     private void parseCommand(PipeNode pipeNode, Lexer lexer, State state) throws TemplateParseException {
         CommandNode commandNode = new CommandNode();
 
-        loop:
         while (true) {
             Node node = null;
 
@@ -582,7 +581,7 @@ public class Parser {
             token = moveToNextToken(lexer, state);
             switch (token.type()) {
                 case SPACE:
-                    continue loop;
+                    continue;
                 case RIGHT_DELIM:
                 case RIGHT_PAREN:
                     moveToPrevItem(lexer, state);
@@ -743,7 +742,6 @@ public class Parser {
             numberNode.setIsFloat(true);
             numberNode.setFloatValue(floatValue);
 
-            long intValue = (long) floatValue;
             simplifyFloat(numberNode, floatValue);
         }
     }

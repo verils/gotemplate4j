@@ -109,14 +109,11 @@ class PipeNodeVariableTest {
     }
 
     @Test
-    void testUndefinedVariable() throws Exception {
+    void testUndefinedVariable() {
         // This should fail at parse time (Go template behavior)
         String template = "{{$undefined}}";
         Template tmpl = new Template("test");
-        
-        assertThrows(TemplateParseException.class, () -> {
-            tmpl.parse(template);
-        });
+        assertThrows(TemplateParseException.class, () -> tmpl.parse(template));
     }
 
     @Test
