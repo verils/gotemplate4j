@@ -81,11 +81,6 @@ For more information on development setup, coding guidelines, and priority areas
 
 See [docs/PLAN.md](./docs/PLAN.md) for the detailed development roadmap.
 
-**Upcoming Milestones:**
-- v0.5.0: Performance optimizations and caching
-- v0.6.0: Complete documentation and production readiness
-- v1.0.0: Stable release
-
 ## References
 
 - [Go text/template Documentation](https://pkg.go.dev/text/template)
