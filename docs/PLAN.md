@@ -315,20 +315,6 @@ After:  "Parse error at line 5, column 12: unexpected 'else' without matching 'i
 
 ---
 
-## 🚀 Quick Wins (< 1 Week Each)
-
-These can be implemented immediately for high impact:
-
-1. **Implement `len` function** - Simple, frequently used
-2. **Implement `eq` function** - Most common comparison
-3. **Add line numbers to errors** - Easy UX improvement
-4. **Update README version** - Currently shows 0.3.1, should be 0.3.2
-5. **Add basic Javadoc** - Start with public API classes
-6. **Configure JaCoCo** - Visibility into test coverage
-7. **Add CONTRIBUTING.md** - Lower barrier for contributors
-
----
-
 ## 📈 Success Metrics
 
 ### Technical Metrics
