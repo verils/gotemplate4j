@@ -6,6 +6,8 @@
 
 A Go template engine implementation for Java that evaluates Go templates and generates textual output.
 
+> **Purpose**: This project was created not to replace Go templates, but to fill a gap in the Java ecosystem where Go template compatibility was needed. It enables Java applications to leverage Go's powerful template syntax when working with Go-based systems.
+
 > ✅ **Production Ready**: This project has reached production-ready status with stable core functionality, 80%+ test coverage, and comprehensive built-in function support.
 
 ## Quick Start
