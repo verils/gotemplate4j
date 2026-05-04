@@ -25,13 +25,13 @@ Transform gotemplate4j from an experimental Go template engine for Java into a p
 ### ⚠️ Known Limitations
 - **Performance**: No caching or optimization strategies
 - **Documentation**: Javadoc added for public APIs, but advanced usage guides still needed
-- **Test Coverage**: 82% instruction coverage, 79% branch coverage (meets >70% branch target)
+- **Test Coverage**: Target 90-95% instruction coverage, 85-90% branch coverage (template engines require higher coverage due to complex parsing logic and edge cases)
 - **Error Diagnostics**: Line/column info and context snippets implemented, suggestions and error codes pending
 
 ### 🔴 Production Blockers
 1. ~~Incomplete built-in function implementations~~ **RESOLVED v0.4.0**
 2. ~~Weak PipeNode processing~~ **RESOLVED v0.4.0**
-3. ~~Insufficient test coverage~~ **RESOLVED - 82% instruction, 79% branch (exceeds 70% target)**
+3. ~~Insufficient test coverage~~ **RESOLVED - Target: 90-95% instruction, 85-90% branch coverage**
 4. ~~Missing error diagnostics~~ **RESOLVED - Parser includes line/column info and context snippets**
 
 ---
@@ -138,21 +138,37 @@ After:  "Parse error at line 5, column 12: unexpected 'else' without matching 'i
 ---
 
 #### 1.4 Increase Test Coverage
-**Priority**: HIGH | **Effort**: Ongoing | **Status**: ✅ COMPLETED
+**Priority**: HIGH | **Effort**: Ongoing | **Status**: IN PROGRESS
 
-**Target**: >80% instruction coverage, >70% branch coverage **ACHIEVED - 82% instruction, 79% branch**
+**Target**: 90-95% instruction coverage, 85-90% branch coverage
 
-~~**Test Categories**:~~
-- ~~Unit tests for all built-in functions~~ (74 tests)
-- ~~Integration tests for complex templates~~
-- ~~Edge case testing (null values, empty collections)~~
-- ~~Error path validation~~
+**Rationale**: Template engines require higher coverage than typical applications due to:
+- Complex parsing logic with numerous edge cases
+- Security implications (template injection prevention)
+- 20+ AST node types requiring thorough testing
+- Critical execution paths that must be bulletproof
+- Backward compatibility requirements for a library
+
+**Test Categories**:
+- Unit tests for all built-in functions (74 tests)
+- Integration tests for complex templates
+- Edge case testing (null values, empty collections, malformed syntax)
+- Error path validation (all error branches tested)
 - Unicode/internationalization tests
 - Performance regression tests
+- Security-focused tests (injection attempts, resource exhaustion)
 
-~~**Tools**:~~
-- ~~Configure JaCoCo for coverage reporting~~ **DONE - Configured in pom.xml**
-- Add mutation testing (PITest)
+**Tools**:
+- JaCoCo for coverage reporting (configured in pom.xml)
+- Mutation testing (PITest) - planned
+- Coverage thresholds enforced in CI/CD pipeline
+
+**Current Status**: 82% instruction, 79% branch coverage
+**Action Plan**: Incrementally increase coverage by focusing on:
+1. Parser edge cases and error handling paths
+2. Executor branch coverage (conditional logic)
+3. AST node execution paths
+4. Built-in function boundary conditions
 
 ---
 
@@ -319,7 +335,7 @@ After:  "Parse error at line 5, column 12: unexpected 'else' without matching 'i
 
 ### Technical Metrics
 - [x] All 18+ built-in functions fully implemented
-- [x] Test coverage >80% instruction, >70% branch (measured by JaCoCo)
+- [ ] Test coverage 90-95% instruction, 85-90% branch (measured by JaCoCo)
 - [x] Zero critical/high severity bugs
 - [ ] Performance within 2x of Go's native implementation
 - [ ] Mutation testing score >70%
