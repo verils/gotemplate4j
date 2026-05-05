@@ -1,7 +1,8 @@
 # gotemplate4j Long-Term Development Plan
 
-**Last Updated**: 2026-05-01  
+**Last Updated**: 2026-05-05  
 **Current Version**: 0.4.0  
+**Next Version**: 0.5.0 (dev branch)  
 **Status**: Production Ready
 
 ---
@@ -25,14 +26,12 @@ Transform gotemplate4j from an experimental Go template engine for Java into a p
 ### ⚠️ Known Limitations
 - **Performance**: No caching or optimization strategies
 - **Documentation**: Javadoc added for public APIs, but advanced usage guides still needed
-- **Test Coverage**: Target 90-95% instruction coverage, 85-90% branch coverage (template engines require higher coverage due to complex parsing logic and edge cases)
 - **Error Diagnostics**: Line/column info and context snippets implemented, suggestions and error codes pending
 
 ### 🔴 Production Blockers
 1. ~~Incomplete built-in function implementations~~ **RESOLVED v0.4.0**
 2. ~~Weak PipeNode processing~~ **RESOLVED v0.4.0**
-3. ~~Insufficient test coverage~~ **RESOLVED - Target: 90-95% instruction, 85-90% branch coverage**
-4. ~~Missing error diagnostics~~ **RESOLVED - Parser includes line/column info and context snippets**
+3. ~~Missing error diagnostics~~ **RESOLVED - Parser includes line/column info and context snippets**
 
 ---
 
@@ -138,9 +137,13 @@ After:  "Parse error at line 5, column 12: unexpected 'else' without matching 'i
 ---
 
 #### 1.4 Increase Test Coverage
-**Priority**: HIGH | **Effort**: Ongoing | **Status**: IN PROGRESS
+**Priority**: MANDATORY (Enforced by CI/CD) | **Effort**: Ongoing | **Status**: MAINTAINED
 
-**Target**: 90-95% instruction coverage, 85-90% branch coverage
+**Coverage Requirements** (Enforced by JaCoCo in pom.xml):
+- Instruction Coverage: ≥ 90%
+- Branch Coverage: ≥ 85%
+
+**Note**: Code coverage is a mandatory quality gate enforced automatically during builds, not a version-specific goal. All changes must maintain these thresholds.
 
 **Rationale**: Template engines require higher coverage than typical applications due to:
 - Complex parsing logic with numerous edge cases
@@ -150,7 +153,7 @@ After:  "Parse error at line 5, column 12: unexpected 'else' without matching 'i
 - Backward compatibility requirements for a library
 
 **Test Categories**:
-- Unit tests for all built-in functions (74 tests)
+- Unit tests for all built-in functions
 - Integration tests for complex templates
 - Edge case testing (null values, empty collections, malformed syntax)
 - Error path validation (all error branches tested)
@@ -163,20 +166,16 @@ After:  "Parse error at line 5, column 12: unexpected 'else' without matching 'i
 - Mutation testing (PITest) - planned
 - Coverage thresholds enforced in CI/CD pipeline
 
-**Current Status**: 82% instruction, 79% branch coverage
-**Action Plan**: Incrementally increase coverage by focusing on:
-1. Parser edge cases and error handling paths
-2. Executor branch coverage (conditional logic)
-3. AST node execution paths
-4. Built-in function boundary conditions
+**Current Status**: Maintained above minimum thresholds
+**Strategy**: Add tests incrementally when implementing new features or fixing bugs, ensuring coverage never drops below thresholds.
 
 ---
 
 ### Phase 2: Feature Completeness (Q4 2026 - Q1 2027)
 **Goal**: Full Go template specification compliance
 
-#### 2.1 Advanced Template Features
-**Priority**: HIGH | **Effort**: 3-4 weeks
+#### 2.1 Advanced Template Features (v0.5.0 Focus)
+**Priority**: HIGH | **Effort**: 3-4 weeks | **Status**: PLANNED for v0.5.0
 
 **Missing Features**:
 - [ ] Full `{{block}}` action with proper overriding semantics
@@ -188,16 +187,16 @@ After:  "Parse error at line 5, column 12: unexpected 'else' without matching 'i
 
 ---
 
-#### 2.2 Type System Enhancements
-**Priority**: MEDIUM | **Effort**: 2-3 weeks
+#### 2.2 Type System Enhancements (v0.5.0 Focus)
+**Priority**: MEDIUM | **Effort**: 2-3 weeks | **Status**: PLANNED for v0.5.0
 
 **Improvements**:
-- Support public fields (not just getter methods)
-- Better array/collection iteration with index tracking
-- Custom type adapters/converter registry
-- Improved null-safety with default values
-- Support for Java 8+ Optional types
-- Enum handling improvements
+- [ ] Support public fields (not just getter methods)
+- [ ] Better array/collection iteration with index tracking
+- [ ] Custom type adapters/converter registry
+- [ ] Improved null-safety with default values
+- [ ] Support for Java 8+ Optional types
+- [ ] Enum handling improvements
 
 ---
 
@@ -335,7 +334,7 @@ After:  "Parse error at line 5, column 12: unexpected 'else' without matching 'i
 
 ### Technical Metrics
 - [x] All 18+ built-in functions fully implemented
-- [ ] Test coverage 90-95% instruction, 85-90% branch (measured by JaCoCo)
+- [x] Test coverage thresholds maintained (≥90% instruction, ≥85% branch - enforced by JaCoCo)
 - [x] Zero critical/high severity bugs
 - [ ] Performance within 2x of Go's native implementation
 - [ ] Mutation testing score >70%
@@ -347,12 +346,11 @@ After:  "Parse error at line 5, column 12: unexpected 'else' without matching 'i
 - [ ] Architecture diagram published
 
 ### Release Milestones
-- [x] Version 0.4.0: All comparison/logical operators
-- [x] Version 0.5.0: All collection functions
-- [x] Version 0.6.0: Complete built-in functions
-- [x] Version 0.7.0: Performance optimizations
-- [x] Version 0.8.0: Documentation complete
-- [x] Version 1.0.0: Production ready (remove experimental warning)
+- [x] Version 0.4.0: All comparison/logical operators + collection functions + complete built-in functions
+- [ ] Version 0.5.0: Advanced template features and type system enhancements
+- [ ] Version 0.6.0: Performance optimizations and caching strategies
+- [ ] Version 0.7.0: Documentation complete with examples and migration guide
+- [ ] Version 1.0.0: Production ready (remove experimental warning)
 
 ---
 
