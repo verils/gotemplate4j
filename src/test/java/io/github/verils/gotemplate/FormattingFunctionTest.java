@@ -13,10 +13,9 @@ import java.util.Map;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
- * Tests for custom type adapter/converter registry.
- * This feature allows registering custom converters for specific types.
+ * Tests for custom formatting functions used with domain types.
  */
-public class TypeAdapterTest {
+public class FormattingFunctionTest {
 
     // Custom class that needs special formatting
     public static class CustomDate {
@@ -45,8 +44,8 @@ public class TypeAdapterTest {
     }
 
     @Test
-    void testDefaultToStringWithoutAdapter() throws IOException, TemplateException {
-        // Without adapter, uses default toString()
+    void testDefaultToStringWithoutFormattingFunction() throws IOException, TemplateException {
+        // Without a formatting function, uses default toString()
         Template template = new Template("test");
         template.parse("Value: {{.value}}");
         
@@ -59,12 +58,12 @@ public class TypeAdapterTest {
         
         // Should use default toString
         String result = writer.toString();
-        assertEquals("Value: " + currency.toString(), result);
+        assertEquals("Value: " + currency, result);
     }
 
     @Test
-    void testCustomTypeAdapter() throws IOException, TemplateException {
-        // Register a custom adapter for Currency type
+    void testCustomFormattingFunction() throws IOException, TemplateException {
+        // Register a custom formatting function for Currency type
         Map<String, Function> functions = new HashMap<>();
         functions.put("formatCurrency", args -> {
             Currency currency = (Currency) args[0];
@@ -84,7 +83,7 @@ public class TypeAdapterTest {
     }
 
     @Test
-    void testDateFormatterAdapter() throws IOException, TemplateException {
+    void testDateFormatterFunction() throws IOException, TemplateException {
         // Register a date formatter function
         Map<String, Function> functions = new HashMap<>();
         functions.put("formatDate", args -> {
@@ -111,8 +110,8 @@ public class TypeAdapterTest {
     }
 
     @Test
-    void testMultipleTypeAdapters() throws IOException, TemplateException {
-        // Register multiple custom adapters
+    void testMultipleFormattingFunctions() throws IOException, TemplateException {
+        // Register multiple custom formatting functions
         Map<String, Function> functions = new HashMap<>();
         functions.put("formatCurrency", args -> {
             Currency currency = (Currency) args[0];
@@ -141,8 +140,8 @@ public class TypeAdapterTest {
     }
 
     @Test
-    void testAdapterInConditional() throws IOException, TemplateException {
-        // Use adapter result in conditional
+    void testFormattingFunctionInConditional() throws IOException, TemplateException {
+        // Use formatting result in conditional
         Map<String, Function> functions = new HashMap<>();
         functions.put("getCurrencySymbol", args -> {
             String currencyCode = (String) args[0];
@@ -166,8 +165,8 @@ public class TypeAdapterTest {
     }
 
     @Test
-    void testAdapterWithNullValue() throws IOException, TemplateException {
-        // Test adapter handles missing/null gracefully using if condition
+    void testFormattingFunctionWithNullValue() throws IOException, TemplateException {
+        // Test formatting function handles missing/null gracefully using if condition
         Map<String, Function> functions = new HashMap<>();
         functions.put("safeString", args -> {
             if (args == null || args.length == 0 || args[0] == null) {
@@ -189,8 +188,8 @@ public class TypeAdapterTest {
     }
 
     @Test
-    void testChainedAdapters() throws IOException, TemplateException {
-        // Test chaining multiple adapters
+    void testChainedFormattingFunctions() throws IOException, TemplateException {
+        // Test chaining multiple formatting functions
         Map<String, Function> functions = new HashMap<>();
         functions.put("upper", args -> ((String) args[0]).toUpperCase());
         functions.put("trim", args -> ((String) args[0]).trim());
@@ -208,8 +207,8 @@ public class TypeAdapterTest {
     }
 
     @Test
-    void testAdapterInRange() throws IOException, TemplateException {
-        // Use adapter in range loop
+    void testFormattingFunctionInRange() throws IOException, TemplateException {
+        // Use formatting function in range loop
         Map<String, Function> functions = new HashMap<>();
         functions.put("formatCurrency", args -> {
             Currency currency = (Currency) args[0];

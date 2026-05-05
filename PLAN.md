@@ -174,28 +174,27 @@ After:  "Parse error at line 5, column 12: unexpected 'else' without matching 'i
 **Goal**: Full Go template specification compliance
 
 #### 2.1 Advanced Template Features (v0.5.0 Focus)
-**Priority**: HIGH | **Effort**: 3-4 weeks | **Status**: PLANNED for v0.5.0
+**Priority**: HIGH | **Effort**: 3-4 weeks | **Status**: Mostly Complete for v0.5.0
 
 **Missing Features**:
-- [ ] Full `{{block}}` action with proper overriding semantics
-- [ ] Template inheritance patterns
-- [ ] Custom delimiters (currently hardcoded `{{` `}}`)
-- [ ] Enhanced whitespace control (`-` trim marker edge cases)
-- [ ] Nested template execution with proper context passing
-- [ ] Template cloning for thread safety
+- [x] Full `{{block}}` action with proper overriding semantics
+- [x] Template inheritance patterns
+- [x] Custom delimiters
+- [x] Enhanced whitespace control (`-` trim marker edge cases)
+- [x] Nested template execution with proper context passing
+- [x] Template cloning for thread safety
 
 ---
 
 #### 2.2 Type System Enhancements (v0.5.0 Focus)
-**Priority**: MEDIUM | **Effort**: 2-3 weeks | **Status**: PLANNED for v0.5.0
+**Priority**: MEDIUM | **Effort**: 2-3 weeks | **Status**: Mostly Complete for v0.5.0
 
 **Improvements**:
-- [ ] Support public fields (not just getter methods)
-- [ ] Better array/collection iteration with index tracking
-- [ ] Custom type adapters/converter registry
-- [ ] Improved null-safety with default values
-- [ ] Support for Java 8+ Optional types
-- [ ] Enum handling improvements
+- [x] Support public fields (not just getter methods)
+- [x] Better array/collection iteration with index tracking
+- [x] Improved null-safety with default values
+- [x] Support for Java 8+ Optional types
+- [x] Enum handling improvements
 
 ---
 
