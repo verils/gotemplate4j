@@ -40,6 +40,9 @@ public class Functions {
         BUILTIN.put("deepEqual", deepEqual());
         BUILTIN.put("typeof", typeof());
         BUILTIN.put("kindOf", kindOf());
+        
+        // Null-safety functions (Phase 2.2.4)
+        BUILTIN.put("default", defaultValue());
     }
 
     private static Function noop() {
@@ -566,6 +569,23 @@ public class Functions {
             return "slice";
         }
         return "struct";
+    }
+
+    // Null-safety functions (Phase 2.2.4)
+    private static Function defaultValue() {
+        return args -> {
+            if (args.length != 2) {
+                throw new IllegalArgumentException("default requires exactly 2 arguments");
+            }
+            Object value = args[0];
+            Object defaultValue = args[1];
+            
+            // Return default value if the first argument is null or falsy
+            if (value == null || !isTruthy(value)) {
+                return defaultValue;
+            }
+            return value;
+        };
     }
 
 }

@@ -44,12 +44,13 @@ import java.util.stream.Stream;
  *   <li>Pipeline operations with | operator</li>
  *   <li>Built-in functions (print, printf, println, eq, ne, lt, le, gt, ge, and, or, len, index, slice, call, html, js, urlquery, deepEqual, typeof, kindOf, not)</li>
  *   <li>Custom function registration</li>
+ *   <li>Template cloning for thread-safe reuse</li>
  * </ul>
  * <p>
  * Thread Safety: This class is NOT thread-safe during parsing. Once parsing is complete,
  * execution is thread-safe if different Writer instances are used for each execution.
+ * For concurrent scenarios, use {@link #Template(Template)} copy constructor to create independent copies.
  *
- * @see GoTemplateFactory for creating and managing multiple templates
  * @see Function for implementing custom template functions
  */
 public class Template {
@@ -61,6 +62,7 @@ public class Template {
 
     private final String name;
     private final Map<String, Function> functions;
+    private final Map<String, Function> customFunctions; // Store custom functions for cloning
     private final String leftDelimiter;
     private final String rightDelimiter;
     private final String leftComment;
@@ -165,13 +167,47 @@ public class Template {
     public Template(String name, Map<String, Function> functions, String leftDelimiter, String rightDelimiter,
                     String leftComment, String rightComment) {
         this.name = name;
-        this.functions = Stream.concat(Functions.BUILTIN.entrySet().stream(), functions.entrySet().stream())
+        this.customFunctions = functions != null ? new LinkedHashMap<>(functions) : Collections.emptyMap();
+        this.functions = Stream.concat(Functions.BUILTIN.entrySet().stream(), this.customFunctions.entrySet().stream())
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (v1, v2) -> v2));
         this.leftDelimiter = leftDelimiter != null ? leftDelimiter : DEFAULT_LEFT_DELIM;
         this.rightDelimiter = rightDelimiter != null ? rightDelimiter : DEFAULT_RIGHT_DELIM;
         this.leftComment = leftComment != null ? leftComment : DEFAULT_LEFT_COMMENT;
         this.rightComment = rightComment != null ? rightComment : DEFAULT_RIGHT_COMMENT;
         this.nodes = new LinkedHashMap<>();
+    }
+
+    /**
+     * Copy constructor that creates a deep copy of an existing template.
+     * <p>
+     * This constructor is useful for creating thread-safe copies of templates that have
+     * already been parsed. The cloned template has its own independent copy of all parsed
+     * template definitions, allowing safe concurrent modification and execution.
+     * <p>
+     * Example usage for thread safety:
+     * <pre>{@code
+     * // Create and parse template once
+     * Template baseTemplate = new Template("master");
+     * baseTemplate.parse("{{.message}}");
+     * 
+     * // In each thread, create a copy before use
+     * Template threadSafe = new Template(baseTemplate);
+     * StringWriter writer = new StringWriter();
+     * threadSafe.execute(writer, data);
+     * }</pre>
+     *
+     * @param other The template to copy
+     * @since 0.5.0
+     */
+    public Template(Template other) {
+        this.name = other.name;
+        this.customFunctions = new LinkedHashMap<>(other.customFunctions);
+        this.functions = other.functions; // Functions map is immutable after construction
+        this.leftDelimiter = other.leftDelimiter;
+        this.rightDelimiter = other.rightDelimiter;
+        this.leftComment = other.leftComment;
+        this.rightComment = other.rightComment;
+        this.nodes = new LinkedHashMap<>(other.nodes);
     }
 
 
@@ -356,5 +392,6 @@ public class Template {
         Executor executor = new Executor(nodes, functions);
         executor.execute(name, data, writer);
     }
+
 
 }
