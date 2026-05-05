@@ -100,35 +100,72 @@ public class Executor {
             TemplateExecutionException, TemplateNotFoundException {
         Object arrayOrList = executePipe(rangeNode.getPipeNode(), data, beanInfo, variables);
 
+        // Get variable names from the range node's pipe
+        List<VariableNode> rangeVars = rangeNode.getPipeNode().getVariables();
+        // In Go templates: {{range $v := .Items}} means $v gets the value (no index)
+        // {{range $i, $v := .Items}} means $i gets index, $v gets value
+        String indexVarName = null;
+        String valueVarName = null;
+        
+        if (rangeVars.size() == 2) {
+            // Two variables: first is index, second is value
+            indexVarName = rangeVars.get(0).getIdentifier(0);
+            valueVarName = rangeVars.get(1).getIdentifier(0);
+        } else if (rangeVars.size() == 1) {
+            // One variable: it's the value
+            valueVarName = rangeVars.get(0).getIdentifier(0);
+        }
+
         if (arrayOrList.getClass().isArray()) {
             int length = Array.getLength(arrayOrList);
             for (int i = 0; i < length; i++) {
                 Object value = Array.get(arrayOrList, i);
-                writeRangeValue(writer, rangeNode, value, variables);
+                writeRangeValue(writer, rangeNode, value, i, indexVarName, valueVarName, variables);
             }
         }
 
         if (arrayOrList instanceof Collection) {
             Collection<?> collection = (Collection<?>) arrayOrList;
+            int index = 0;
             for (Object object : collection) {
-                writeRangeValue(writer, rangeNode, object, variables);
+                writeRangeValue(writer, rangeNode, object, index, indexVarName, valueVarName, variables);
+                index++;
             }
         }
 
         if (arrayOrList instanceof Map) {
             Map<?, ?> map = (Map<?, ?>) arrayOrList;
-            for (Object object : map.values()) {
-                writeRangeValue(writer, rangeNode, object, variables);
+            int index = 0;
+            for (Map.Entry<?, ?> entry : map.entrySet()) {
+                // For maps, when two vars are specified, first is key, second is value
+                Object mapValue = (indexVarName != null && rangeVars.size() == 2) ? entry.getValue() : entry.getValue();
+                Object mapKey = entry.getKey();
+                writeRangeValue(writer, rangeNode, mapValue, index, indexVarName, valueVarName, variables);
+                index++;
             }
         }
     }
 
-    private void writeRangeValue(Writer writer, RangeNode rangeNode, Object value, Map<String, Object> variables) throws IOException,
+    private void writeRangeValue(Writer writer, RangeNode rangeNode, Object value, int index, 
+                                  String indexVarName, String valueVarName, Map<String, Object> variables) throws IOException,
             TemplateExecutionException, TemplateNotFoundException {
+        // Create a copy of variables for this iteration to avoid pollution
+        Map<String, Object> iterationVars = new HashMap<>(variables);
+        
+        // Set index variable if specified (e.g., {{range $i, $v := .Items}})
+        if (indexVarName != null) {
+            iterationVars.put(indexVarName, index);
+        }
+        
+        // Set value variable if specified
+        if (valueVarName != null) {
+            iterationVars.put(valueVarName, value);
+        }
+        
         ListNode ifListNode = rangeNode.getIfListNode();
         for (Node node : ifListNode) {
             BeanInfo itemBeanInfo = getBeanInfo(value);
-            writeNode(writer, node, value, itemBeanInfo, variables);
+            writeNode(writer, node, value, itemBeanInfo, iterationVars);
         }
     }
 
@@ -156,14 +193,22 @@ public class Executor {
             throw new TemplateExecutionException(String.format("template %s not defined", name));
         }
 
+        // Create a copy of variables for template isolation
+        Map<String, Object> templateVariables = new HashMap<>(variables);
+
         if (data != null) {
             BeanInfo beanInfo = getBeanInfo(data);
             Object value = executePipe(templateNode.getPipeNode(), data, beanInfo, variables);
 
-            BeanInfo valueBeanInfo = getBeanInfo(value);
-            writeNode(writer, listNode, value, valueBeanInfo, variables);
+            // Handle null value from pipeline
+            if (value == null) {
+                writeNode(writer, listNode, null, null, templateVariables);
+            } else {
+                BeanInfo valueBeanInfo = getBeanInfo(value);
+                writeNode(writer, listNode, value, valueBeanInfo, templateVariables);
+            }
         } else {
-            writeNode(writer, listNode, null, null, variables);
+            writeNode(writer, listNode, null, null, templateVariables);
         }
     }
 
@@ -205,6 +250,10 @@ public class Executor {
         }
         if (firstArgument instanceof VariableNode) {
             return executeVariable((VariableNode) firstArgument, variables);
+        }
+        if (firstArgument instanceof PipeNode) {
+            // Support pipeline expressions as commands: {{template "name" (.X | printf "%s")}}
+            return executePipe((PipeNode) firstArgument, data, beanInfo, variables);
         }
 
         throw new TemplateExecutionException(String.format("can't evaluate command %s", firstArgument));
