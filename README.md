@@ -81,7 +81,7 @@ For more information on development setup, coding guidelines, and priority areas
 
 ## Roadmap
 
-See [docs/PLAN.md](./docs/PLAN.md) for the detailed development roadmap.
+See [PLAN.md](./PLAN.md) for the detailed development roadmap.
 
 ## References
 
@@ -89,6 +89,6 @@ See [docs/PLAN.md](./docs/PLAN.md) for the detailed development roadmap.
 - [Go template Source Code](https://github.com/golang/go/tree/master/src/text/template)
 - [Java Template Engine (Alternative)](https://github.com/proninyaroslav/java-template-engine)
 - [Changelog](./CHANGELOG)
-- [Development Plan](./docs/PLAN.md)
+- [Development Plan](./PLAN.md)
 
 

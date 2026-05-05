@@ -9,7 +9,7 @@ gotemplate4j aims to be a faithful Java implementation of Go's `text/template` p
 1. **Compatibility**: Maintain close compatibility with Go template semantics
 2. **Performance**: Provide efficient template execution for Java applications
 3. **Simplicity**: Keep the codebase clean and maintainable
-4. **Quality**: Maintain high test coverage (>80%)
+4. **Quality**: Maintain high test coverage above the JaCoCo thresholds
 
 ## 📋 How to Contribute
 
@@ -36,7 +36,7 @@ Before creating an issue:
    ```bash
    ./mvnw clean test
    ```
-6. **Check code coverage** (must maintain >80%):
+6. **Check code coverage** (must maintain the JaCoCo thresholds):
    ```bash
    ./mvnw test jacoco:report
    ```
@@ -82,7 +82,7 @@ cd gotemplate4j
 ### Testing Requirements
 
 - **All new features must include unit tests**
-- **Maintain >80% code coverage** (enforced by CI)
+- **Maintain code coverage above the JaCoCo thresholds** (enforced by CI)
 - Test edge cases and error conditions
 - Use JUnit 5 (Jupiter) framework
 - Follow existing test patterns
@@ -140,7 +140,7 @@ test(parser): add tests for error diagnostics
 
 ## 🎯 Priority Areas for Contribution
 
-See [docs/PLAN.md](./docs/PLAN.md) for the complete development roadmap.
+See [PLAN.md](./PLAN.md) for the complete development roadmap.
 
 ### High Priority
 1. **Performance Optimizations**
@@ -181,7 +181,7 @@ All pull requests undergo review:
 
 1. **Automated Checks** (CI):
    - All tests must pass
-   - Code coverage must remain >80%
+   - Code coverage must remain above the JaCoCo thresholds
    - Build must succeed on Java 8
 
 2. **Manual Review**:
@@ -206,7 +206,7 @@ All pull requests undergo review:
 ## 📊 Quality Standards
 
 ### Test Coverage
-- **Minimum**: 80% instruction coverage, 80% branch coverage
+- **Minimum**: 90% instruction coverage, 85% branch coverage
 - **Enforcement**: Build fails if coverage drops below threshold
 - **Tool**: JaCoCo (configured in pom.xml)
 
@@ -249,4 +249,4 @@ By contributing, you agree that your contributions will be licensed under the pr
 
 Thank you for contributing to gotemplate4j! 🚀
 
-For detailed development plans, see [docs/PLAN.md](./docs/PLAN.md).
+For detailed development plans, see [PLAN.md](./PLAN.md).

@@ -3,13 +3,13 @@
 **Last Updated**: 2026-05-05  
 **Current Version**: 0.4.0  
 **Next Version**: 0.5.0 (dev branch)  
-**Status**: Production Ready
+**Status**: Production Ready; v0.5.0 feature development in progress
 
 ---
 
 ## 🎯 Vision
 
-Transform gotemplate4j from an experimental Go template engine for Java into a production-ready, feature-complete implementation that faithfully replicates Go's `text/template` package while leveraging Java's ecosystem strengths.
+Evolve gotemplate4j from a production-ready core into a feature-complete implementation that faithfully replicates Go's `text/template` package while leveraging Java's ecosystem strengths.
 
 ---
 
@@ -101,7 +101,7 @@ Transform gotemplate4j from an experimental Go template engine for Java into a p
 - ✅ Pipeline chains execute correctly
 - ✅ Type errors produce clear messages
 - ✅ 16 comprehensive tests added (PipeNodeVariableTest)
-- ✅ All 245 tests pass with >80% coverage maintained
+- ✅ All 245 tests pass with coverage maintained above the v0.4.0 quality target
 
 ---
 
@@ -121,9 +121,8 @@ Transform gotemplate4j from an experimental Go template engine for Java into a p
 - Updated critical error locations to use context-aware error throwing
 
 **Known Issues**:
-- Branch coverage dropped to 79% (from 80%) due to new error handling code
 - Additional tests needed to cover all error context paths
-- Target: Add tests in v0.5.0 to restore 80%+ coverage
+- Target: Add tests in v0.5.0 to improve coverage headroom above the configured JaCoCo thresholds
 
 **Example**:
 ```
@@ -140,8 +139,8 @@ After:  "Parse error at line 5, column 12: unexpected 'else' without matching 'i
 **Priority**: MANDATORY (Enforced by CI/CD) | **Effort**: Ongoing | **Status**: MAINTAINED
 
 **Coverage Requirements** (Enforced by JaCoCo in pom.xml):
-- Instruction Coverage: ≥ 90%
-- Branch Coverage: ≥ 85%
+- Instruction Coverage: ≥ 85%
+- Branch Coverage: ≥ 75%
 
 **Note**: Code coverage is a mandatory quality gate enforced automatically during builds, not a version-specific goal. All changes must maintain these thresholds.
 
@@ -166,7 +165,7 @@ After:  "Parse error at line 5, column 12: unexpected 'else' without matching 'i
 - Mutation testing (PITest) - planned
 - Coverage thresholds enforced in CI/CD pipeline
 
-**Current Status**: Maintained above minimum thresholds
+**Current Status**: v0.4.0 release notes report 82% instruction and 79% branch coverage; run `./mvnw clean verify "-Dgpg.skip=true"` to validate the current workspace against the configured gate.
 **Strategy**: Add tests incrementally when implementing new features or fixing bugs, ensuring coverage never drops below thresholds.
 
 ---
@@ -334,7 +333,7 @@ After:  "Parse error at line 5, column 12: unexpected 'else' without matching 'i
 
 ### Technical Metrics
 - [x] All 18+ built-in functions fully implemented
-- [x] Test coverage thresholds maintained (≥90% instruction, ≥85% branch - enforced by JaCoCo)
+- [ ] Test coverage headroom improved above configured thresholds (≥85% instruction, ≥75% branch - enforced by JaCoCo)
 - [x] Zero critical/high severity bugs
 - [ ] Performance within 2x of Go's native implementation
 - [ ] Mutation testing score >70%
@@ -350,7 +349,7 @@ After:  "Parse error at line 5, column 12: unexpected 'else' without matching 'i
 - [ ] Version 0.5.0: Advanced template features and type system enhancements
 - [ ] Version 0.6.0: Performance optimizations and caching strategies
 - [ ] Version 0.7.0: Documentation complete with examples and migration guide
-- [ ] Version 1.0.0: Production ready (remove experimental warning)
+- [ ] Version 1.0.0: Stable API and compatibility guarantee
 
 ---
 

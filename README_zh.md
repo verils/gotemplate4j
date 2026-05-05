@@ -85,8 +85,8 @@ cd gotemplate4j
 - [Go template 源代码](https://github.com/golang/go/tree/master/src/text/template)
 - [Java Template Engine（替代方案）](https://github.com/proninyaroslav/java-template-engine)
 - [变更日志](./CHANGELOG)
-- [开发计划](./docs/PLAN.md)
+- [开发计划](./PLAN.md)
 
 ## 开发路线
 
-请参阅 [docs/PLAN.md](./docs/PLAN.md) 获取详细的开发路线图。
+请参阅 [PLAN.md](./PLAN.md) 获取详细的开发路线图。
