@@ -136,7 +136,7 @@ After:  "Parse error at line 5, column 12: unexpected 'else' without matching 'i
 ---
 
 #### 1.4 Increase Test Coverage
-**Priority**: MANDATORY (Enforced by CI/CD) | **Effort**: Ongoing | **Status**: MAINTAINED
+**Priority**: MANDATORY (Enforced by CI/CD) | **Effort**: Ongoing | **Status**: Mostly Complete
 
 **Coverage Requirements** (Enforced by JaCoCo in pom.xml):
 - Instruction Coverage: ≥ 85%
