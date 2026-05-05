@@ -123,13 +123,13 @@ class FunctionsCollectionTest {
 
     @Test
     void sliceReturnsArrayForArrayInput() {
-        Object result = TemplateTestSupport.invoke("slice", (Object) new String[]{"a", "b", "c", "d"}, 1, 3);
+        Object result = TemplateTestSupport.invoke("slice", new String[]{"a", "b", "c", "d"}, 1, 3);
         assertArrayEquals(new String[]{"b", "c"}, (String[]) result);
     }
 
     @Test
     void sliceReturnsEmptyArrayWhenArrayStartIsNotBeforeEnd() {
-        Object result = TemplateTestSupport.invoke("slice", (Object) new String[]{"a", "b", "c"}, 3, 2);
+        Object result = TemplateTestSupport.invoke("slice", new String[]{"a", "b", "c"}, 3, 2);
         assertEquals(0, java.lang.reflect.Array.getLength(result));
     }
 

@@ -29,16 +29,12 @@ final class LexerTestSupport {
         return new Token(type, value, pos, line, column);
     }
 
-    static Token[] tokens(Token... tokens) {
-        return tokens;
-    }
-
     static Arguments defaultCase(String input, Token... expectedTokens) {
-        return arguments(input, (Object) expectedTokens);
+        return arguments(input, expectedTokens);
     }
 
     static Arguments delimiterCase(String input, Token... expectedTokens) {
-        return arguments(input, (Object) expectedTokens);
+        return arguments(input, expectedTokens);
     }
 
     static void assertDefaultTokens(String input, Token... expectedTokens) {
