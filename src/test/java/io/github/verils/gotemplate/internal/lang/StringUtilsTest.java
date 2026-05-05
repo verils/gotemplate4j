@@ -4,10 +4,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Tests for StringUtils to improve coverage
- */
-class StringUtilsCoverageTest {
+class StringUtilsTest {
 
     @Test
     void testQuote() {
