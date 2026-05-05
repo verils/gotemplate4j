@@ -164,4 +164,21 @@ class TemplateTest {
         assertEquals("Names: Gamora, Groot, Nebula, Rocket, Star-Lord", overlayText);
     }
 
+    @Test
+    void testNestedTemplateInvocation() throws TemplateException, IOException {
+        // Create main template T0 that invokes T1
+        Template template = new Template("T0");
+        template.parse("T0 invokes T1: ({{template \"T1\"}})");
+        
+        // Define T1 that invokes T2
+        template.parse("{{define \"T1\"}}T1 invokes T2: ({{template \"T2\"}}){{end}}");
+        
+        // Define T2
+        template.parse("{{define \"T2\"}}This is T2{{end}}");
+
+        StringWriter writer = new StringWriter();
+        template.execute(writer, null);
+        assertEquals("T0 invokes T1: (T1 invokes T2: (This is T2))", writer.toString());
+    }
+
 }
