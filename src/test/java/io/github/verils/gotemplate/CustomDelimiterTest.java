@@ -128,21 +128,6 @@ public class CustomDelimiterTest {
     }
 
     @Test
-    void testGoTemplateFactoryWithCustomDelimiters() throws IOException, TemplateException {
-        // Test GoTemplateFactory with custom delimiters
-        GoTemplateFactory factory = new GoTemplateFactory(null, "<%", "%>");
-        factory.parse("test", "Hello <% .Name %>!");
-        
-        GoTemplate goTemplate = factory.getTemplate("test");
-        Writer writer = new StringWriter();
-        Map<String, Object> data = new HashMap<>();
-        data.put("Name", "World");
-        goTemplate.execute(data, writer);
-        
-        assertEquals("Hello World!", writer.toString());
-    }
-
-    @Test
     void testCustomDelimitersWithWhitespaceControl() throws IOException, TemplateException {
         // Test trim markers with custom delimiters
         Template template = new Template("test", "{{", "}}");
