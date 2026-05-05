@@ -13,12 +13,14 @@ import java.beans.PropertyDescriptor;
 import java.io.IOException;
 import java.io.Writer;
 import java.lang.reflect.Array;
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 public class Executor {
 
@@ -106,7 +108,7 @@ public class Executor {
         // {{range $i, $v := .Items}} means $i gets index, $v gets value
         String indexVarName = null;
         String valueVarName = null;
-        
+
         if (rangeVars.size() == 2) {
             // Two variables: first is index, second is value
             indexVarName = rangeVars.get(0).getIdentifier(0);
@@ -138,33 +140,35 @@ public class Executor {
             int index = 0;
             for (Map.Entry<?, ?> entry : map.entrySet()) {
                 // For maps, when two vars are specified, first is key, second is value
-                Object mapValue = (indexVarName != null && rangeVars.size() == 2) ? entry.getValue() : entry.getValue();
-                Object mapKey = entry.getKey();
+                Object mapValue = entry.getValue();
                 writeRangeValue(writer, rangeNode, mapValue, index, indexVarName, valueVarName, variables);
                 index++;
             }
         }
     }
 
-    private void writeRangeValue(Writer writer, RangeNode rangeNode, Object value, int index, 
-                                  String indexVarName, String valueVarName, Map<String, Object> variables) throws IOException,
+    private void writeRangeValue(Writer writer, RangeNode rangeNode, Object value, int index,
+                                 String indexVarName, String valueVarName, Map<String, Object> variables) throws IOException,
             TemplateExecutionException, TemplateNotFoundException {
+        // Unwrap Optional if present
+        value = unwrapOptional(value);
+
         // Create a copy of variables for this iteration to avoid pollution
         Map<String, Object> iterationVars = new HashMap<>(variables);
-        
+
         // Set index variable if specified (e.g., {{range $i, $v := .Items}})
         if (indexVarName != null) {
             iterationVars.put(indexVarName, index);
         }
-        
+
         // Set value variable if specified
         if (valueVarName != null) {
             iterationVars.put(valueVarName, value);
         }
-        
+
         ListNode ifListNode = rangeNode.getIfListNode();
         for (Node node : ifListNode) {
-            BeanInfo itemBeanInfo = getBeanInfo(value);
+            BeanInfo itemBeanInfo = value != null ? getBeanInfo(value) : null;
             writeNode(writer, node, value, itemBeanInfo, iterationVars);
         }
     }
@@ -259,21 +263,37 @@ public class Executor {
         throw new TemplateExecutionException(String.format("can't evaluate command %s", firstArgument));
     }
 
-    private Object executeField(FieldNode fieldNode, Object data, BeanInfo beanInfo)
+    private Object executeField(final FieldNode fieldNode, final Object data, final BeanInfo beanInfo)
             throws TemplateExecutionException {
         String[] identifiers = fieldNode.getIdentifiers();
+        Object currentData = data;
+        BeanInfo currentBeanInfo = beanInfo;
+
         for (String identifier : identifiers) {
-            if (data == null) {
+            if (currentData == null) {
                 return null;
             }
 
-            if (data instanceof Map) {
-                //noinspection unchecked
-                Map<String, Object> map = (Map<String, Object>) data;
-                return map.get(identifier);
+            // Unwrap Optional if present
+            currentData = unwrapOptional(currentData);
+            if (currentData == null) {
+                return null;
             }
 
-            PropertyDescriptor[] propertyDescriptors = beanInfo.getPropertyDescriptors();
+            if (currentData instanceof Map) {
+                //noinspection unchecked
+                Map<String, Object> map = (Map<String, Object>) currentData;
+                currentData = unwrapOptional(map.get(identifier));
+                // Update beanInfo for the new data
+                currentBeanInfo = currentData != null ? getBeanInfo(currentData) : null;
+                continue;
+            }
+
+            // First, try to find a getter method
+            PropertyDescriptor[] propertyDescriptors = currentBeanInfo.getPropertyDescriptors();
+            Object value = null;
+            boolean found = false;
+
             for (PropertyDescriptor propertyDescriptor : propertyDescriptors) {
                 String propertyDescriptorName = propertyDescriptor.getName();
                 if ("class".equals(propertyDescriptorName)) {
@@ -284,7 +304,9 @@ public class Executor {
                 if (identifier.equals(propertyDescriptorName) || identifier.equals(goStyleName)) {
                     Method readMethod = propertyDescriptor.getReadMethod();
                     try {
-                        return readMethod.invoke(data);
+                        value = unwrapOptional(readMethod.invoke(currentData));
+                        found = true;
+                        break;
                     } catch (IllegalAccessException | InvocationTargetException e) {
                         throw new TemplateExecutionException(String.format(
                                 "can't get value '%s' from data", identifier), e);
@@ -292,9 +314,63 @@ public class Executor {
                 }
             }
 
-            throw new TemplateExecutionException(String.format("can't get value '%s' from data", identifier));
+            // If no getter found, try public fields
+            if (!found) {
+                try {
+                    Field field = findField(currentData.getClass(), identifier);
+                    if (field != null) {
+                        field.setAccessible(true);
+                        value = unwrapOptional(field.get(currentData));
+                        found = true;
+                    }
+                } catch (IllegalAccessException e) {
+                    throw new TemplateExecutionException(String.format(
+                            "can't access field '%s' from data", identifier), e);
+                }
+            }
+
+            if (!found) {
+                throw new TemplateExecutionException(String.format("can't get value '%s' from data", identifier));
+            }
+
+            // Update currentData and beanInfo for next iteration
+            currentData = value;
+            currentBeanInfo = currentData != null ? getBeanInfo(currentData) : null;
         }
 
+        return currentData;
+    }
+
+    /**
+     * Unwrap Optional values
+     *
+     * @param obj The object to unwrap
+     * @return The unwrapped value, or null if Optional is empty
+     */
+    private Object unwrapOptional(Object obj) {
+        if (obj instanceof Optional) {
+            Optional<?> optional = (Optional<?>) obj;
+            return optional.orElse(null);
+        }
+        return obj;
+    }
+
+    /**
+     * Find a field by name in the class hierarchy
+     *
+     * @param clazz     The class to search
+     * @param fieldName The field name to find
+     * @return The Field object if found, null otherwise
+     */
+    private Field findField(Class<?> clazz, String fieldName) {
+        while (clazz != null && clazz != Object.class) {
+            try {
+                return clazz.getDeclaredField(fieldName);
+            } catch (NoSuchFieldException e) {
+                // Try superclass
+                clazz = clazz.getSuperclass();
+            }
+        }
         return null;
     }
 
@@ -480,6 +556,9 @@ public class Executor {
         } else if (value instanceof Number) {
             writer.write(String.valueOf(value));
         } else if (value instanceof Boolean) {
+            writer.write(String.valueOf(value));
+        } else if (value != null) {
+            // For other types (including enums), use toString()
             writer.write(String.valueOf(value));
         }
     }
