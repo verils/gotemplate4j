@@ -4,10 +4,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Tests for AST node classes to improve coverage
- */
-class ASTNodeCoverageTest {
+class ASTNodeTest {
 
     @Test
     void testNodeTypeEnumValues() {

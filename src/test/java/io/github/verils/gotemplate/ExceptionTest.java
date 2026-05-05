@@ -4,10 +4,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Tests for exception classes to improve coverage
- */
-class ExceptionCoverageTest {
+class ExceptionTest {
 
     @Test
     void testTemplateNotFoundException() {
