@@ -54,8 +54,17 @@ import java.util.stream.Stream;
  */
 public class Template {
 
+    private static final String DEFAULT_LEFT_DELIM = "{{";
+    private static final String DEFAULT_RIGHT_DELIM = "}}";
+    private static final String DEFAULT_LEFT_COMMENT = "/*";
+    private static final String DEFAULT_RIGHT_COMMENT = "*/";
+
     private final String name;
     private final Map<String, Function> functions;
+    private final String leftDelimiter;
+    private final String rightDelimiter;
+    private final String leftComment;
+    private final String rightComment;
 
     private final Map<String, Node> nodes;
 
@@ -73,6 +82,38 @@ public class Template {
     }
 
     /**
+     * Creates a new template with the specified name and custom delimiters.
+     * <p>
+     * The template will have access to all built-in Go template functions.
+     *
+     * @param name           The template name, used for identification and template references
+     * @param leftDelimiter  Left delimiter (default: "{{")
+     * @param rightDelimiter Right delimiter (default: "}}")
+     * @throws IllegalArgumentException if name is null or empty
+     * @since 0.5.0
+     */
+    public Template(String name, String leftDelimiter, String rightDelimiter) {
+        this(name, Collections.emptyMap(), leftDelimiter, rightDelimiter, DEFAULT_LEFT_COMMENT, DEFAULT_RIGHT_COMMENT);
+    }
+
+    /**
+     * Creates a new template with the specified name and custom delimiters.
+     * <p>
+     * The template will have access to all built-in Go template functions.
+     *
+     * @param name           The template name, used for identification and template references
+     * @param leftDelimiter  Left delimiter (default: "{{")
+     * @param rightDelimiter Right delimiter (default: "}}")
+     * @param leftComment    Left comment delimiter (default: "/*")
+     * @param rightComment   Right comment delimiter (default: "* /")
+     * @throws IllegalArgumentException if name is null or empty
+     * @since 0.5.0
+     */
+    public Template(String name, String leftDelimiter, String rightDelimiter, String leftComment, String rightComment) {
+        this(name, Collections.emptyMap(), leftDelimiter, rightDelimiter, leftComment, rightComment);
+    }
+
+    /**
      * Creates a new template with the specified name and custom functions.
      * <p>
      * The template will have access to both built-in Go template functions and the provided custom functions.
@@ -84,9 +125,52 @@ public class Template {
      * @see Function for implementing custom template functions
      */
     public Template(String name, Map<String, Function> functions) {
+        this(name, functions, DEFAULT_LEFT_DELIM, DEFAULT_RIGHT_DELIM, DEFAULT_LEFT_COMMENT, DEFAULT_RIGHT_COMMENT);
+    }
+
+    /**
+     * Creates a new template with the specified name, custom functions, and custom delimiters.
+     * <p>
+     * The template will have access to both built-in Go template functions and the provided custom functions.
+     * If a custom function has the same name as a built-in function, the custom function takes precedence.
+     *
+     * @param name           The template name, used for identification and template references
+     * @param functions      A map of custom functions where the key is the function name and the value is the Function implementation
+     * @param leftDelimiter  Left delimiter (default: "{{")
+     * @param rightDelimiter Right delimiter (default: "}}")
+     * @throws IllegalArgumentException if name is null or empty
+     * @see Function for implementing custom template functions
+     * @since 0.5.0
+     */
+    public Template(String name, Map<String, Function> functions, String leftDelimiter, String rightDelimiter) {
+        this(name, functions, leftDelimiter, rightDelimiter, DEFAULT_LEFT_COMMENT, DEFAULT_RIGHT_COMMENT);
+    }
+
+    /**
+     * Creates a new template with the specified name, custom functions, and custom delimiters.
+     * <p>
+     * The template will have access to both built-in Go template functions and the provided custom functions.
+     * If a custom function has the same name as a built-in function, the custom function takes precedence.
+     *
+     * @param name           The template name, used for identification and template references
+     * @param functions      A map of custom functions where the key is the function name and the value is the Function implementation
+     * @param leftDelimiter  Left delimiter (default: "{{")
+     * @param rightDelimiter Right delimiter (default: "}}")
+     * @param leftComment    Left comment delimiter (default: "/*")
+     * @param rightComment   Right comment delimiter (default: "* /")
+     * @throws IllegalArgumentException if name is null or empty
+     * @see Function for implementing custom template functions
+     * @since 0.5.0
+     */
+    public Template(String name, Map<String, Function> functions, String leftDelimiter, String rightDelimiter,
+                    String leftComment, String rightComment) {
         this.name = name;
         this.functions = Stream.concat(Functions.BUILTIN.entrySet().stream(), functions.entrySet().stream())
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (v1, v2) -> v2));
+        this.leftDelimiter = leftDelimiter != null ? leftDelimiter : DEFAULT_LEFT_DELIM;
+        this.rightDelimiter = rightDelimiter != null ? rightDelimiter : DEFAULT_RIGHT_DELIM;
+        this.leftComment = leftComment != null ? leftComment : DEFAULT_LEFT_COMMENT;
+        this.rightComment = rightComment != null ? rightComment : DEFAULT_RIGHT_COMMENT;
         this.nodes = new LinkedHashMap<>();
     }
 
@@ -120,7 +204,7 @@ public class Template {
      * @see #parse(Reader)
      */
     public void parse(String template) throws TemplateParseException {
-        Parser parser = new Parser(functions);
+        Parser parser = new Parser(functions, leftDelimiter, rightDelimiter, leftComment, rightComment);
         Map<String, Node> nodes = parser.parse(name, template);
         nodes.forEach((name, node) -> {
             if (!this.nodes.containsKey(name)) {

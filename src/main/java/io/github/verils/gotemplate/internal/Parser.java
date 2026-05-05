@@ -18,7 +18,16 @@ import java.util.Map;
  */
 public class Parser {
 
+    private static final String DEFAULT_LEFT_DELIM = "{{";
+    private static final String DEFAULT_RIGHT_DELIM = "}}";
+    private static final String DEFAULT_LEFT_COMMENT = "/*";
+    private static final String DEFAULT_RIGHT_COMMENT = "*/";
+
     private final Map<String, Function> functions;
+    private final String leftDelimiter;
+    private final String rightDelimiter;
+    private final String leftComment;
+    private final String rightComment;
 
 
     public Parser() {
@@ -26,7 +35,16 @@ public class Parser {
     }
 
     public Parser(Map<String, Function> functions) {
+        this(functions, DEFAULT_LEFT_DELIM, DEFAULT_RIGHT_DELIM, DEFAULT_LEFT_COMMENT, DEFAULT_RIGHT_COMMENT);
+    }
+
+    public Parser(Map<String, Function> functions, String leftDelimiter, String rightDelimiter, 
+                  String leftComment, String rightComment) {
         this.functions = functions;
+        this.leftDelimiter = leftDelimiter != null ? leftDelimiter : DEFAULT_LEFT_DELIM;
+        this.rightDelimiter = rightDelimiter != null ? rightDelimiter : DEFAULT_RIGHT_DELIM;
+        this.leftComment = leftComment != null ? leftComment : DEFAULT_LEFT_COMMENT;
+        this.rightComment = rightComment != null ? rightComment : DEFAULT_RIGHT_COMMENT;
     }
 
 
@@ -42,7 +60,7 @@ public class Parser {
         // Parse the template text, build a list node as the root node
         ListNode listNode = new ListNode();
 
-        Lexer lexer = new Lexer(text);
+        Lexer lexer = new Lexer(text, false, leftDelimiter, rightDelimiter, leftComment, rightComment);
 
         State state = new State(text);
         state.addVariable("$");

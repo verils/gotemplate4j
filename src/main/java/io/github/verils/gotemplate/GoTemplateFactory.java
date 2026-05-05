@@ -41,7 +41,16 @@ import java.util.Map;
  */
 public class GoTemplateFactory {
 
+    private static final String DEFAULT_LEFT_DELIM = "{{";
+    private static final String DEFAULT_RIGHT_DELIM = "}}";
+    private static final String DEFAULT_LEFT_COMMENT = "/*";
+    private static final String DEFAULT_RIGHT_COMMENT = "*/";
+
     private final Map<String, Function> functions;
+    private final String leftDelimiter;
+    private final String rightDelimiter;
+    private final String leftComment;
+    private final String rightComment;
 
     private final Map<String, Node> rootNodes;
 
@@ -64,11 +73,52 @@ public class GoTemplateFactory {
      * @see Function for implementing custom template functions
      */
     public GoTemplateFactory(Map<String, Function> functions) {
+        this(functions, DEFAULT_LEFT_DELIM, DEFAULT_RIGHT_DELIM, DEFAULT_LEFT_COMMENT, DEFAULT_RIGHT_COMMENT);
+    }
+
+    /**
+     * Creates a factory with custom functions and custom delimiters.
+     * <p>
+     * Custom functions will be merged with the built-in functions. If a custom function
+     * has the same name as a built-in function, the custom function takes precedence.
+     *
+     * @param functions      A map of custom functions where the key is the function name
+     *                       Can be null to use only built-in functions
+     * @param leftDelimiter  Left delimiter (default: "{{")
+     * @param rightDelimiter Right delimiter (default: "}}")
+     * @see Function for implementing custom template functions
+     * @since 0.5.0
+     */
+    public GoTemplateFactory(Map<String, Function> functions, String leftDelimiter, String rightDelimiter) {
+        this(functions, leftDelimiter, rightDelimiter, DEFAULT_LEFT_COMMENT, DEFAULT_RIGHT_COMMENT);
+    }
+
+    /**
+     * Creates a factory with custom functions and custom delimiters.
+     * <p>
+     * Custom functions will be merged with the built-in functions. If a custom function
+     * has the same name as a built-in function, the custom function takes precedence.
+     *
+     * @param functions      A map of custom functions where the key is the function name
+     *                       Can be null to use only built-in functions
+     * @param leftDelimiter  Left delimiter (default: "{{")
+     * @param rightDelimiter Right delimiter (default: "}}")
+     * @param leftComment    Left comment delimiter (default: "/*")
+     * @param rightComment   Right comment delimiter (default: "* /")
+     * @see Function for implementing custom template functions
+     * @since 0.5.0
+     */
+    public GoTemplateFactory(Map<String, Function> functions, String leftDelimiter, String rightDelimiter,
+                             String leftComment, String rightComment) {
         LinkedHashMap<String, Function> map = new LinkedHashMap<>(Functions.BUILTIN);
         if (functions != null) {
             map.putAll(functions);
         }
         this.functions = Collections.unmodifiableMap(map);
+        this.leftDelimiter = leftDelimiter != null ? leftDelimiter : DEFAULT_LEFT_DELIM;
+        this.rightDelimiter = rightDelimiter != null ? rightDelimiter : DEFAULT_RIGHT_DELIM;
+        this.leftComment = leftComment != null ? leftComment : DEFAULT_LEFT_COMMENT;
+        this.rightComment = rightComment != null ? rightComment : DEFAULT_RIGHT_COMMENT;
         this.rootNodes = new LinkedHashMap<>();
     }
 
@@ -100,7 +150,7 @@ public class GoTemplateFactory {
      * @see #getTemplate(String)
      */
     public void parse(String name, String text) throws TemplateParseException {
-        Parser parser = new Parser(functions);
+        Parser parser = new Parser(functions, leftDelimiter, rightDelimiter, leftComment, rightComment);
         Map<String, Node> parsedNodes = parser.parse(name, text);
         rootNodes.putAll(parsedNodes);
     }

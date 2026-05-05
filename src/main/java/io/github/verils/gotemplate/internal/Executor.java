@@ -385,7 +385,39 @@ public class Executor {
         if (value instanceof CharSequence) {
             return ((CharSequence) value).length() != 0;
         }
-        return false;
+        if (value instanceof Number) {
+            // Zero values are falsy in Go templates
+            if (value instanceof Integer) {
+                return ((Integer) value) != 0;
+            }
+            if (value instanceof Long) {
+                return ((Long) value) != 0L;
+            }
+            if (value instanceof Float) {
+                return ((Float) value) != 0.0f;
+            }
+            if (value instanceof Double) {
+                return ((Double) value) != 0.0;
+            }
+            if (value instanceof Short) {
+                return ((Short) value) != 0;
+            }
+            if (value instanceof Byte) {
+                return ((Byte) value) != 0;
+            }
+            // For other number types, check if not zero
+            return ((Number) value).doubleValue() != 0.0;
+        }
+        if (value != null && value.getClass().isArray()) {
+            return java.lang.reflect.Array.getLength(value) > 0;
+        }
+        if (value instanceof Collection) {
+            return !((Collection<?>) value).isEmpty();
+        }
+        if (value instanceof Map) {
+            return !((Map<?, ?>) value).isEmpty();
+        }
+        return value != null;
     }
 
     private void printText(Writer writer, String text) throws IOException {
