@@ -33,11 +33,13 @@ class ASTNodeCoverageTest {
         assertEquals(18, NodeType.VARIABLE.getCode());
         assertEquals(19, NodeType.WITH.getCode());
         assertEquals(20, NodeType.COMMENT.getCode());
+        assertEquals(21, NodeType.BREAK.getCode());
+        assertEquals(22, NodeType.CONTINUE.getCode());
     }
 
     @Test
     void testNodeTypeEnumCount() {
-        assertEquals(21, NodeType.values().length);
+        assertEquals(23, NodeType.values().length);
     }
 
     @Test

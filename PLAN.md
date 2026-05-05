@@ -173,6 +173,8 @@ After:  "Parse error at line 5, column 12: unexpected 'else' without matching 'i
 ### Phase 2: Feature Completeness (Q4 2026 - Q1 2027)
 **Goal**: Full Go template specification compliance
 
+Compatibility tracking: see [GO_COMPATIBILITY.md](./GO_COMPATIBILITY.md).
+
 #### 2.1 Advanced Template Features (v0.5.0 Focus)
 **Priority**: HIGH | **Effort**: 3-4 weeks | **Status**: Mostly Complete for v0.5.0
 

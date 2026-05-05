@@ -92,6 +92,18 @@ class LexerTextAndActionTest {
     }
 
     @Test
+    void breakAndContinueKeywords() {
+        assertDefaultTokens("{{break}}{{continue}}",
+                token(TokenType.LEFT_DELIM, "{{", 0, 1, 1),
+                token(TokenType.BREAK, "break", 2, 1, 3),
+                token(TokenType.RIGHT_DELIM, "}}", 7, 1, 8),
+                token(TokenType.LEFT_DELIM, "{{", 9, 1, 10),
+                token(TokenType.CONTINUE, "continue", 11, 1, 12),
+                token(TokenType.RIGHT_DELIM, "}}", 19, 1, 20),
+                token(TokenType.EOF, "", 21, 1, 22));
+    }
+
+    @Test
     void standaloneCommentOmitsActionDelimiters() {
         assertDefaultTokens("{{/* this is a comment */}}",
                 token(TokenType.COMMENT, "/* this is a comment */", 2, 1, 0),

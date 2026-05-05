@@ -153,6 +153,12 @@ public class Parser {
             case BLOCK:
                 parseBlock(listNode, lexer, state);
                 break;
+            case BREAK:
+                parseBreak(listNode, lexer, state, token);
+                break;
+            case CONTINUE:
+                parseContinue(listNode, lexer, state, token);
+                break;
             case ELSE:
                 parseElse(listNode, lexer, state);
                 break;
@@ -208,7 +214,13 @@ public class Parser {
 
         // Parse block content as an associate template
         ListNode blockListNode = new ListNode();
-        parseList(blockListNode, lexer, state);
+        int rangeDepth = state.rangeDepth;
+        state.rangeDepth = 0;
+        try {
+            parseList(blockListNode, lexer, state);
+        } finally {
+            state.rangeDepth = rangeDepth;
+        }
 
         Node lastNode = blockListNode.getLast();
         if (lastNode instanceof ElseNode) {
@@ -248,7 +260,13 @@ public class Parser {
         }
 
         ListNode definitionListNode = new ListNode();
-        parseList(definitionListNode, lexer, state);
+        int rangeDepth = state.rangeDepth;
+        state.rangeDepth = 0;
+        try {
+            parseList(definitionListNode, lexer, state);
+        } finally {
+            state.rangeDepth = rangeDepth;
+        }
 
         Node lastNode = definitionListNode.getLast();
         if (lastNode instanceof EndNode) {
@@ -293,6 +311,30 @@ public class Parser {
         listNode.append(new EndNode());
     }
 
+    private void parseBreak(ListNode listNode, Lexer lexer, State state, Token breakToken) throws TemplateParseException {
+        parseRangeControl(listNode, lexer, state, breakToken, new BreakNode());
+    }
+
+    private void parseContinue(ListNode listNode, Lexer lexer, State state, Token continueToken) throws TemplateParseException {
+        parseRangeControl(listNode, lexer, state, continueToken, new ContinueNode());
+    }
+
+    private void parseRangeControl(ListNode listNode, Lexer lexer, State state, Token token, Node node) throws TemplateParseException {
+        if (state.rangeDepth == 0) {
+            throwUnexpectErrorWithContext(String.format("{{%s}} outside {{range}}", token.value()), token, state);
+        }
+
+        Token nextToken = moveToNextNonSpaceToken(lexer, state);
+        if (nextToken == null) {
+            throwUnexpectErrorWithContext("missing token", token, state);
+        }
+        if (nextToken.type() != TokenType.RIGHT_DELIM) {
+            throwUnexpectErrorWithContext(String.format("unexpected %s in %s", nextToken, token.value()), nextToken, state);
+        }
+
+        listNode.append(node);
+    }
+
     private void parseIf(ListNode listNode, Lexer lexer, State state) throws TemplateParseException {
         moveToNextNonSpaceToken(lexer, state);
         moveToPrevItem(lexer, state);
@@ -307,7 +349,12 @@ public class Parser {
         moveToPrevItem(lexer, state);
 
         RangeNode rangeNode = new RangeNode();
-        parseBranch(rangeNode, lexer, "range", true, state);
+        state.rangeDepth++;
+        try {
+            parseBranch(rangeNode, lexer, "range", true, state);
+        } finally {
+            state.rangeDepth--;
+        }
         listNode.append(rangeNode);
     }
 
@@ -932,6 +979,8 @@ public class Parser {
          * Position marker
          */
         private int tokenIndex;
+
+        private int rangeDepth;
 
         private State(String templateText) {
             this.templateText = templateText;

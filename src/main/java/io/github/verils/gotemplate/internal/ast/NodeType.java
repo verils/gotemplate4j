@@ -22,7 +22,9 @@ public enum NodeType {
     TEMPLATE(17),
     VARIABLE(18),
     WITH(19),
-    COMMENT(20);
+    COMMENT(20),
+    BREAK(21),
+    CONTINUE(22);
 
 
     private final int code;

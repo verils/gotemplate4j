@@ -57,6 +57,10 @@ public class Executor {
             writeAction(writer, (ActionNode) node, data, beanInfo, variables);
         } else if (node instanceof CommentNode) {
             // Ignore comment
+        } else if (node instanceof BreakNode) {
+            throw BreakException.INSTANCE;
+        } else if (node instanceof ContinueNode) {
+            throw ContinueException.INSTANCE;
         } else if (node instanceof IfNode) {
             writeIf(writer, (IfNode) node, data, beanInfo, variables);
         } else if (node instanceof RangeNode) {
@@ -122,7 +126,9 @@ public class Executor {
             int length = Array.getLength(arrayOrList);
             for (int i = 0; i < length; i++) {
                 Object value = Array.get(arrayOrList, i);
-                writeRangeValue(writer, rangeNode, i, value, indexVarName, valueVarName, variables);
+                if (!writeRangeValue(writer, rangeNode, i, value, indexVarName, valueVarName, variables)) {
+                    break;
+                }
             }
         }
 
@@ -130,7 +136,9 @@ public class Executor {
             Collection<?> collection = (Collection<?>) arrayOrList;
             int index = 0;
             for (Object object : collection) {
-                writeRangeValue(writer, rangeNode, index, object, indexVarName, valueVarName, variables);
+                if (!writeRangeValue(writer, rangeNode, index, object, indexVarName, valueVarName, variables)) {
+                    break;
+                }
                 index++;
             }
         }
@@ -141,12 +149,14 @@ public class Executor {
                 // For maps, when two vars are specified, first is key, second is value
                 Object entryValue = entry.getValue();
                 Object entryKey = entry.getKey();
-                writeRangeValue(writer, rangeNode, entryKey, entryValue, indexVarName, valueVarName, variables);
+                if (!writeRangeValue(writer, rangeNode, entryKey, entryValue, indexVarName, valueVarName, variables)) {
+                    break;
+                }
             }
         }
     }
 
-    private void writeRangeValue(Writer writer, RangeNode rangeNode, Object index, Object value,
+    private boolean writeRangeValue(Writer writer, RangeNode rangeNode, Object index, Object value,
                                  String indexVarName, String valueVarName, Map<String, Object> variables) throws IOException,
             TemplateExecutionException, TemplateNotFoundException {
         // Unwrap Optional if present
@@ -166,9 +176,16 @@ public class Executor {
         }
 
         ListNode ifListNode = rangeNode.getIfListNode();
-        for (Node node : ifListNode) {
-            BeanInfo itemBeanInfo = value != null ? getBeanInfo(value) : null;
-            writeNode(writer, node, value, itemBeanInfo, iterationVars);
+        try {
+            for (Node node : ifListNode) {
+                BeanInfo itemBeanInfo = value != null ? getBeanInfo(value) : null;
+                writeNode(writer, node, value, itemBeanInfo, iterationVars);
+            }
+            return true;
+        } catch (ContinueException e) {
+            return true;
+        } catch (BreakException e) {
+            return false;
         }
     }
 
@@ -560,5 +577,13 @@ public class Executor {
             // For other types (including enums), use toString()
             writer.write(String.valueOf(value));
         }
+    }
+
+    private static class BreakException extends RuntimeException {
+        private static final BreakException INSTANCE = new BreakException();
+    }
+
+    private static class ContinueException extends RuntimeException {
+        private static final ContinueException INSTANCE = new ContinueException();
     }
 }

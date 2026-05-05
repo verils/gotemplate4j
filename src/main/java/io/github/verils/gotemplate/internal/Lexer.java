@@ -24,6 +24,8 @@ public class Lexer {
     static {
         KEY_MAP.put(".", TokenType.DOT);
         KEY_MAP.put("block", TokenType.BLOCK);
+        KEY_MAP.put("break", TokenType.BREAK);
+        KEY_MAP.put("continue", TokenType.CONTINUE);
         KEY_MAP.put("define", TokenType.DEFINE);
         KEY_MAP.put("else", TokenType.ELSE);
         KEY_MAP.put("end", TokenType.END);

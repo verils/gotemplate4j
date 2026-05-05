@@ -13,6 +13,11 @@ public enum TokenType {
     BLOCK,
 
     /**
+     * break keyword
+     */
+    BREAK,
+
+    /**
      * boolean constant
      */
     BOOL,
@@ -31,6 +36,11 @@ public enum TokenType {
      * comment text
      */
     COMMENT,
+
+    /**
+     * continue keyword
+     */
+    CONTINUE,
 
     /**
      * complex constant (1+2i); imaginary is just a number
