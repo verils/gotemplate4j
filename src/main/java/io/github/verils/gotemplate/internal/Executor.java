@@ -122,7 +122,7 @@ public class Executor {
             int length = Array.getLength(arrayOrList);
             for (int i = 0; i < length; i++) {
                 Object value = Array.get(arrayOrList, i);
-                writeRangeValue(writer, rangeNode, value, i, indexVarName, valueVarName, variables);
+                writeRangeValue(writer, rangeNode, i, value, indexVarName, valueVarName, variables);
             }
         }
 
@@ -130,24 +130,23 @@ public class Executor {
             Collection<?> collection = (Collection<?>) arrayOrList;
             int index = 0;
             for (Object object : collection) {
-                writeRangeValue(writer, rangeNode, object, index, indexVarName, valueVarName, variables);
+                writeRangeValue(writer, rangeNode, index, object, indexVarName, valueVarName, variables);
                 index++;
             }
         }
 
         if (arrayOrList instanceof Map) {
             Map<?, ?> map = (Map<?, ?>) arrayOrList;
-            int index = 0;
             for (Map.Entry<?, ?> entry : map.entrySet()) {
                 // For maps, when two vars are specified, first is key, second is value
-                Object mapValue = entry.getValue();
-                writeRangeValue(writer, rangeNode, mapValue, index, indexVarName, valueVarName, variables);
-                index++;
+                Object entryValue = entry.getValue();
+                Object entryKey = entry.getKey();
+                writeRangeValue(writer, rangeNode, entryKey, entryValue, indexVarName, valueVarName, variables);
             }
         }
     }
 
-    private void writeRangeValue(Writer writer, RangeNode rangeNode, Object value, int index,
+    private void writeRangeValue(Writer writer, RangeNode rangeNode, Object index, Object value,
                                  String indexVarName, String valueVarName, Map<String, Object> variables) throws IOException,
             TemplateExecutionException, TemplateNotFoundException {
         // Unwrap Optional if present

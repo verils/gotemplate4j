@@ -86,6 +86,23 @@ public class RangeIndexTest {
     }
 
     @Test
+    void testRangeWithMapKeyAndValue() throws IOException, TemplateException {
+        Template template = new Template("test");
+        template.parse("{{range $k, $v := .Data}}{{$k}}={{$v}};{{end}}");
+
+        Writer writer = new StringWriter();
+        Map<String, Object> data = new HashMap<>();
+        Map<String, String> mapData = new LinkedHashMap<>();
+        mapData.put("first", "1");
+        mapData.put("second", "2");
+        data.put("Data", mapData);
+
+        template.execute(writer, data);
+
+        assertEquals("first=1;second=2;", writer.toString());
+    }
+
+    @Test
     void testRangeIndexVariableIsolation() throws IOException, TemplateException {
         // Test that range variables don't leak outside the range block
         Template template = new Template("test");
