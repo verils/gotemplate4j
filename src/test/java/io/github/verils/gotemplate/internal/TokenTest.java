@@ -4,10 +4,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Tests for Token class to improve coverage
- */
-class TokenCoverageTest {
+class TokenTest {
 
     @Test
     void testTokenCreation() {
