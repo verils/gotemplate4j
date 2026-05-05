@@ -12,6 +12,10 @@ public class VariableNode implements Node {
         return identifiers[index];
     }
 
+    public String[] getIdentifiers() {
+        return identifiers;
+    }
+
     @Override
     public String toString() {
         return String.join(".", identifiers);

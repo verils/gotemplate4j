@@ -40,6 +40,7 @@ public class Executor {
         }
 
         Map<String, Object> variables = new HashMap<>();
+        variables.put("$", data);
         if (data != null) {
             BeanInfo beanInfo = getBeanInfo(data);
             writeNode(writer, listNode, data, beanInfo, variables);
@@ -213,22 +214,19 @@ public class Executor {
             throw new TemplateExecutionException(String.format("template %s not defined", name));
         }
 
-        // Create a copy of variables for template isolation
-        Map<String, Object> templateVariables = new HashMap<>(variables);
+        BeanInfo beanInfo = data != null ? getBeanInfo(data) : null;
+        Object value = templateNode.getPipeNode() != null
+                ? executePipe(templateNode.getPipeNode(), data, beanInfo, variables)
+                : null;
 
-        if (data != null) {
-            BeanInfo beanInfo = getBeanInfo(data);
-            Object value = executePipe(templateNode.getPipeNode(), data, beanInfo, variables);
+        Map<String, Object> templateVariables = new HashMap<>();
+        templateVariables.put("$", value);
 
-            // Handle null value from pipeline
-            if (value == null) {
-                writeNode(writer, listNode, null, null, templateVariables);
-            } else {
-                BeanInfo valueBeanInfo = getBeanInfo(value);
-                writeNode(writer, listNode, value, valueBeanInfo, templateVariables);
-            }
-        } else {
+        if (value == null) {
             writeNode(writer, listNode, null, null, templateVariables);
+        } else {
+            BeanInfo valueBeanInfo = getBeanInfo(value);
+            writeNode(writer, listNode, value, valueBeanInfo, templateVariables);
         }
     }
 
@@ -281,11 +279,15 @@ public class Executor {
 
     private Object executeField(final FieldNode fieldNode, final Object data, final BeanInfo beanInfo)
             throws TemplateExecutionException {
-        String[] identifiers = fieldNode.getIdentifiers();
-        Object currentData = data;
-        BeanInfo currentBeanInfo = beanInfo;
+        return executeFieldPath(fieldNode.getIdentifiers(), 0, data);
+    }
 
-        for (String identifier : identifiers) {
+    private Object executeFieldPath(final String[] identifiers, int start, final Object data)
+            throws TemplateExecutionException {
+        Object currentData = data;
+
+        for (int i = start; i < identifiers.length; i++) {
+            String identifier = identifiers[i];
             if (currentData == null) {
                 return null;
             }
@@ -300,10 +302,10 @@ public class Executor {
                 //noinspection unchecked
                 Map<String, Object> map = (Map<String, Object>) currentData;
                 currentData = unwrapOptional(map.get(identifier));
-                // Update beanInfo for the new data
-                currentBeanInfo = currentData != null ? getBeanInfo(currentData) : null;
                 continue;
             }
+
+            BeanInfo currentBeanInfo = getBeanInfo(currentData);
 
             // First, try to find a getter method
             PropertyDescriptor[] propertyDescriptors = currentBeanInfo.getPropertyDescriptors();
@@ -351,7 +353,6 @@ public class Executor {
 
             // Update currentData and beanInfo for next iteration
             currentData = value;
-            currentBeanInfo = currentData != null ? getBeanInfo(currentData) : null;
         }
 
         return currentData;
@@ -395,7 +396,12 @@ public class Executor {
         if (!variables.containsKey(varName)) {
             throw new TemplateExecutionException(String.format("undefined variable \"%s\"", varName));
         }
-        return variables.get(varName);
+        Object value = variables.get(varName);
+        String[] identifiers = variableNode.getIdentifiers();
+        if (identifiers.length == 1) {
+            return value;
+        }
+        return executeFieldPath(identifiers, 1, value);
     }
 
     private Object executeFunction(IdentifierNode identifierNode, List<Node> cmdArgNodes, Object data, BeanInfo beanInfo,

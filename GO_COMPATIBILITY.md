@@ -45,7 +45,7 @@ This matrix tracks semantic compatibility with Go's `text/template` package. It 
 | `range $k, $v :=` binds index/key and element | Compatible | `RangeIndexTest` | Keep as regression suite. |
 | Variable scope ends at matching `end` | Mostly Compatible | `RangeIndexTest`, `ParserBranchScopeTest` | Strengthen execution tests for `if`, `with`, `range`, and root scope. |
 | Template invocation does not inherit caller variables | Compatible | `RangeIndexTest` | Add one explicit non-range variable case. |
-| `$` is initial execution data | Needs Audit | Parser initializes `$` | Add executor test for `$` inside `with` and `range`. |
+| `$` is initial execution data | Compatible | `RootVariableCompatibilityTest` | Keep root stability and template invocation root rebinding as regression coverage. |
 
 ## Data Access and Type Semantics
 

@@ -79,13 +79,6 @@ public class Lexer {
     private int lineStart = 0;
 
 
-    /**
-     * Start line of current token
-     */
-    private int startLineStart = 1;
-
-
-
     /* Result tokens */
 
     private final List<Token> tokens = new ArrayList<>(8);
@@ -180,7 +173,7 @@ public class Lexer {
             return this::parseComment;
         }
 
-        addToken(TokenType.LEFT_DELIM);
+        addTokenWithCurrentPosition(TokenType.LEFT_DELIM);
 
         pos = parseStart;
         moveStartToPos();
@@ -203,7 +196,7 @@ public class Lexer {
         }
 
         if (keepComments) {
-            addToken(TokenType.COMMENT);
+            addTokenWithCurrentPosition(TokenType.COMMENT);
         }
 
         if (isPosAtRightDelimWithTrimMarker()) {
@@ -262,15 +255,15 @@ public class Lexer {
             return this::parseIdentifier;
         } else if (ch == '(') {
             parenDepth++;
-            addToken(TokenType.LEFT_PAREN);
+            addTokenWithCurrentPosition(TokenType.LEFT_PAREN);
         } else if (ch == ')') {
             parenDepth--;
             if (parenDepth < 0) {
                 return parseError("unexpected right paren");
             }
-            addToken(TokenType.RIGHT_PAREN);
+            addTokenWithCurrentPosition(TokenType.RIGHT_PAREN);
         } else if (CharUtils.isAscii(ch) && CharUtils.isVisible(ch)) {
-            addToken(TokenType.CHAR);
+            addTokenWithCurrentPosition(TokenType.CHAR);
         } else {
             return parseError("bad character in action: " + ch);
         }
@@ -288,7 +281,7 @@ public class Lexer {
         }
 
         pos = start + rightDelimiter.length();
-        addToken(TokenType.RIGHT_DELIM);
+        addTokenWithCurrentPosition(TokenType.RIGHT_DELIM);
         moveStartToPos();
 
         if (posAtRightDelimWithTrimMarker) {
@@ -303,7 +296,7 @@ public class Lexer {
     }
 
     private State parseSpace() {
-        addToken(TokenType.SPACE);
+        addTokenWithCurrentPosition(TokenType.SPACE);
         moveStartToPos();
 
         return this::parseInsideAction;
@@ -315,14 +308,14 @@ public class Lexer {
             return () -> parseError("expected :=");
         }
 
-        addToken(TokenType.DECLARE);
+        addTokenWithCurrentPosition(TokenType.DECLARE);
         moveStartToPos();
 
         return this::parseInsideAction;
     }
 
     private State parsePipe() {
-        addToken(TokenType.PIPE);
+        addTokenWithCurrentPosition(TokenType.PIPE);
         moveStartToPos();
 
         return this::parseInsideAction;
@@ -347,7 +340,7 @@ public class Lexer {
             }
         }
 
-        addToken(TokenType.STRING);
+        addTokenWithCurrentPosition(TokenType.STRING);
         moveStartToPos();
 
         return this::parseInsideAction;
@@ -365,7 +358,7 @@ public class Lexer {
             }
         }
 
-        addToken(TokenType.RAW_STRING);
+        addTokenWithCurrentPosition(TokenType.RAW_STRING);
         moveStartToPos();
 
         return this::parseInsideAction;
@@ -373,7 +366,7 @@ public class Lexer {
 
     private State parseVariable() {
         if (isPosAtWordTerminator()) {
-            addToken(TokenType.VARIABLE);
+            addTokenWithCurrentPosition(TokenType.VARIABLE);
             moveStartToPos();
 
             return this::parseInsideAction;
@@ -384,7 +377,7 @@ public class Lexer {
             return () -> parseError("bad character: " + ch);
         }
 
-        addToken(TokenType.VARIABLE);
+        addTokenWithCurrentPosition(TokenType.VARIABLE);
         moveStartToPos();
 
         return this::parseInsideAction;
@@ -410,7 +403,7 @@ public class Lexer {
             }
         }
 
-        addToken(TokenType.CHAR_CONSTANT);
+        addTokenWithCurrentPosition(TokenType.CHAR_CONSTANT);
         moveStartToPos();
 
         return this::parseInsideAction;
@@ -427,7 +420,7 @@ public class Lexer {
 
     private State parseField() {
         if (isPosAtWordTerminator()) {
-            addToken(TokenType.DOT);
+            addTokenWithCurrentPosition(TokenType.DOT);
             moveStartToPos();
 
             return this::parseInsideAction;
@@ -438,7 +431,7 @@ public class Lexer {
             return () -> parseError("bad character: " + ch);
         }
 
-        addToken(TokenType.FIELD);
+        addTokenWithCurrentPosition(TokenType.FIELD);
         moveStartToPos();
 
         return this::parseInsideAction;
@@ -456,9 +449,9 @@ public class Lexer {
         if (CharUtils.isAnyOf(ch, "+-")) {
             lookForNumber();
 
-            addToken(TokenType.COMPLEX);
+            addTokenWithCurrentPosition(TokenType.COMPLEX);
         } else {
-            addToken(TokenType.NUMBER);
+            addTokenWithCurrentPosition(TokenType.NUMBER);
         }
 
         moveStartToPos();
@@ -480,13 +473,13 @@ public class Lexer {
         String word = getText();
 
         if (KEY_MAP.containsKey(word)) {
-            addToken(KEY_MAP.get(word));
+            addTokenWithCurrentPosition(KEY_MAP.get(word));
         } else if (word.charAt(0) == '.') {
-            addToken(TokenType.FIELD);
+            addTokenWithCurrentPosition(TokenType.FIELD);
         } else if ("true".equals(word) || "false".equals(word)) {
-            addToken(TokenType.BOOL);
+            addTokenWithCurrentPosition(TokenType.BOOL);
         } else {
-            addToken(TokenType.IDENTIFIER);
+            addTokenWithCurrentPosition(TokenType.IDENTIFIER);
         }
 
         moveStartToPos();
@@ -496,7 +489,7 @@ public class Lexer {
 
     private State parseError(String error) {
         startLine = line;
-        addToken(TokenType.ERROR, error);
+        addErrorToken(error);
         return null;
     }
 
@@ -655,12 +648,12 @@ public class Lexer {
         lineStart = pos + 1;
     }
 
-    private void addToken(TokenType type) {
-        addToken(type, getText(), start, line, start - lineStart + 1);
+    private void addErrorToken(String value) {
+        addToken(TokenType.ERROR, value, start, startLine, start - lineStart + 1);
     }
 
-    private void addToken(TokenType type, String value) {
-        addToken(type, value, start, startLine, start - lineStart + 1);
+    private void addTokenWithCurrentPosition(TokenType type) {
+        addToken(type, getText(), start, line, start - lineStart + 1);
     }
 
     private void addToken(TokenType type, String text, int start, int startLine, int column) {
@@ -681,7 +674,6 @@ public class Lexer {
     }
 
     private interface State {
-
         State run();
     }
 }
