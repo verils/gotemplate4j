@@ -1,14 +1,15 @@
 # gotemplate4j Development Plan
 
 **Last Updated**: 2026-05-06  
-**Current Version**: 0.5.0 release candidate  
-**Current Focus**: complete the v0.5.0 Go `text/template` compatibility audit and release readiness
+**Current Version**: 0.5.0  
+**Next Version**: 0.6.0  
+**Current Focus**: post-audit API usability, migration guidance, and high-value compatibility gaps
 
 ---
 
 ## Direction
 
-gotemplate4j should remain a small, Java 8-compatible implementation of Go's `text/template` semantics for Java applications. The v0.5.0 line is the compatibility-audit release: behavior must be covered by focused tests, documented as a Java-specific deviation, or explicitly deferred.
+gotemplate4j should remain a small, Java 8-compatible implementation of Go's `text/template` semantics for Java applications. v0.5.0 completed the core compatibility audit. v0.6.0 should turn that audit result into better user-facing API behavior, migration guidance, and a small number of high-value compatibility improvements.
 
 ## Working Constraints
 
@@ -107,34 +108,191 @@ Status meanings:
 - `./mvnw test` succeeds on Java 8.
 - `./mvnw verify "-Dgpg.skip=true"` succeeds before release tagging.
 
-## Post-v0.5.0 Work
+## v0.6.0 Release Plan
 
-### Compatibility Fixture Suite
+Positioning: v0.6.0 is the API usability and migration release after the v0.5.0 compatibility audit. It should not reopen the entire compatibility matrix. It should make the audited behavior easier to understand, configure, and validate in real Java projects.
 
-- Build a compact fixture set with expected Go outputs for `if`, `range`, `with`, template invocation, variables, missing keys, escaping, formatting, and errors.
-- Add a repeatable process for refreshing expected outputs from Go when Go `text/template` changes.
-- Keep Java deviations in separate fixtures so compatibility gaps are not hidden by Java-specific convenience behavior.
+### Goals
 
-### API and Documentation
+- Move detailed compatibility guidance out of README into focused docs.
+- Add a configurable missing-key policy, because missing data is one of the most important production behaviors for template engines.
+- Add template introspection APIs so callers can inspect parsed template sets before execution.
+- Add a canonical compatibility fixture suite that preserves the v0.5.0 audit results and gives future changes a stable regression target.
+- Keep the implementation Java 8-compatible and dependency-light.
 
-- Write a migration guide from Go templates to gotemplate4j, including Java object access rules.
-- Decide whether Go-style `Option("missingkey=...")` belongs in the public API.
-- Decide whether `Lookup`, `DefinedTemplates`, `Templates`, `Name`, and associated `New` are needed for v1.0 API stability.
-- Decide whether file helpers such as `ParseFiles` and `ParseGlob` fit the Java API or should remain caller-managed IO.
-- Decide whether general Java method invocation with arguments is desirable, given security and compatibility tradeoffs.
+### Non-Goals
 
-### Quality and Tooling
+- Do not implement generic Java method calls with arguments in v0.6.0. The security and invocation rules need a separate design.
+- Do not implement Go channel, `iter.Seq`, `iter.Seq2`, or Go `ParseFS` equivalents.
+- Do not start broad performance refactors before establishing a baseline.
+- Do not add runtime dependencies unless a specific feature cannot be implemented cleanly with the JDK.
+
+### Stage 1: Documentation and Fixture Skeleton
+
+Create user-facing docs:
+
+- `docs/go-template-compatibility.md`
+- `docs/migration-from-go-template.md`
+
+The compatibility doc should cover:
+
+- Covered core Go `text/template` behavior.
+- Java-specific behavior: getters, public fields, public no-arg methods, `Optional`, enum rendering, null and missing values.
+- Unsupported or deferred Go APIs.
+- Suggested Java alternatives for unsupported Go APIs.
+
+The migration guide should cover:
+
+- How to map Go structs to JavaBeans, public fields, maps, and enums.
+- How null and missing keys behave.
+- How map iteration order differs from Go's ordered-key behavior.
+- How custom functions map to gotemplate4j `Function`.
+- How to avoid relying on Go-only APIs such as `ParseFS`, `Option`, and function-valued fields.
+
+Add fixture test structure:
+
+- Keep Go-compatible fixtures separate from Java-deviation fixtures.
+- Prefer small, canonical fixtures with explicit expected output.
+- Cover `if`, `range`, `with`, template invocation, variables, missing keys, escaping, formatting, and errors.
+
+### Stage 2: Missing Key Policy
+
+Implement configurable missing-key behavior.
+
+Preferred public API:
+
+```java
+Template template = new Template("name");
+template.withMissingKeyPolicy(MissingKeyPolicy.ERROR);
+```
+
+Also consider a Go-compatible string entrypoint if it can be added without ambiguity:
+
+```java
+template.option("missingkey=error");
+```
+
+Policies:
+
+- `DEFAULT`: current v0.5.0 behavior; missing keys evaluate to null and print as empty output.
+- `ZERO`: return a Java zero-like value where the target type is knowable; otherwise fall back to null/empty output.
+- `ERROR`: throw `TemplateExecutionException` when a map key or field-chain segment is missing.
+
+Implementation constraints:
+
+- Preserve v0.5.0 default behavior for backward compatibility.
+- Make policy part of `Template` state and preserve it in the copy constructor.
+- Keep exported API Java 8-compatible.
+- Add focused tests for map key access, field access, nested chains, `index`, branch truthiness, and template execution errors.
+- Document any Java-specific limits of `ZERO`, because Java often cannot infer the intended value type from a missing map entry.
+
+### Stage 3: Template Introspection API
+
+Add a small, Java-friendly template-set inspection API.
+
+Candidate API:
+
+```java
+String name();
+boolean hasTemplate(String name);
+Set<String> definedTemplates();
+List<Template> templates();
+Template lookup(String name);
+```
+
+Refine the exact return types during implementation. Avoid exposing mutable internal AST structures.
+
+Behavior expectations:
+
+- `name()` returns the root template name.
+- `definedTemplates()` returns stable names for parsed templates.
+- `hasTemplate(name)` is the safest simple query.
+- `lookup(name)` should be documented carefully. If returning a `Template`, it must not allow accidental mutation of the original template set.
+
+Testing requirements:
+
+- Root-only template.
+- Multiple `define` blocks.
+- Re-parse and override behavior.
+- Empty definition handling.
+- Copy constructor behavior.
+
+### Stage 4: Optional File Helpers
+
+This stage is optional for v0.6.0. Only include it if Stages 1-3 are complete and stable.
+
+Candidate API:
+
+```java
+void parseFile(Path path);
+void parseFiles(Path... paths);
+void parseGlob(Path directory, String glob);
+```
+
+Constraints:
+
+- Use `java.nio.file` only.
+- Keep IO caller-visible through `IOException`.
+- Do not try to model Go `ParseFS` in Java 8.
+- Document file-name to template-name behavior before implementation.
+
+### Stage 5: Lightweight Performance Baseline
+
+This stage is optional for v0.6.0 and should not block release.
+
+Add a lightweight benchmark or repeatable smoke harness for:
+
+- parse throughput
+- execute throughput
+- JavaBean getter access
+- public field access
+- public no-arg method access
+- range-heavy templates
+- function-heavy pipelines
+
+Do not add reflection caching or AST caching until baseline numbers show a concrete need.
+
+### v0.6.0 Completion Gate
+
+- `README.md` and `README_zh.md` link to the detailed compatibility and migration docs instead of carrying all details inline.
+- Missing-key policy is implemented or explicitly moved out of v0.6.0 before coding begins.
+- Template introspection API is implemented or explicitly moved out of v0.6.0 before coding begins.
+- Compatibility fixtures and Java-deviation fixtures are separate.
+- `CHANGELOG` describes v0.6.0 as a post-audit API usability release.
+- `./mvnw clean verify "-Dgpg.skip=true"` succeeds on Java 8.
+- No public API additions are left undocumented in Javadocs.
+
+### Suggested Next Session Order
+
+1. Review this v0.6.0 plan against the current code and adjust API names before implementation.
+2. Add docs skeleton and fixture test structure.
+3. Implement `MissingKeyPolicy` and tests.
+4. Implement template introspection API and tests.
+5. Revisit optional file helpers only after the first three stages pass verification.
+6. Update README/README_zh/CHANGELOG and run Java 8 verification.
+
+## Later Backlog
+
+These items should stay out of v0.6.0 unless the release scope is explicitly changed.
+
+### Quality and Tooling Backlog
 
 - Improve coverage headroom above the configured JaCoCo thresholds.
 - Add tests for error paths that are currently only incidentally covered.
 - Consider static analysis tooling such as SpotBugs or PMD after compatibility behavior stabilizes.
 - Review deprecated APIs, magic strings, and input validation boundaries.
 
-### Performance Baseline
+### Performance Backlog
 
 - Add JMH or a lightweight benchmark harness for parse, execute, field access, function calls, and range-heavy templates.
 - Establish baseline numbers before adding reflection caching or AST caching.
 - Add performance regression checks only after the benchmark harness is stable enough to avoid noisy failures.
+
+### API Backlog
+
+- Decide whether general Java method invocation with arguments is desirable, given security and compatibility tradeoffs.
+- Revisit Java-friendly file helpers if caller-managed IO proves too verbose in real usage.
+- Revisit broader Go API parity only after v0.6.0 missing-key policy and introspection APIs are stable.
 
 ## Maintenance Rules
 
