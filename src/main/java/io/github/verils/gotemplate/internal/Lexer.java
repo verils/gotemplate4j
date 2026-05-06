@@ -235,6 +235,8 @@ public class Lexer {
             return this::parseSpace;
         } else if (ch == ':') {
             return this::parseDeclare;
+        } else if (ch == '=') {
+            addTokenWithCurrentPosition(TokenType.ASSIGN);
         } else if (ch == '|') {
             return this::parsePipe;
         } else if (ch == '"') {

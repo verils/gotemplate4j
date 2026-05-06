@@ -288,6 +288,7 @@ public class Parser {
 
         switch (token.type()) {
             case IF:
+            case WITH:
                 moveToPrevItem(lexer, state);
                 listNode.append(new ElseNode());
                 break;
@@ -417,12 +418,12 @@ public class Parser {
         if (lastNode instanceof ElseNode) {
             listNode.removeLast();
 
-            if (allowElseIf) {
-                Token token = lookNextNonSpaceToken(lexer, state);
-                if (token == null) {
-                    throwUnexpectError("missing token");
-                }
+            Token token = lookNextNonSpaceToken(lexer, state);
+            if (token == null) {
+                throwUnexpectError("missing token");
+            }
 
+            if (allowElseIf) {
                 if (token.type() == TokenType.IF) {
                     moveToNextNonSpaceToken(lexer, state);
 
@@ -432,6 +433,16 @@ public class Parser {
 
                     return;
                 }
+            }
+
+            if (token.type() == TokenType.WITH) {
+                moveToNextNonSpaceToken(lexer, state);
+
+                ListNode elseListNode = new ListNode();
+                parseWith(elseListNode, lexer, state);
+                branchNode.setElseListNode(elseListNode);
+
+                return;
             }
 
             ListNode elseListNode = new ListNode();

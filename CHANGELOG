@@ -1,3 +1,52 @@
+v0.5.0 (2026-05-06)
+
+========
+
+**Compatibility Audit Release** - This version completes the v0.5.0 Go `text/template` compatibility audit for core execution semantics and documents intentional Java deviations.
+
+### Compatibility Improvements
+
+- Added focused compatibility coverage for high-risk Go template behavior:
+  - `range ... else` over empty lists, arrays, maps, and null values
+  - `with ... else with`
+  - template invocation with omitted pipeline data
+  - variable declaration, reassignment, and branch/range scoping
+  - logical `and` / `or` short-circuit evaluation
+  - function error wrapping and writer `IOException` propagation
+
+- Improved execution semantics:
+  - Null range values now execute the `else` branch instead of throwing `NullPointerException`
+  - `and` and `or` now short-circuit before evaluating later arguments
+  - Runtime failures from template functions are wrapped in `TemplateExecutionException`
+  - Public no-argument Java methods can be accessed in field chains
+  - Enum `name` and `ordinal` access no longer depends on private JDK field reflection
+
+### Java Compatibility Decisions
+
+- Java getters and public fields map to Go-style exported field access
+- Java `Optional` values unwrap automatically
+- Null and missing values are falsey and print as empty output
+- Java `Map` iteration follows the map implementation order; keys are not sorted by the engine
+- `default`, `deepEqual`, `typeof`, and `kindOf` are documented as gotemplate4j extensions
+
+### Deferred Go APIs
+
+The following Go APIs are intentionally not part of v0.5.0:
+
+- `Option("missingkey=default/zero/error")`
+- `ParseFiles`, `ParseGlob`, and `ParseFS`
+- Template introspection APIs such as `Lookup`, `DefinedTemplates`, `Templates`, `Name`, and associated `New`
+- `range` over channels, Go iterators, or integer sequences
+- General Java method calls with arguments from templates
+- Go function-valued fields or map entries for `call`
+
+### Testing
+
+- Added `GoCompatibilityAuditTest`
+- Updated legacy null-range behavior coverage
+- Total: 620+ tests with zero failures
+- Java 8 verification target: `./mvnw verify "-Dgpg.skip=true"`
+
 v0.4.0 (2026-05-01)
 
 ========

@@ -16,6 +16,7 @@ import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -41,6 +42,7 @@ public class Executor {
 
         Map<String, Object> variables = new HashMap<>();
         variables.put("$", data);
+
         if (data != null) {
             BeanInfo beanInfo = getBeanInfo(data);
             writeNode(writer, listNode, data, beanInfo, variables);
@@ -88,11 +90,12 @@ public class Executor {
 
     private void writeIf(Writer writer, IfNode ifNode, Object data, BeanInfo beanInfo, Map<String, Object> variables) throws IOException,
             TemplateExecutionException, TemplateNotFoundException {
-        Object value = executePipe(ifNode.getPipeNode(), data, beanInfo, variables);
+        Map<String, Object> blockVariables = new HashMap<>(variables);
+        Object value = executePipe(ifNode.getPipeNode(), data, beanInfo, blockVariables);
         if (isTrue(value)) {
-            writeNode(writer, ifNode.getIfListNode(), data, beanInfo, variables);
+            writeNode(writer, ifNode.getIfListNode(), data, beanInfo, blockVariables);
         } else if (ifNode.getElseListNode() != null) {
-            writeNode(writer, ifNode.getElseListNode(), data, beanInfo, variables);
+            writeNode(writer, ifNode.getElseListNode(), data, beanInfo, blockVariables);
         }
     }
 
@@ -105,7 +108,7 @@ public class Executor {
 
     private void writeRange(Writer writer, RangeNode rangeNode, Object data, BeanInfo beanInfo, Map<String, Object> variables) throws IOException,
             TemplateExecutionException, TemplateNotFoundException {
-        Object arrayOrList = executePipe(rangeNode.getPipeNode(), data, beanInfo, variables);
+        Object arrayOrList = executePipe(rangeNode.getPipeNode(), data, beanInfo, new HashMap<>(variables), false);
 
         // Get variable names from the range node's pipe
         List<VariableNode> rangeVars = rangeNode.getPipeNode().getVariables();
@@ -123,10 +126,13 @@ public class Executor {
             valueVarName = rangeVars.get(0).getIdentifier(0);
         }
 
-        if (arrayOrList.getClass().isArray()) {
+        boolean iterated = false;
+
+        if (arrayOrList != null && arrayOrList.getClass().isArray()) {
             int length = Array.getLength(arrayOrList);
             for (int i = 0; i < length; i++) {
                 Object value = Array.get(arrayOrList, i);
+                iterated = true;
                 if (!writeRangeValue(writer, rangeNode, i, value, indexVarName, valueVarName, variables)) {
                     break;
                 }
@@ -137,6 +143,7 @@ public class Executor {
             Collection<?> collection = (Collection<?>) arrayOrList;
             int index = 0;
             for (Object object : collection) {
+                iterated = true;
                 if (!writeRangeValue(writer, rangeNode, index, object, indexVarName, valueVarName, variables)) {
                     break;
                 }
@@ -150,15 +157,20 @@ public class Executor {
                 // For maps, when two vars are specified, first is key, second is value
                 Object entryValue = entry.getValue();
                 Object entryKey = entry.getKey();
+                iterated = true;
                 if (!writeRangeValue(writer, rangeNode, entryKey, entryValue, indexVarName, valueVarName, variables)) {
                     break;
                 }
             }
         }
+
+        if (!iterated && rangeNode.getElseListNode() != null) {
+            writeNode(writer, rangeNode.getElseListNode(), data, beanInfo, new HashMap<>(variables));
+        }
     }
 
     private boolean writeRangeValue(Writer writer, RangeNode rangeNode, Object index, Object value,
-                                 String indexVarName, String valueVarName, Map<String, Object> variables) throws IOException,
+                                    String indexVarName, String valueVarName, Map<String, Object> variables) throws IOException,
             TemplateExecutionException, TemplateNotFoundException {
         // Unwrap Optional if present
         value = unwrapOptional(value);
@@ -196,12 +208,13 @@ public class Executor {
 
     private void writeWith(Writer writer, WithNode withNode, Object data, BeanInfo beanInfo, Map<String, Object> variables) throws IOException,
             TemplateExecutionException, TemplateNotFoundException {
-        Object value = executePipe(withNode.getPipeNode(), data, beanInfo, variables);
+        Map<String, Object> blockVariables = new HashMap<>(variables);
+        Object value = executePipe(withNode.getPipeNode(), data, beanInfo, blockVariables);
         if (isTrue(value)) {
             BeanInfo valueBeanInfo = getBeanInfo(value);
-            writeNode(writer, withNode.getIfListNode(), value, valueBeanInfo, variables);
+            writeNode(writer, withNode.getIfListNode(), value, valueBeanInfo, blockVariables);
         } else if (withNode.getElseListNode() != null) {
-            writeNode(writer, withNode.getElseListNode(), data, beanInfo, variables);
+            writeNode(writer, withNode.getElseListNode(), data, beanInfo, blockVariables);
         }
     }
 
@@ -231,6 +244,11 @@ public class Executor {
     }
 
     private Object executePipe(PipeNode pipeNode, Object data, BeanInfo beanInfo, Map<String, Object> variables) throws TemplateExecutionException {
+        return executePipe(pipeNode, data, beanInfo, variables, true);
+    }
+
+    private Object executePipe(PipeNode pipeNode, Object data, BeanInfo beanInfo, Map<String, Object> variables,
+                               boolean assignVariables) throws TemplateExecutionException {
         if (pipeNode == null) {
             return data;
         }
@@ -241,9 +259,11 @@ public class Executor {
         }
 
         // Handle variable assignments: {{$x := .Value | upper}}
-        for (VariableNode variable : pipeNode.getVariables()) {
-            String varName = variable.getIdentifier(0);
-            variables.put(varName, value);
+        if (assignVariables) {
+            for (VariableNode variable : pipeNode.getVariables()) {
+                String varName = variable.getIdentifier(0);
+                variables.put(varName, value);
+            }
         }
 
         return value;
@@ -332,12 +352,26 @@ public class Executor {
                 }
             }
 
+            // Go permits no-arg method access in chains. In Java, only public no-arg methods
+            // are exposed this way; methods with arguments remain unsupported.
+            if (!found) {
+                Method method = findNoArgMethod(currentData.getClass(), identifier);
+                if (method != null) {
+                    try {
+                        value = unwrapOptional(method.invoke(currentData));
+                        found = true;
+                    } catch (IllegalAccessException | InvocationTargetException e) {
+                        throw new TemplateExecutionException(String.format(
+                                "can't invoke method '%s' from data", identifier), e);
+                    }
+                }
+            }
+
             // If no getter found, try public fields
             if (!found) {
                 try {
                     Field field = findField(currentData.getClass(), identifier);
                     if (field != null) {
-                        field.setAccessible(true);
                         value = unwrapOptional(field.get(currentData));
                         found = true;
                     }
@@ -380,12 +414,21 @@ public class Executor {
      * @return The Field object if found, null otherwise
      */
     private Field findField(Class<?> clazz, String fieldName) {
-        while (clazz != null && clazz != Object.class) {
-            try {
-                return clazz.getDeclaredField(fieldName);
-            } catch (NoSuchFieldException e) {
-                // Try superclass
-                clazz = clazz.getSuperclass();
+        try {
+            Field field = clazz.getField(fieldName);
+            return Modifier.isPublic(field.getModifiers()) ? field : null;
+        } catch (NoSuchFieldException e) {
+            return null;
+        }
+    }
+
+    private Method findNoArgMethod(Class<?> clazz, String methodName) {
+        for (Method method : clazz.getMethods()) {
+            if (method.getParameterTypes().length == 0
+                    && Modifier.isPublic(method.getModifiers())
+                    && method.getName().equals(methodName)
+                    && !"getClass".equals(method.getName())) {
+                return method;
             }
         }
         return null;
@@ -407,6 +450,10 @@ public class Executor {
     private Object executeFunction(IdentifierNode identifierNode, List<Node> cmdArgNodes, Object data, BeanInfo beanInfo,
                                    Object finalValue, Map<String, Object> variables) throws TemplateExecutionException {
         String identifier = identifierNode.getIdentifier();
+
+        if ("and".equals(identifier) || "or".equals(identifier)) {
+            return executeShortCircuitFunction(identifier, cmdArgNodes, data, beanInfo, finalValue, variables);
+        }
 
         if (functions.containsKey(identifier)) {
             Function function = functions.get(identifier);
@@ -431,10 +478,42 @@ public class Executor {
                 executeArguments(data, beanInfo, functionArgNodes, functionArgs, variables);
             }
 
-            return function.invoke(functionArgs);
+            try {
+                return function.invoke(functionArgs);
+            } catch (RuntimeException e) {
+                throw new TemplateExecutionException(String.format("function '%s' failed", identifier), e);
+            }
         }
 
         throw new TemplateExecutionException(String.format("%s is not a defined function", identifier));
+    }
+
+    private Object executeShortCircuitFunction(String identifier, List<Node> cmdArgNodes, Object data, BeanInfo beanInfo,
+                                               Object finalValue, Map<String, Object> variables) throws TemplateExecutionException {
+        List<Node> functionArgNodes = cmdArgNodes.subList(1, cmdArgNodes.size());
+
+        Object last = null;
+        for (Node argNode : functionArgNodes) {
+            last = executeArgument(argNode, data, beanInfo, variables);
+            if ("and".equals(identifier) && !isTrue(last)) {
+                return last;
+            }
+            if ("or".equals(identifier) && isTrue(last)) {
+                return last;
+            }
+        }
+
+        if (finalValue != null) {
+            last = finalValue;
+            if ("and".equals(identifier) && !isTrue(last)) {
+                return last;
+            }
+            if ("or".equals(identifier) && isTrue(last)) {
+                return last;
+            }
+        }
+
+        return last;
     }
 
     private void executeArguments(Object data, BeanInfo beanInfo, List<Node> args, Object[] argumentValues, Map<String, Object> variables) throws TemplateExecutionException {
