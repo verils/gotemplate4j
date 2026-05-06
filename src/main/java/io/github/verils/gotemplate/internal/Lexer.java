@@ -671,6 +671,7 @@ public class Lexer {
         return leftDelimiter;
     }
 
+    @SuppressWarnings("unused")
     public String getRightDelimiter() {
         return rightDelimiter;
     }

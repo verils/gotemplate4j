@@ -1,3 +1,23 @@
+v0.6.0 (unreleased)
+
+========
+
+**Post-Audit API Usability and Migration Release** - This version builds on the v0.5.0 compatibility audit by making high-value runtime behavior configurable and easier to inspect.
+
+### Added
+
+- Added `MissingKeyPolicy` with `DEFAULT`, `ZERO`, and `ERROR` modes.
+- Added `Template.withMissingKeyPolicy(...)` and Go-style `Template.option("missingkey=...")`.
+- Added template-set introspection APIs: `name()`, `hasTemplate(...)`, `definedTemplates()`, `lookup(...)`, and `templates()`.
+- Added focused compatibility and Java-deviation fixture tests.
+- Added detailed compatibility and migration docs under `docs/`.
+
+### Notes
+
+- `DEFAULT` preserves v0.5.0 missing-key behavior: missing map keys evaluate to `null` and print as empty output.
+- `ZERO` currently falls back to `null` for missing map keys because Java usually cannot infer the intended value type for absent map entries.
+- `lookup(...)` and `templates()` return independent template copies to avoid accidental mutation of the original parsed template set.
+
 v0.5.0 (2026-05-06)
 
 ========

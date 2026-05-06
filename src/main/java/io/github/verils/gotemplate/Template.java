@@ -8,9 +8,14 @@ import io.github.verils.gotemplate.internal.ast.Node;
 import io.github.verils.gotemplate.internal.ast.TextNode;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -61,8 +66,10 @@ public class Template {
     private static final String DEFAULT_RIGHT_COMMENT = "*/";
 
     private final String name;
+
     private final Map<String, Function> functions;
     private final Map<String, Function> customFunctions; // Store custom functions for cloning
+
     private final String leftDelimiter;
     private final String rightDelimiter;
     private final String leftComment;
@@ -70,6 +77,7 @@ public class Template {
 
     private final Map<String, Node> nodes;
 
+    private MissingKeyPolicy missingKeyPolicy;
 
     /**
      * Creates a new template with the specified name.
@@ -174,7 +182,10 @@ public class Template {
         this.rightDelimiter = rightDelimiter != null ? rightDelimiter : DEFAULT_RIGHT_DELIM;
         this.leftComment = leftComment != null ? leftComment : DEFAULT_LEFT_COMMENT;
         this.rightComment = rightComment != null ? rightComment : DEFAULT_RIGHT_COMMENT;
+
         this.nodes = new LinkedHashMap<>();
+
+        this.missingKeyPolicy = MissingKeyPolicy.DEFAULT;
     }
 
     /**
@@ -200,16 +211,140 @@ public class Template {
      * @since 0.5.0
      */
     public Template(Template other) {
-        this.name = other.name;
+        this(other, other.name);
+    }
+
+    private Template(Template other, String name) {
+        this.name = name;
         this.customFunctions = new LinkedHashMap<>(other.customFunctions);
         this.functions = other.functions; // Functions map is immutable after construction
         this.leftDelimiter = other.leftDelimiter;
         this.rightDelimiter = other.rightDelimiter;
         this.leftComment = other.leftComment;
         this.rightComment = other.rightComment;
+        this.missingKeyPolicy = other.missingKeyPolicy;
         this.nodes = new LinkedHashMap<>(other.nodes);
     }
 
+    /**
+     * Returns the root template name.
+     *
+     * @return root template name
+     * @since 0.6.0
+     */
+    public String name() {
+        return name;
+    }
+
+    /**
+     * Configures how this template handles missing map keys and field-chain segments during execution.
+     *
+     * @param missingKeyPolicy missing-key policy; {@code null} resets to {@link MissingKeyPolicy#DEFAULT}
+     * @return this template
+     * @since 0.6.0
+     */
+    public Template withMissingKeyPolicy(MissingKeyPolicy missingKeyPolicy) {
+        this.missingKeyPolicy = missingKeyPolicy != null ? missingKeyPolicy : MissingKeyPolicy.DEFAULT;
+        return this;
+    }
+
+    /**
+     * Applies Go-style string options supported by gotemplate4j.
+     * <p>
+     * Supported values are {@code missingkey=default}, {@code missingkey=zero}, and {@code missingkey=error}.
+     *
+     * @param option option string
+     * @return this template
+     * @throws IllegalArgumentException if the option is not supported
+     * @since 0.6.0
+     */
+    public Template option(String option) {
+        if ("missingkey=default".equals(option)) {
+            return withMissingKeyPolicy(MissingKeyPolicy.DEFAULT);
+        }
+        if ("missingkey=zero".equals(option)) {
+            return withMissingKeyPolicy(MissingKeyPolicy.ZERO);
+        }
+        if ("missingkey=error".equals(option)) {
+            return withMissingKeyPolicy(MissingKeyPolicy.ERROR);
+        }
+        throw new IllegalArgumentException("unsupported template option: " + option);
+    }
+
+    /**
+     * Returns whether a parsed template with the given name exists in this template set.
+     *
+     * @param name template name
+     * @return {@code true} if the template is defined
+     * @since 0.6.0
+     */
+    public boolean hasTemplate(String name) {
+        return nodes.containsKey(name);
+    }
+
+    /**
+     * Returns the names of parsed templates in stable parse order.
+     *
+     * @return immutable set of template names
+     * @since 0.6.0
+     */
+    public Set<String> definedTemplates() {
+        return Collections.unmodifiableSet(new LinkedHashSet<>(orderedTemplateNames()));
+    }
+
+    /**
+     * Looks up a parsed template by name.
+     * <p>
+     * The returned template is an independent copy of this template set with the requested template as its root name.
+     * Parsing more definitions into the returned template does not mutate the original set.
+     *
+     * @param name template name
+     * @return independent template copy, or {@code null} if no template exists with that name
+     * @since 0.6.0
+     */
+    public Template lookup(String name) {
+        if (!hasTemplate(name)) {
+            return null;
+        }
+        return new Template(this, name);
+    }
+
+    /**
+     * Returns independent copies for all parsed templates in stable parse order.
+     *
+     * @return immutable list of template copies
+     * @since 0.6.0
+     */
+    public List<Template> templates() {
+        List<Template> templates = new ArrayList<>();
+        for (String templateName : orderedTemplateNames()) {
+            templates.add(new Template(this, templateName));
+        }
+        return Collections.unmodifiableList(templates);
+    }
+
+    /**
+     * Returns the currently configured missing-key policy.
+     *
+     * @return missing-key policy
+     * @since 0.6.0
+     */
+    public MissingKeyPolicy missingKeyPolicy() {
+        return missingKeyPolicy;
+    }
+
+    private List<String> orderedTemplateNames() {
+        List<String> names = new ArrayList<>();
+        if (nodes.containsKey(name)) {
+            names.add(name);
+        }
+        for (String templateName : nodes.keySet()) {
+            if (!templateName.equals(name)) {
+                names.add(templateName);
+            }
+        }
+        return names;
+    }
 
     /**
      * Parses the provided text as a template body.
@@ -248,27 +383,27 @@ public class Template {
                 return;
             }
 
-            if (!isEmpty(node)) {
+            if (isNotEmpty(node)) {
                 this.nodes.put(name, node);
             }
         });
     }
 
-    private boolean isEmpty(Node currentNode) {
+    private boolean isNotEmpty(Node currentNode) {
         if (currentNode instanceof ListNode) {
             ListNode listNode = (ListNode) currentNode;
             for (Node node : listNode) {
-                if (!isEmpty(node)) {
-                    return false;
+                if (isNotEmpty(node)) {
+                    return true;
                 }
             }
-            return true;
+            return false;
         }
         if (currentNode instanceof TextNode) {
             TextNode textNode = (TextNode) currentNode;
-            return textNode.getText().trim().isEmpty();
+            return !textNode.getText().trim().isEmpty();
         }
-        return false;
+        return true;
     }
 
     /**
@@ -284,7 +419,7 @@ public class Template {
      * @see #parse(Reader)
      */
     public void parse(InputStream in) throws TemplateParseException, IOException {
-        parse(new InputStreamReader(in));
+        parse(new InputStreamReader(in, StandardCharsets.UTF_8));
     }
 
     /**
@@ -318,7 +453,9 @@ public class Template {
      * @see #execute(Writer, Object)
      */
     public void execute(OutputStream out, Object data) throws TemplateException, IOException {
-        execute(new OutputStreamWriter(out), data);
+        Writer writer = new OutputStreamWriter(out, StandardCharsets.UTF_8);
+        execute(writer, data);
+        writer.flush();
     }
 
     /**
@@ -389,7 +526,7 @@ public class Template {
             throw new TemplateNotFoundException(String.format("Template '%s' not found.", name));
         }
 
-        Executor executor = new Executor(nodes, functions);
+        Executor executor = new Executor(nodes, functions, missingKeyPolicy);
         executor.execute(name, data, writer);
     }
 

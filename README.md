@@ -46,37 +46,14 @@ template.execute(writer, user);
 System.out.print(writer.toString());  // "Hello Bob!"
 ```
 
-## Go Compatibility Scope
+## Compatibility and Migration
 
-v0.5.0 is the compatibility-audit release for core Go `text/template` behavior. The following areas are covered by focused tests:
+v0.6.0 moves detailed compatibility notes into focused docs:
 
-- Control flow: `if`, `else`, `else if`, `range`, `range ... else`, `with`, `else with`, `break`, and `continue`
-- Template definitions, override order, and `template "name"` execution with omitted pipeline data
-- Pipeline variables, declaration with `:=`, assignment with `=`, parenthesized pipeline arguments, and branch/range scoping
-- Built-in functions including comparison, logical, collection, formatting, escaping, and `call`
-- Execution error handling, including function failures and writer `IOException` propagation
+- [Go Template Compatibility](./docs/go-template-compatibility.md)
+- [Migration from Go text/template](./docs/migration-from-go-template.md)
 
-## Java-Specific Behavior
-
-Some behavior intentionally maps Go template concepts onto Java:
-
-- Java getters and public fields are exposed through field-chain access.
-- Public no-argument methods can be accessed in field chains, such as enum `name` and `ordinal`.
-- Java `Optional` values are unwrapped automatically.
-- Null and missing values are falsey and print as empty output.
-- Java `Map` iteration follows the map implementation order; keys are not sorted by the engine.
-- `default`, `deepEqual`, `typeof`, and `kindOf` are gotemplate4j extensions, not Go predefined functions.
-
-## Unsupported Go APIs in v0.5.0
-
-The following Go APIs or semantics are intentionally deferred:
-
-- `Option("missingkey=default/zero/error")`
-- `ParseFiles`, `ParseGlob`, and `ParseFS`
-- Template introspection APIs such as `Lookup`, `DefinedTemplates`, `Templates`, `Name`, and associated `New`
-- `range` over channels, Go iterators, or integer sequences
-- General Java method calls with arguments from templates
-- Go function-valued fields or map entries for `call`; gotemplate4j `call` accepts `Function` instances
+The short version: gotemplate4j covers core Go `text/template` control flow, pipelines, template definitions, built-in functions, and execution errors. Java-specific behavior such as JavaBean access, public fields, `Optional`, enums, nulls, missing keys, and map iteration order is documented separately from Go compatibility claims.
 
 ## Contributing
 
@@ -93,4 +70,3 @@ See [PLAN.md](./PLAN.md) for the detailed development roadmap.
 - [Java Template Engine (Alternative)](https://github.com/proninyaroslav/java-template-engine)
 - [Changelog](./CHANGELOG)
 - [Development Plan](./PLAN.md)
-

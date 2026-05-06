@@ -1,6 +1,8 @@
 package io.github.verils.gotemplate.internal;
 
 import io.github.verils.gotemplate.Function;
+import io.github.verils.gotemplate.Functions;
+import io.github.verils.gotemplate.MissingKeyPolicy;
 import io.github.verils.gotemplate.TemplateExecutionException;
 import io.github.verils.gotemplate.TemplateNotFoundException;
 import io.github.verils.gotemplate.internal.ast.*;
@@ -27,10 +29,16 @@ public class Executor {
 
     private final Map<String, Node> rootNodes;
     private final Map<String, Function> functions;
+    private final MissingKeyPolicy missingKeyPolicy;
 
     public Executor(Map<String, Node> rootNodes, Map<String, Function> functions) {
+        this(rootNodes, functions, MissingKeyPolicy.DEFAULT);
+    }
+
+    public Executor(Map<String, Node> rootNodes, Map<String, Function> functions, MissingKeyPolicy missingKeyPolicy) {
         this.rootNodes = rootNodes;
         this.functions = functions;
+        this.missingKeyPolicy = missingKeyPolicy != null ? missingKeyPolicy : MissingKeyPolicy.DEFAULT;
     }
 
     public void execute(String name, Object data, Writer writer) throws IOException,
@@ -169,6 +177,20 @@ public class Executor {
         }
     }
 
+    /**
+     * TODO Complete this javadoc
+     * @param writer
+     * @param rangeNode
+     * @param index
+     * @param value
+     * @param indexVarName
+     * @param valueVarName
+     * @param variables
+     * @return
+     * @throws IOException
+     * @throws TemplateExecutionException
+     * @throws TemplateNotFoundException
+     */
     private boolean writeRangeValue(Writer writer, RangeNode rangeNode, Object index, Object value,
                                     String indexVarName, String valueVarName, Map<String, Object> variables) throws IOException,
             TemplateExecutionException, TemplateNotFoundException {
@@ -273,7 +295,7 @@ public class Executor {
             throws TemplateExecutionException {
         Node firstArgument = command.getFirstArgument();
         if (firstArgument instanceof FieldNode) {
-            return executeField((FieldNode) firstArgument, data, beanInfo);
+            return executeField((FieldNode) firstArgument, data);
         }
         if (firstArgument instanceof IdentifierNode) {
             return executeFunction((IdentifierNode) firstArgument, command.getArguments(), data, beanInfo, currentPipelineValue, variables);
@@ -297,7 +319,7 @@ public class Executor {
         throw new TemplateExecutionException(String.format("can't evaluate command %s", firstArgument));
     }
 
-    private Object executeField(final FieldNode fieldNode, final Object data, final BeanInfo beanInfo)
+    private Object executeField(final FieldNode fieldNode, final Object data)
             throws TemplateExecutionException {
         return executeFieldPath(fieldNode.getIdentifiers(), 0, data);
     }
@@ -309,18 +331,27 @@ public class Executor {
         for (int i = start; i < identifiers.length; i++) {
             String identifier = identifiers[i];
             if (currentData == null) {
+                if (missingKeyPolicy == MissingKeyPolicy.ERROR) {
+                    throw new TemplateExecutionException(String.format("missing value for field-chain segment '%s'", identifier));
+                }
                 return null;
             }
 
             // Unwrap Optional if present
             currentData = unwrapOptional(currentData);
             if (currentData == null) {
+                if (missingKeyPolicy == MissingKeyPolicy.ERROR) {
+                    throw new TemplateExecutionException(String.format("missing value for field-chain segment '%s'", identifier));
+                }
                 return null;
             }
 
             if (currentData instanceof Map) {
-                //noinspection unchecked
-                Map<String, Object> map = (Map<String, Object>) currentData;
+                Map<?, ?> map = (Map<?, ?>) currentData;
+                if (!map.containsKey(identifier)) {
+                    currentData = handleMissingMapKey(identifier);
+                    continue;
+                }
                 currentData = unwrapOptional(map.get(identifier));
                 continue;
             }
@@ -455,6 +486,10 @@ public class Executor {
             return executeShortCircuitFunction(identifier, cmdArgNodes, data, beanInfo, finalValue, variables);
         }
 
+        if ("index".equals(identifier) && functions.get("index") == Functions.BUILTIN.get("index")) {
+            return executeIndex(cmdArgNodes.subList(1, cmdArgNodes.size()), data, beanInfo, finalValue, variables);
+        }
+
         if (functions.containsKey(identifier)) {
             Function function = functions.get(identifier);
             if (function == null) {
@@ -486,6 +521,56 @@ public class Executor {
         }
 
         throw new TemplateExecutionException(String.format("%s is not a defined function", identifier));
+    }
+
+    private Object executeIndex(List<Node> functionArgNodes, Object data, BeanInfo beanInfo,
+                                Object finalValue, Map<String, Object> variables) throws TemplateExecutionException {
+        Object[] functionArgs;
+        if (finalValue != null) {
+            functionArgs = new Object[functionArgNodes.size() + 1];
+            executeArguments(data, beanInfo, functionArgNodes, functionArgs, variables);
+            functionArgs[functionArgNodes.size()] = finalValue;
+        } else {
+            functionArgs = new Object[functionArgNodes.size()];
+            executeArguments(data, beanInfo, functionArgNodes, functionArgs, variables);
+        }
+
+        if (functionArgs.length < 2) {
+            throw new TemplateExecutionException("function 'index' failed", new IllegalArgumentException("index requires at least 2 arguments"));
+        }
+
+        Object collection = functionArgs[0];
+        Object key = functionArgs[1];
+        if (collection == null) {
+            if (missingKeyPolicy == MissingKeyPolicy.ERROR) {
+                throw new TemplateExecutionException("index of null value");
+            }
+            return null;
+        }
+        if (collection instanceof Map) {
+            Map<?, ?> map = (Map<?, ?>) collection;
+            if (!map.containsKey(key)) {
+                return handleMissingMapKey(String.valueOf(key));
+            }
+            return unwrapOptional(map.get(key));
+        }
+
+        Function indexFunction = functions.get("index");
+        if (indexFunction == null) {
+            throw new TemplateExecutionException("index is not a defined function");
+        }
+        try {
+            return indexFunction.invoke(functionArgs);
+        } catch (RuntimeException e) {
+            throw new TemplateExecutionException("function 'index' failed", e);
+        }
+    }
+
+    private Object handleMissingMapKey(String key) throws TemplateExecutionException {
+        if (missingKeyPolicy == MissingKeyPolicy.ERROR) {
+            throw new TemplateExecutionException(String.format("missing map key '%s'", key));
+        }
+        return null;
     }
 
     private Object executeShortCircuitFunction(String identifier, List<Node> cmdArgNodes, Object data, BeanInfo beanInfo,
@@ -551,7 +636,7 @@ public class Executor {
 
         if (argument instanceof FieldNode) {
             FieldNode fieldNode = (FieldNode) argument;
-            return executeField(fieldNode, data, beanInfo);
+            return executeField(fieldNode, data);
         }
 
         if (argument instanceof VariableNode) {

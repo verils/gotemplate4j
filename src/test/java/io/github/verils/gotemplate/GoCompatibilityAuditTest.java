@@ -10,10 +10,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertSame;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Focused v0.5.0 audit tests for high-risk Go text/template compatibility semantics.
@@ -36,7 +33,7 @@ class GoCompatibilityAuditTest {
     }
 
     @Test
-    void rangeVariablesDoNotLeakOutsideRangeBlock() throws Exception {
+    void rangeVariablesDoNotLeakOutsideRangeBlock() {
         Template template = new Template("test");
         TemplateParseException exception = assertThrows(TemplateParseException.class,
                 () -> template.parse("{{range $item := .}}{{$item}}{{end}}|{{$item}}"));
@@ -44,7 +41,7 @@ class GoCompatibilityAuditTest {
     }
 
     @Test
-    void ifPipelineVariablesDoNotLeakAfterEnd() throws Exception {
+    void ifPipelineVariablesDoNotLeakAfterEnd() {
         Template template = new Template("test");
         TemplateParseException exception = assertThrows(TemplateParseException.class,
                 () -> template.parse("{{if $x := .Value}}{{$x}}{{end}}|{{$x}}"));
@@ -121,7 +118,7 @@ class GoCompatibilityAuditTest {
         });
 
         assertTrue(exception.getMessage().contains("function 'boom' failed"));
-        assertTrue(exception.getCause() instanceof IllegalArgumentException);
+        assertInstanceOf(IllegalArgumentException.class, exception.getCause());
     }
 
     @Test

@@ -149,6 +149,7 @@ public class Parser {
             throwUnexpectErrorWithContext("missing action token", null, state);
         }
 
+        //noinspection DataFlowIssue
         switch (token.type()) {
             case BLOCK:
                 parseBlock(listNode, lexer, state);
@@ -200,6 +201,7 @@ public class Parser {
             throwUnexpectErrorWithContext("missing token", null, state);
         }
 
+        //noinspection DataFlowIssue
         if (token.type() != TokenType.STRING && token.type() != TokenType.RAW_STRING) {
             throwUnexpectErrorWithContext(String.format("unexpected '%s' in %s", token.value(), context), token, state);
         }
@@ -329,6 +331,7 @@ public class Parser {
         if (nextToken == null) {
             throwUnexpectErrorWithContext("missing token", token, state);
         }
+        //noinspection DataFlowIssue
         if (nextToken.type() != TokenType.RIGHT_DELIM) {
             throwUnexpectErrorWithContext(String.format("unexpected %s in %s", nextToken, token.value()), nextToken, state);
         }
@@ -885,6 +888,7 @@ public class Parser {
      *
      * @return 上一个元素。第一次执行返回null，超出最后一个元素后执行返回最后的元素
      */
+    @SuppressWarnings("UnusedReturnValue")
     private Token moveToPrevNonSpaceItem(Lexer lexer, State state) {
         while (true) {
             Token token = moveToPrevItem(lexer, state);

@@ -46,37 +46,14 @@ template.execute(writer, user);
 System.out.print(writer.toString());  // "Hello Bob!"
 ```
 
-## Go 兼容范围
+## 兼容性与迁移
 
-v0.5.0 是核心 Go `text/template` 行为的兼容性审计版本。以下行为已有 focused tests 覆盖：
+v0.6.0 将详细兼容性说明移入专门文档：
 
-- 控制流：`if`、`else`、`else if`、`range`、`range ... else`、`with`、`else with`、`break` 和 `continue`
-- 模板定义、覆盖顺序，以及省略 pipeline data 的 `template "name"` 执行
-- pipeline 变量、`:=` 声明、`=` 赋值、带括号的 pipeline 参数，以及 branch/range 作用域
-- 内置函数，包括比较、逻辑、集合、格式化、转义和 `call`
-- 执行错误处理，包括函数失败和 writer `IOException` 传播
+- [Go Template Compatibility](./docs/go-template-compatibility.md)
+- [Migration from Go text/template](./docs/migration-from-go-template.md)
 
-## Java 特定行为
-
-部分行为是 Go 模板概念在 Java 类型系统上的有意映射：
-
-- Java getter 和 public field 可通过字段链访问。
-- public 无参方法可在字段链中访问，例如 enum 的 `name` 和 `ordinal`。
-- Java `Optional` 会自动解包。
-- null 和缺失值为 falsey，输出时表现为空字符串。
-- Java `Map` 迭代遵循具体 Map 实现顺序；引擎不会像 Go 那样对基础类型 key 排序。
-- `default`、`deepEqual`、`typeof` 和 `kindOf` 是 gotemplate4j 扩展，不是 Go 预定义函数。
-
-## v0.5.0 暂不支持的 Go API
-
-以下 Go API 或语义已明确延期：
-
-- `Option("missingkey=default/zero/error")`
-- `ParseFiles`、`ParseGlob` 和 `ParseFS`
-- 模板 introspection API，例如 `Lookup`、`DefinedTemplates`、`Templates`、`Name` 和 associated `New`
-- 对 channel、Go iterator 或 integer sequence 执行 `range`
-- 在模板中调用带参数的通用 Java method
-- 用 `call` 调用 Go 风格的 function-valued field 或 map entry；gotemplate4j 的 `call` 接受 `Function` 实例
+简要说明：gotemplate4j 覆盖核心 Go `text/template` 控制流、pipeline、模板定义、内置函数和执行错误。JavaBean 访问、public field、`Optional`、enum、null、缺失 key 和 Map 迭代顺序等 Java 特定行为会与 Go 兼容性声明分开记录。
 
 ## 贡献指南
 
