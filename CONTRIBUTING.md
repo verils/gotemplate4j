@@ -87,6 +87,24 @@ cd gotemplate4j
 - Use JUnit 5 (Jupiter) framework
 - Follow existing test patterns
 
+### Where to Put Tests
+
+The project currently keeps all automated tests under `src/test/java` and runs them with Maven Surefire via `./mvnw test`. There is no separate `src/integrationTest` source set and no Maven Failsafe configuration at this time.
+
+Use the existing test structure to make the intent of a new test clear:
+
+- `src/test/java/io/github/verils/gotemplate/internal/*Test.java`: lexer, parser, AST, token, and internal utility behavior.
+- `Functions*Test.java`: built-in template function behavior.
+- `Template*Test.java`: public `Template` API behavior, template sets, cloning, introspection, and user-facing template operations.
+- `ExecutorTest.java` or a focused top-level feature test: execution semantics that do not fit a narrower existing class.
+- `GoCompatibility*Test.java`: behavior that should match Go `text/template` semantics.
+- `JavaDeviationFixtureTest.java` or a focused feature test: intentional Java-specific behavior or documented deviations from Go.
+- Feature-specific top-level tests such as `RangeIndexTest`, `NullSafetyTest`, or `OptionalSupportTest`: focused execution behavior that deserves its own readable test class.
+
+Prefer adding a test to the most specific existing class when it improves readability. Create a new focused `*Test.java` class when the behavior would make an existing class too broad or hard to scan.
+
+Do not add `*IT.java`, `src/integrationTest`, or Maven Failsafe configuration unless the test needs a genuinely separate lifecycle, such as slow compatibility suites, external processes, large filesystem fixtures, or environment-dependent setup.
+
 Example test structure:
 ```java
 @Test
