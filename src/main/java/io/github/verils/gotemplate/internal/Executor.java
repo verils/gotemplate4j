@@ -168,19 +168,23 @@ public class Executor {
     }
 
     /**
-     * TODO Complete this javadoc
+     * Writes one iteration of a {@code range} block.
+     * <p>
+     * The iteration value is unwrapped when it is an {@link Optional}, then rendered as the dot value for the
+     * range body. Index/key and value variables declared by the range pipeline are bound in a copied variable
+     * scope so assignments from this iteration do not leak into sibling iterations or the outer scope.
      *
-     * @param writer
-     * @param rangeNode
-     * @param index
-     * @param value
-     * @param indexVarName
-     * @param valueVarName
-     * @param variables
-     * @return
-     * @throws IOException
-     * @throws TemplateExecutionException
-     * @throws TemplateNotFoundException
+     * @param writer the destination writer
+     * @param rangeNode the range node whose body should be executed
+     * @param index the current array/list index or map key
+     * @param value the current iteration value
+     * @param indexVarName the range index/key variable name, or {@code null} when none was declared
+     * @param valueVarName the range value variable name, or {@code null} when none was declared
+     * @param variables variables visible before this iteration starts
+     * @return {@code true} to continue the enclosing range loop, or {@code false} after a {@code break}
+     * @throws IOException if writing output fails
+     * @throws TemplateExecutionException if executing the range body fails
+     * @throws TemplateNotFoundException if the range body invokes an undefined template
      */
     private boolean writeRangeValue(Writer writer, RangeNode rangeNode, Object index, Object value,
                                     String indexVarName, String valueVarName, Map<String, Object> variables) throws IOException,
