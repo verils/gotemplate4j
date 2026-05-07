@@ -174,17 +174,17 @@ public class Executor {
      * range body. Index/key and value variables declared by the range pipeline are bound in a copied variable
      * scope so assignments from this iteration do not leak into sibling iterations or the outer scope.
      *
-     * @param writer the destination writer
-     * @param rangeNode the range node whose body should be executed
-     * @param index the current array/list index or map key
-     * @param value the current iteration value
+     * @param writer       the destination writer
+     * @param rangeNode    the range node whose body should be executed
+     * @param index        the current array/list index or map key
+     * @param value        the current iteration value
      * @param indexVarName the range index/key variable name, or {@code null} when none was declared
      * @param valueVarName the range value variable name, or {@code null} when none was declared
-     * @param variables variables visible before this iteration starts
+     * @param variables    variables visible before this iteration starts
      * @return {@code true} to continue the enclosing range loop, or {@code false} after a {@code break}
-     * @throws IOException if writing output fails
+     * @throws IOException                if writing output fails
      * @throws TemplateExecutionException if executing the range body fails
-     * @throws TemplateNotFoundException if the range body invokes an undefined template
+     * @throws TemplateNotFoundException  if the range body invokes an undefined template
      */
     private boolean writeRangeValue(Writer writer, RangeNode rangeNode, Object index, Object value,
                                     String indexVarName, String valueVarName, Map<String, Object> variables) throws IOException,
@@ -733,24 +733,24 @@ public class Executor {
         return value != null;
     }
 
-    private void printText(Writer writer, String text) throws IOException {
-        writer.write(text);
-    }
-
     private void printValue(Writer writer, Object value) throws IOException {
         if (value == null) {
-            writer.write(NO_VALUE);
+            printText(writer, NO_VALUE);
         } else if (value instanceof String) {
             String unescaped = StringEscapeUtils.unescape((String) value);
-            writer.write(unescaped);
+            printText(writer, unescaped);
         } else if (value instanceof Number) {
-            writer.write(String.valueOf(value));
+            printText(writer, String.valueOf(value));
         } else if (value instanceof Boolean) {
-            writer.write(String.valueOf(value));
+            printText(writer, String.valueOf(value));
         } else {
             // For other types (including enums), use toString()
-            writer.write(String.valueOf(value));
+            printText(writer, String.valueOf(value));
         }
+    }
+
+    private void printText(Writer writer, String text) throws IOException {
+        writer.write(text);
     }
 
     private static class BreakException extends RuntimeException {
