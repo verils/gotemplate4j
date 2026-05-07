@@ -5,10 +5,15 @@ import org.junit.jupiter.api.Test;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.io.Writer;
+import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -256,5 +261,121 @@ class ExecutorTest {
         template.execute(writer, data);
         // Numbers != 0 are truthy
         assertNotNull(writer.toString());
+    }
+
+    @Test
+    void testTruthinessCoversJavaNumberKinds() throws IOException, TemplateException {
+        assertEquals("no", renderIfValue(0L));
+        assertEquals("yes", renderIfValue(2L));
+        assertEquals("no", renderIfValue(0.0f));
+        assertEquals("yes", renderIfValue(1.5f));
+        assertEquals("no", renderIfValue(0.0d));
+        assertEquals("yes", renderIfValue(2.5d));
+        assertEquals("no", renderIfValue((short) 0));
+        assertEquals("yes", renderIfValue((short) 1));
+        assertEquals("no", renderIfValue((byte) 0));
+        assertEquals("yes", renderIfValue((byte) 1));
+        assertEquals("no", renderIfValue(BigDecimal.ZERO));
+        assertEquals("yes", renderIfValue(new BigDecimal("0.25")));
+    }
+
+    @Test
+    void testTruthinessCoversArraysCollectionsMapsAndObjects() throws IOException, TemplateException {
+        assertEquals("no", renderIfValue(new String[0]));
+        assertEquals("yes", renderIfValue(new String[]{"x"}));
+        assertEquals("no", renderIfValue(Collections.emptyList()));
+        assertEquals("yes", renderIfValue(Collections.singletonList("x")));
+        assertEquals("no", renderIfValue(Collections.emptyMap()));
+        assertEquals("yes", renderIfValue(Collections.singletonMap("x", "y")));
+        assertEquals("yes", renderIfValue(new Object()));
+    }
+
+    @Test
+    void testPipelineFinalValueForShortCircuitFunctions() throws IOException, TemplateException {
+        assertEquals("false", TemplateTestSupport.render("{{.Value | and}}", TemplateTestSupport.data("Value", false)));
+        assertEquals("true", TemplateTestSupport.render("{{.Value | and}}", TemplateTestSupport.data("Value", true)));
+        assertEquals("true", TemplateTestSupport.render("{{.Value | or}}", TemplateTestSupport.data("Value", true)));
+        assertEquals("false", TemplateTestSupport.render("{{.Value | or}}", TemplateTestSupport.data("Value", false)));
+    }
+
+    @Test
+    void testPipelineFinalValueForIndex() throws IOException, TemplateException {
+        assertEquals("b", TemplateTestSupport.render("{{.Index | index .Items}}",
+                TemplateTestSupport.data("Items", new String[]{"a", "b"}, "Index", 1)));
+    }
+
+    @Test
+    void testIndexWrapsBuiltinRuntimeFailure() throws IOException, TemplateException {
+        Template template = new Template("test");
+        template.parse("{{index .Value 0}}");
+
+        TemplateExecutionException exception = assertThrows(TemplateExecutionException.class,
+                () -> template.execute(new StringWriter(), TemplateTestSupport.data("Value", new Object())));
+
+        assertTrue(exception.getMessage().contains("function 'index' failed"));
+        assertTrue(exception.getCause() instanceof IllegalArgumentException);
+    }
+
+    @Test
+    void testStrictMissingKeyPolicyFailsAfterEmptyOptional() throws IOException, TemplateException {
+        Template template = new Template("test").withMissingKeyPolicy(MissingKeyPolicy.ERROR);
+        template.parse("{{.User.Name}}");
+
+        TemplateExecutionException exception = assertThrows(TemplateExecutionException.class,
+                () -> template.execute(new StringWriter(), TemplateTestSupport.data("User", Optional.empty())));
+
+        assertTrue(exception.getMessage().contains("missing value for field-chain segment 'Name'"));
+    }
+
+    @Test
+    void testMissingBeanFieldFailsClearly() throws IOException, TemplateException {
+        Template template = new Template("test");
+        template.parse("{{.Missing}}");
+
+        TemplateExecutionException exception = assertThrows(TemplateExecutionException.class,
+                () -> template.execute(new StringWriter(), new SimpleBean("Bob")));
+
+        assertTrue(exception.getMessage().contains("can't get value 'Missing' from data"));
+    }
+
+    @Test
+    void testUndefinedTemplateActionFailsDuringExecution() throws IOException, TemplateException {
+        Template template = new Template("test");
+        template.parse("{{template \"missing\" .}}");
+
+        TemplateExecutionException exception = assertThrows(TemplateExecutionException.class,
+                () -> template.execute(new StringWriter(), TemplateTestSupport.data()));
+
+        assertTrue(exception.getMessage().contains("template missing not defined"));
+    }
+
+    @Test
+    void testRangeBreakCoversArrayCollectionAndMapPaths() throws IOException, TemplateException {
+        assertEquals("a", TemplateTestSupport.render("{{range .Items}}{{.}}{{break}}{{end}}",
+                TemplateTestSupport.data("Items", new String[]{"a", "b"})));
+        assertEquals("a", TemplateTestSupport.render("{{range .Items}}{{.}}{{break}}{{end}}",
+                TemplateTestSupport.data("Items", Arrays.asList("a", "b"))));
+
+        Map<String, Object> items = new LinkedHashMap<>();
+        items.put("a", 1);
+        items.put("b", 2);
+        assertEquals("a=1", TemplateTestSupport.render("{{range $k, $v := .Items}}{{$k}}={{$v}}{{break}}{{end}}",
+                TemplateTestSupport.data("Items", items)));
+    }
+
+    private String renderIfValue(Object value) throws IOException, TemplateException {
+        return TemplateTestSupport.render("{{if .Value}}yes{{else}}no{{end}}", TemplateTestSupport.data("Value", value));
+    }
+
+    public static class SimpleBean {
+        private final String name;
+
+        SimpleBean(String name) {
+            this.name = name;
+        }
+
+        public String getName() {
+            return name;
+        }
     }
 }
