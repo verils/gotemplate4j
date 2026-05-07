@@ -78,15 +78,15 @@ class FunctionsCollectionTest {
 
     @ParameterizedTest
     @MethodSource("indexMissCases")
-    void indexReturnsEmptyOutputForMissingValues(String template, Object data) throws IOException, TemplateException {
-        assertEquals("", render(template, data));
+    void indexReturnsCurrentOutputForMissingValues(String template, Object data, String expected) throws IOException, TemplateException {
+        assertEquals(expected, render(template, data));
     }
 
     private static Stream<org.junit.jupiter.params.provider.Arguments> indexMissCases() {
         return Stream.of(
-                arguments("{{index .Collection \"key\"}}", data("Collection", null)),
-                arguments("{{index .Items 10}}", data("Items", new String[]{"a", "b", "c"})),
-                arguments("{{index .Text 100}}", data("Text", "hi"))
+                arguments("{{index .Collection \"key\"}}", data("Collection", null), "<no value>"),
+                arguments("{{index .Items 10}}", data("Items", new String[]{"a", "b", "c"}), "<no value>"),
+                arguments("{{index .Text 100}}", data("Text", "hi"), "")
         );
     }
 

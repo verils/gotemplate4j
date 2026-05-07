@@ -9,13 +9,7 @@ import io.github.verils.gotemplate.internal.ast.TextNode;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.LinkedHashSet;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -29,10 +23,10 @@ import java.util.stream.Stream;
  * <pre>{@code
  * Template template = new Template("greeting");
  * template.parse("Hello, {{.Name}}!");
- * 
+ *
  * Map<String, Object> data = new HashMap<>();
  * data.put("Name", "World");
- * 
+ *
  * StringWriter writer = new StringWriter();
  * template.execute(writer, data);
  * System.out.println(writer.toString()); // Output: Hello, World!
@@ -185,7 +179,7 @@ public class Template {
 
         this.nodes = new LinkedHashMap<>();
 
-        this.missingKeyPolicy = MissingKeyPolicy.DEFAULT;
+        this.missingKeyPolicy = MissingKeyPolicy.INVALID;
     }
 
     /**
@@ -200,7 +194,7 @@ public class Template {
      * // Create and parse template once
      * Template baseTemplate = new Template("master");
      * baseTemplate.parse("{{.message}}");
-     * 
+     *
      * // In each thread, create a copy before use
      * Template threadSafe = new Template(baseTemplate);
      * StringWriter writer = new StringWriter();
@@ -239,12 +233,12 @@ public class Template {
     /**
      * Configures how this template handles missing map keys and field-chain segments during execution.
      *
-     * @param missingKeyPolicy missing-key policy; {@code null} resets to {@link MissingKeyPolicy#DEFAULT}
+     * @param missingKeyPolicy missing-key policy; {@code null} resets to {@link MissingKeyPolicy#INVALID}
      * @return this template
      * @since 0.6.0
      */
     public Template withMissingKeyPolicy(MissingKeyPolicy missingKeyPolicy) {
-        this.missingKeyPolicy = missingKeyPolicy != null ? missingKeyPolicy : MissingKeyPolicy.DEFAULT;
+        this.missingKeyPolicy = missingKeyPolicy != null ? missingKeyPolicy : MissingKeyPolicy.INVALID;
         return this;
     }
 
@@ -259,16 +253,33 @@ public class Template {
      * @since 0.6.0
      */
     public Template option(String option) {
-        if ("missingkey=default".equals(option)) {
-            return withMissingKeyPolicy(MissingKeyPolicy.DEFAULT);
+        if (option == null) {
+            throw new IllegalArgumentException("option can not be null");
         }
-        if ("missingkey=zero".equals(option)) {
-            return withMissingKeyPolicy(MissingKeyPolicy.ZERO);
+
+        int pos = option.indexOf('=');
+        if (pos == -1) {
+            throw new IllegalArgumentException("option must be in format 'key=value'");
         }
-        if ("missingkey=error".equals(option)) {
-            return withMissingKeyPolicy(MissingKeyPolicy.ERROR);
+
+        String key = option.substring(0, pos);
+        String value = option.substring(pos + 1);
+
+        if ("missingkey".equals(key)) {
+            switch (value) {
+                case "default":
+                case "invalid":
+                    return withMissingKeyPolicy(MissingKeyPolicy.INVALID);
+                case "zero":
+                    return withMissingKeyPolicy(MissingKeyPolicy.ZERO);
+                case "error":
+                    return withMissingKeyPolicy(MissingKeyPolicy.ERROR);
+                default:
+                    throw new IllegalArgumentException("unsupported option: " + option);
+            }
         }
-        throw new IllegalArgumentException("unsupported template option: " + option);
+
+        return this;
     }
 
     /**
@@ -475,7 +486,7 @@ public class Template {
      * <pre>{@code
      * User user = new User();
      * user.setName("Alice");
-     * 
+     *
      * StringWriter writer = new StringWriter();
      * template.execute(writer, user);
      * String result = writer.toString();
@@ -506,7 +517,7 @@ public class Template {
      *     "{{define \"header\"}}<h1>{{.Title}}</h1>{{end}}" +
      *     "{{define \"footer\"}}<footer>{{.Copyright}}</footer>{{end}}"
      * );
-     * 
+     *
      * // Execute a specific template
      * StringWriter writer = new StringWriter();
      * template.executeTemplate(writer, "header", data);

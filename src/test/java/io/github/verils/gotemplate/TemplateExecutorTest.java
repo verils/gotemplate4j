@@ -84,7 +84,7 @@ class TemplateExecutorTest {
         data.put("Items", new String[]{"a", "b", "c"});
 
         template.execute(writer, data);
-        assertEquals("", writer.toString());
+        assertEquals("<no value>", writer.toString());
     }
 
     @Test

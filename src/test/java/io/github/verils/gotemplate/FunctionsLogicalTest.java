@@ -27,13 +27,13 @@ class FunctionsLogicalTest {
                 arguments("{{and false true}}", "false"),
                 arguments("{{and 1 2 3}}", "3"),
                 arguments("{{and false false false}}", "false"),
-                arguments("{{and}}", ""),
+                arguments("{{and}}", "<no value>"),
                 arguments("{{if or false true}}yes{{else}}no{{end}}", "yes"),
                 arguments("{{if or false false}}yes{{else}}no{{end}}", "no"),
                 arguments("{{or true false}}", "true"),
                 arguments("{{or 0 0 5}}", "5"),
                 arguments("{{or 0 \"\" false}}", "false"),
-                arguments("{{or}}", ""),
+                arguments("{{or}}", "<no value>"),
                 arguments("{{if not false}}yes{{else}}no{{end}}", "yes"),
                 arguments("{{if not 1}}yes{{else}}no{{end}}", "no")
         );
