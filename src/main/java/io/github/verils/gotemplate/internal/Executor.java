@@ -1,10 +1,6 @@
 package io.github.verils.gotemplate.internal;
 
-import io.github.verils.gotemplate.Function;
-import io.github.verils.gotemplate.Functions;
-import io.github.verils.gotemplate.MissingKeyPolicy;
-import io.github.verils.gotemplate.TemplateExecutionException;
-import io.github.verils.gotemplate.TemplateNotFoundException;
+import io.github.verils.gotemplate.*;
 import io.github.verils.gotemplate.internal.ast.*;
 import io.github.verils.gotemplate.internal.lang.StringEscapeUtils;
 
@@ -14,31 +10,25 @@ import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
 import java.io.IOException;
 import java.io.Writer;
-import java.lang.reflect.Array;
-import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.lang.reflect.*;
+import java.util.*;
 
 public class Executor {
+
+    private static final String NO_VALUE = "<no value>";
 
     private final Map<String, Node> rootNodes;
     private final Map<String, Function> functions;
     private final MissingKeyPolicy missingKeyPolicy;
 
     public Executor(Map<String, Node> rootNodes, Map<String, Function> functions) {
-        this(rootNodes, functions, MissingKeyPolicy.DEFAULT);
+        this(rootNodes, functions, MissingKeyPolicy.INVALID);
     }
 
     public Executor(Map<String, Node> rootNodes, Map<String, Function> functions, MissingKeyPolicy missingKeyPolicy) {
         this.rootNodes = rootNodes;
         this.functions = functions;
-        this.missingKeyPolicy = missingKeyPolicy != null ? missingKeyPolicy : MissingKeyPolicy.DEFAULT;
+        this.missingKeyPolicy = missingKeyPolicy != null ? missingKeyPolicy : MissingKeyPolicy.INVALID;
     }
 
     public void execute(String name, Object data, Writer writer) throws IOException,
@@ -178,18 +168,23 @@ public class Executor {
     }
 
     /**
-     * TODO Complete this javadoc
-     * @param writer
-     * @param rangeNode
-     * @param index
-     * @param value
-     * @param indexVarName
-     * @param valueVarName
-     * @param variables
-     * @return
-     * @throws IOException
-     * @throws TemplateExecutionException
-     * @throws TemplateNotFoundException
+     * Writes one iteration of a {@code range} block.
+     * <p>
+     * The iteration value is unwrapped when it is an {@link Optional}, then rendered as the dot value for the
+     * range body. Index/key and value variables declared by the range pipeline are bound in a copied variable
+     * scope so assignments from this iteration do not leak into sibling iterations or the outer scope.
+     *
+     * @param writer       the destination writer
+     * @param rangeNode    the range node whose body should be executed
+     * @param index        the current array/list index or map key
+     * @param value        the current iteration value
+     * @param indexVarName the range index/key variable name, or {@code null} when none was declared
+     * @param valueVarName the range value variable name, or {@code null} when none was declared
+     * @param variables    variables visible before this iteration starts
+     * @return {@code true} to continue the enclosing range loop, or {@code false} after a {@code break}
+     * @throws IOException                if writing output fails
+     * @throws TemplateExecutionException if executing the range body fails
+     * @throws TemplateNotFoundException  if the range body invokes an undefined template
      */
     private boolean writeRangeValue(Writer writer, RangeNode rangeNode, Object index, Object value,
                                     String indexVarName, String valueVarName, Map<String, Object> variables) throws IOException,
@@ -304,6 +299,9 @@ public class Executor {
 
         if (firstArgument instanceof DotNode) {
             return data;
+        }
+        if (firstArgument instanceof NilNode) {
+            return null;
         }
         if (firstArgument instanceof StringNode) {
             return ((StringNode) firstArgument).getText();
@@ -634,6 +632,10 @@ public class Executor {
             return boolNode.getValue();
         }
 
+        if (argument instanceof NilNode) {
+            return null;
+        }
+
         if (argument instanceof FieldNode) {
             FieldNode fieldNode = (FieldNode) argument;
             return executeField(fieldNode, data);
@@ -731,22 +733,24 @@ public class Executor {
         return value != null;
     }
 
-    private void printText(Writer writer, String text) throws IOException {
-        writer.write(text);
+    private void printValue(Writer writer, Object value) throws IOException {
+        if (value == null) {
+            printText(writer, NO_VALUE);
+        } else if (value instanceof String) {
+            String unescaped = StringEscapeUtils.unescape((String) value);
+            printText(writer, unescaped);
+        } else if (value instanceof Number) {
+            printText(writer, String.valueOf(value));
+        } else if (value instanceof Boolean) {
+            printText(writer, String.valueOf(value));
+        } else {
+            // For other types (including enums), use toString()
+            printText(writer, String.valueOf(value));
+        }
     }
 
-    private void printValue(Writer writer, Object value) throws IOException {
-        if (value instanceof String) {
-            String unescaped = StringEscapeUtils.unescape((String) value);
-            writer.write(unescaped);
-        } else if (value instanceof Number) {
-            writer.write(String.valueOf(value));
-        } else if (value instanceof Boolean) {
-            writer.write(String.valueOf(value));
-        } else if (value != null) {
-            // For other types (including enums), use toString()
-            writer.write(String.valueOf(value));
-        }
+    private void printText(Writer writer, String text) throws IOException {
+        writer.write(text);
     }
 
     private static class BreakException extends RuntimeException {

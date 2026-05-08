@@ -20,25 +20,25 @@ class MissingKeyPolicyTest {
 
     @Test
     void missingKeyPolicyEnumValuesAreStable() {
-        assertEquals(Arrays.asList(MissingKeyPolicy.DEFAULT, MissingKeyPolicy.ZERO, MissingKeyPolicy.ERROR),
+        assertEquals(Arrays.asList(MissingKeyPolicy.INVALID, MissingKeyPolicy.ZERO, MissingKeyPolicy.ERROR),
                 Arrays.asList(MissingKeyPolicy.values()));
         assertSame(MissingKeyPolicy.ERROR, MissingKeyPolicy.valueOf("ERROR"));
     }
 
     @Test
-    void defaultPolicyPreservesEmptyOutputForMissingMapKey() throws Exception {
-        assertEquals("Hello, !", TemplateTestSupport.render("Hello, {{.Name}}!", TemplateTestSupport.data()));
+    void defaultPolicyPrintsNoValueForMissingMapKey() throws Exception {
+        assertEquals("Hello, <no value>!", TemplateTestSupport.render("Hello, {{.Name}}!", TemplateTestSupport.data()));
     }
 
     @Test
-    void zeroPolicyFallsBackToEmptyOutputForUnknownMapValueType() throws Exception {
+    void zeroPolicyFallsBackToNoValueForUnknownMapValueType() throws Exception {
         Template template = new Template("test").withMissingKeyPolicy(MissingKeyPolicy.ZERO);
         template.parse("Hello, {{.Name}}!");
 
         StringWriter writer = new StringWriter();
         template.execute(writer, TemplateTestSupport.data());
 
-        assertEquals("Hello, !", writer.toString());
+        assertEquals("Hello, <no value>!", writer.toString());
     }
 
     @Test
@@ -47,7 +47,7 @@ class MissingKeyPolicyTest {
 
         template.withMissingKeyPolicy(null);
 
-        assertSame(MissingKeyPolicy.DEFAULT, template.missingKeyPolicy());
+        assertSame(MissingKeyPolicy.INVALID, template.missingKeyPolicy());
     }
 
     @Test
@@ -55,7 +55,7 @@ class MissingKeyPolicyTest {
         Template template = new Template("test").withMissingKeyPolicy(MissingKeyPolicy.ERROR);
 
         assertSame(template, template.option("missingkey=default"));
-        assertSame(MissingKeyPolicy.DEFAULT, template.missingKeyPolicy());
+        assertSame(MissingKeyPolicy.INVALID, template.missingKeyPolicy());
         template.option("missingkey=zero");
         assertSame(MissingKeyPolicy.ZERO, template.missingKeyPolicy());
     }
@@ -106,7 +106,7 @@ class MissingKeyPolicyTest {
 
     @Test
     void indexMissingMapKeyUsesDefaultPolicyWhenNotStrict() throws Exception {
-        assertEquals("[]", TemplateTestSupport.render("[{{index . \"Name\"}}]", TemplateTestSupport.data()));
+        assertEquals("[<no value>]", TemplateTestSupport.render("[{{index . \"Name\"}}]", TemplateTestSupport.data()));
     }
 
     @Test
@@ -119,7 +119,7 @@ class MissingKeyPolicyTest {
 
     @Test
     void indexNullValueFailsOnlyForErrorPolicy() throws Exception {
-        assertEquals("[]", TemplateTestSupport.render("[{{index .Missing \"Name\"}}]", TemplateTestSupport.data()));
+        assertEquals("[<no value>]", TemplateTestSupport.render("[{{index .Missing \"Name\"}}]", TemplateTestSupport.data()));
 
         Template template = new Template("test").withMissingKeyPolicy(MissingKeyPolicy.ERROR);
         template.parse("{{index .Missing \"Name\"}}");
@@ -128,6 +128,14 @@ class MissingKeyPolicyTest {
                 () -> template.execute(new StringWriter(), TemplateTestSupport.data("Missing", null)));
 
         assertTrue(exception.getMessage().contains("index of null value"));
+    }
+
+    @Test
+    void nilValuesPrintNoValue() throws Exception {
+        assertEquals("<no value>", TemplateTestSupport.render("{{nil}}", TemplateTestSupport.data()));
+        assertEquals("Name=<no value>", TemplateTestSupport.render("Name={{.Name}}",
+                TemplateTestSupport.data("Name", null)));
+        assertEquals("Dot=<no value>", TemplateTestSupport.render("Dot={{.}}", null));
     }
 
     @Test
@@ -187,16 +195,6 @@ class MissingKeyPolicyTest {
         assertSame(MissingKeyPolicy.ERROR, copy.missingKeyPolicy());
         assertThrows(TemplateExecutionException.class,
                 () -> copy.execute(new StringWriter(), TemplateTestSupport.data()));
-    }
-
-    @Test
-    void unsupportedOptionFailsClearly() {
-        Template template = new Template("test");
-
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
-                () -> template.option("missingkey=invalid"));
-
-        assertTrue(exception.getMessage().contains("unsupported template option"));
     }
 
     @Test

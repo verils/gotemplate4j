@@ -11,9 +11,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotSame;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Tests for template cloning and thread safety.
@@ -115,7 +113,7 @@ public class TemplateCloningTest {
     }
 
     @Test
-    void testConcurrentExecutionWithClone() throws InterruptedException, IOException, TemplateException {
+    void testConcurrentExecutionWithClone() throws InterruptedException, TemplateException {
         final Template original = new Template("test");
         original.parse("Thread {{.threadId}}: {{.message}}");
         
@@ -146,7 +144,7 @@ public class TemplateCloningTest {
                 }
             });
         }
-        
+
         latch.await(5, TimeUnit.SECONDS);
         executor.shutdown();
         
@@ -157,7 +155,7 @@ public class TemplateCloningTest {
     }
 
     @Test
-    void testConcurrentParsingAndExecution() throws InterruptedException, IOException, TemplateException {
+    void testConcurrentParsingAndExecution() throws InterruptedException {
         // Test that parsing in one thread doesn't affect execution in another
         final Template template1 = new Template("t1");
         final Template template2 = new Template("t2");
@@ -269,7 +267,7 @@ public class TemplateCloningTest {
         try {
             StringWriter cloneHelperWriter = new StringWriter();
             clone.executeTemplate(cloneHelperWriter, "helper", null);
-            assertTrue(false, "Should have thrown exception");
+            fail("Should have thrown exception");
         } catch (TemplateNotFoundException e) {
             // Expected
         }

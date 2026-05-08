@@ -19,8 +19,8 @@ class JavaDeviationFixtureTest {
     }
 
     @Test
-    void missingValuesPrintEmptyByDefaultFixture() throws Exception {
-        assertEquals("[]", TemplateTestSupport.render("[{{.Missing}}]", TemplateTestSupport.data()));
+    void missingValuesPrintNoValueByDefaultFixture() throws Exception {
+        assertEquals("[<no value>]", TemplateTestSupport.render("[{{.Missing}}]", TemplateTestSupport.data()));
     }
 
     @Test

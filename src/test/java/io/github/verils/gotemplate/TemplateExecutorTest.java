@@ -6,13 +6,15 @@ import java.io.IOException;
 import java.io.StringWriter;
 import java.io.Writer;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class ExecutorTest {
+class TemplateExecutorTest {
 
     @Test
     void testExecuteWithNullWriter() throws IOException, TemplateException {
@@ -82,7 +84,7 @@ class ExecutorTest {
         data.put("Items", new String[]{"a", "b", "c"});
 
         template.execute(writer, data);
-        assertEquals("", writer.toString());
+        assertEquals("<no value>", writer.toString());
     }
 
     @Test
@@ -256,5 +258,25 @@ class ExecutorTest {
         template.execute(writer, data);
         // Numbers != 0 are truthy
         assertNotNull(writer.toString());
+    }
+
+    @Test
+    void testPipelineFinalValueForIndex() throws IOException, TemplateException {
+        assertEquals("b", TemplateTestSupport.render("{{.Index | index .Items}}",
+                TemplateTestSupport.data("Items", new String[]{"a", "b"}, "Index", 1)));
+    }
+
+    @Test
+    void testRangeBreakCoversArrayCollectionAndMapPaths() throws IOException, TemplateException {
+        assertEquals("a", TemplateTestSupport.render("{{range .Items}}{{.}}{{break}}{{end}}",
+                TemplateTestSupport.data("Items", new String[]{"a", "b"})));
+        assertEquals("a", TemplateTestSupport.render("{{range .Items}}{{.}}{{break}}{{end}}",
+                TemplateTestSupport.data("Items", Arrays.asList("a", "b"))));
+
+        Map<String, Object> items = new LinkedHashMap<>();
+        items.put("a", 1);
+        items.put("b", 2);
+        assertEquals("a=1", TemplateTestSupport.render("{{range $k, $v := .Items}}{{$k}}={{$v}}{{break}}{{end}}",
+                TemplateTestSupport.data("Items", items)));
     }
 }
