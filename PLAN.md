@@ -141,7 +141,7 @@ docs/
 **Next Steps for Stage 1:**
 - ✅ Create Examples sections (basic-examples ✅, web-templates ✅, email-templates ✅, complex-scenarios ✅)
 - ✅ Enhance existing compatibility and migration docs
-- ⏳ Create FAQ
+- ✅ Create FAQ
 
 **Documentation Standards:**
 
@@ -370,7 +370,7 @@ Prepare for v0.7.0 release:
 13. ⏳ Implement block action support with tests
 14. ✅ Create comprehensive examples (basic-examples ✅, web-templates ✅, email-templates ✅, complex-scenarios ✅)
 15. ✅ Enhance compatibility and migration docs
-16. ⏳ Write FAQ
+16. ✅ Write FAQ
 17. ⏳ Update README and CHANGELOG
 18. ⏳ Final review and verification
 
