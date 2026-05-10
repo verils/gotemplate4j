@@ -9,6 +9,7 @@ import io.github.verils.gotemplate.internal.ast.TextNode;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.*;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -448,6 +449,65 @@ public class Template {
     public void parse(Reader reader) throws TemplateParseException, IOException {
         String text = IOUtils.read(reader);
         parse(text);
+    }
+
+    /**
+     * Parses template content from a file.
+     * <p>
+     * The file is read using UTF-8 encoding. The template name for definitions inside
+     * the file will default to the file's base name (without extension) unless explicitly
+     * defined within the template text.
+     *
+     * @param path the path to the file
+     * @throws TemplateParseException if the template contains syntax errors or parsing issues
+     * @throws IOException            if the file cannot be read
+     * @since 0.6.0
+     */
+    public void parseFile(Path path) throws TemplateParseException, IOException {
+        try (InputStream in = Files.newInputStream(path)) {
+            parse(in);
+        }
+    }
+
+    /**
+     * Parses template content from multiple files.
+     * <p>
+     * Each file is processed as if by {@link #parseFile(Path)}. If multiple files define
+     * the same template name, the last one parsed wins (unless it is empty).
+     *
+     * @param paths the paths to the files
+     * @throws TemplateParseException if any template contains syntax errors or parsing issues
+     * @throws IOException            if any file cannot be read
+     * @since 0.6.0
+     */
+    public void parseFiles(Path... paths) throws TemplateParseException, IOException {
+        for (Path path : paths) {
+            parseFile(path);
+        }
+    }
+
+    /**
+     * Parses template files matching a glob pattern in a directory.
+     * <p>
+     * This method searches the given directory for files matching the glob pattern
+     * (e.g., "*.tmpl") and parses them. The order of parsing is determined by the
+     * underlying file system iteration.
+     *
+     * @param directory the directory to search
+     * @param glob      the glob pattern (e.g., "*.tmpl", "*.html")
+     * @throws TemplateParseException if any template contains syntax errors or parsing issues
+     * @throws IOException            if the directory cannot be accessed
+     * @since 0.6.0
+     */
+    public void parseGlob(Path directory, String glob) throws TemplateParseException, IOException {
+        final PathMatcher matcher = FileSystems.getDefault().getPathMatcher("glob:" + glob);
+        try (DirectoryStream<Path> stream = Files.newDirectoryStream(directory, entry -> matcher.matches(entry.getFileName()))) {
+            for (Path path : stream) {
+                if (Files.isRegularFile(path)) {
+                    parseFile(path);
+                }
+            }
+        }
     }
 
     /**
