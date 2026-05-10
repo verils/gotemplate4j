@@ -37,8 +37,8 @@ Comprehensive guides for everyday use:
 
 For power users and special scenarios:
 
-- [Go Compatibility](advanced/compatibility.md) - Detailed compatibility guide
-- [Migration Guide](advanced/migration.md) - Migrate from Go templates
+- [Go Compatibility](go-template-compatibility.md) - Detailed compatibility guide
+- [Migration Guide](migration-from-go-template.md) - Migrate from Go templates
 - [Performance Tuning](advanced/performance.md) - Optimize template execution
 - [Security](advanced/security.md) - Security best practices
 - [Best Practices](advanced/best-practices.md) - Patterns and recommendations
