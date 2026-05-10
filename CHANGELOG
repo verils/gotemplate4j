@@ -1,3 +1,44 @@
+v0.7.0 (2026-05-10)
+
+========
+
+**Documentation and Compatibility Enhancement Release** - This version transforms gotemplate4j from a functional library into a production-ready, well-documented solution with reduced migration friction from Go templates.
+
+### Documentation
+
+- **Comprehensive Documentation Structure**: Created complete documentation hub with 20+ documents
+  - Getting Started guides (installation, quick start, basic concepts)
+  - User Guide (syntax, data models, functions, control flow, template sets, error handling)
+  - API Reference (Template, Function, Exception APIs)
+  - Advanced Topics (performance, security, best practices)
+  - Real-world Examples (basic, web, email, complex scenarios)
+  - FAQ with 30+ common questions and answers
+
+- **Enhanced Compatibility Documentation**:
+  - Expanded [Go Template Compatibility Guide](./docs/go-template-compatibility.md) with detailed behavior comparison table
+  - Comprehensive [Migration Guide](./docs/migration-from-go-template.md) with Go vs Java side-by-side examples
+  - Added common migration patterns and testing strategies
+
+- **Production-Grade Examples**:
+  - Basic examples covering all core features
+  - Web template patterns (layouts, forms, tables, pagination, authentication UI)
+  - Email templates (welcome, password reset, order confirmation, newsletters)
+  - Complex scenarios (multi-language, reports, code generation, invoices, API docs)
+
+### Improvements
+
+- All documentation follows consistent structure for future static site generation
+- Code examples verified and tested
+- Cross-references between documents are accurate
+- Translation-friendly structure for future i18n support
+
+### Testing
+
+- All existing tests pass on Java 8
+- Code coverage remains above 90% threshold
+- No backward compatibility breaks
+- `./mvnw clean verify "-Dgpg.skip=true"` succeeds
+
 v0.6.0 (2026-05-10)
 
 ========

@@ -25,7 +25,7 @@ Add the dependency to your Maven project:
 <dependency>
     <groupId>io.github.verils</groupId>
     <artifactId>gotemplate4j</artifactId>
-    <version>0.6.0</version>
+    <version>0.7.0</version>
 </dependency>
 ```
 
@@ -46,14 +46,45 @@ template.execute(writer, user);
 System.out.print(writer.toString());  // "Hello Bob!"
 ```
 
-## Compatibility and Migration
+## Documentation
 
-v0.6.0 moves detailed compatibility notes into focused docs:
+Comprehensive documentation is available in the `docs/` directory:
 
-- [Go Template Compatibility](./docs/go-template-compatibility.md)
-- [Migration from Go text/template](./docs/migration-from-go-template.md)
+### 🚀 Getting Started
+- [Installation Guide](./docs/getting-started/installation.md) - Add gotemplate4j to your project
+- [Quick Start Tutorial](./docs/getting-started/quick-start.md) - Create your first template in 5 minutes
+- [Basic Concepts](./docs/getting-started/basic-concepts.md) - Understand core concepts
 
-The short version: gotemplate4j covers core Go `text/template` control flow, pipelines, template definitions, built-in functions, and execution errors. Java-specific behavior such as JavaBean access, public fields, `Optional`, enums, nulls, missing keys, and map iteration order is documented separately from Go compatibility claims.
+### 📖 User Guide
+- [Template Syntax Reference](./docs/user-guide/template-syntax.md) - Complete syntax guide
+- [Working with Java Data](./docs/user-guide/data-models.md) - JavaBeans, Maps, Lists, Enums
+- [Built-in and Custom Functions](./docs/user-guide/functions.md) - Function reference
+- [Control Flow](./docs/user-guide/control-flow.md) - If, range, with, break/continue
+- [Template Sets and Inheritance](./docs/user-guide/template-sets.md) - Define, template, blocks
+- [Error Handling](./docs/user-guide/error-handling.md) - Handle errors gracefully
+
+### 🔧 Advanced Topics
+- [Go Template Compatibility](./docs/go-template-compatibility.md) - Detailed compatibility guide
+- [Migration from Go Templates](./docs/migration-from-go-template.md) - Step-by-step migration
+- [Performance Tuning](./docs/advanced/performance.md) - Optimize template execution
+- [Security Best Practices](./docs/advanced/security.md) - Security considerations
+- [Design Patterns](./docs/advanced/best-practices.md) - Best practices and patterns
+
+### 📚 API Reference
+- [Template API](./docs/api-reference/template-api.md) - Template class reference
+- [Function API](./docs/api-reference/function-api.md) - Function interface guide
+- [Exception API](./docs/api-reference/exception-api.md) - Exception hierarchy
+
+### 💡 Examples
+- [Basic Examples](./docs/examples/basic-examples.md) - Simple use cases
+- [Web Templates](./docs/examples/web-templates.md) - HTML generation patterns
+- [Email Templates](./docs/examples/email-templates.md) - Email generation examples
+- [Complex Scenarios](./docs/examples/complex-scenarios.md) - Advanced real-world scenarios
+
+### ❓ FAQ
+- [Frequently Asked Questions](./docs/faq.md) - Common questions and answers
+
+**Start here:** [Documentation Hub](./docs/index.md)
 
 ## Performance
 
@@ -76,10 +107,6 @@ gotemplate4j is optimized for Java 8 environments. The following baseline metric
 - **OS**: Windows 25H2
 - **Java Version**: 1.8
 
-## Roadmap
-
-See [PLAN.md](./PLAN.md) for the detailed development roadmap.
-
 ## References
 
 - [Go text/template Documentation](https://pkg.go.dev/text/template)
@@ -87,6 +114,10 @@ See [PLAN.md](./PLAN.md) for the detailed development roadmap.
 - [Java Template Engine (Alternative)](https://github.com/proninyaroslav/java-template-engine)
 - [Changelog](./CHANGELOG)
 - [Development Plan](./PLAN.md)
+
+## Roadmap
+
+See [PLAN.md](./PLAN.md) for the detailed development roadmap.
 
 ## Contributing
 
