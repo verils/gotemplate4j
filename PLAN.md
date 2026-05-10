@@ -2,9 +2,9 @@
 
 **Last Updated**: 2026-05-10  
 **Current Version**: 0.6.0  
-**Next Version**: 0.7.0  
-**Current Focus**: production-grade documentation and enhanced Go template compatibility  
-**Status**: Stage 1 in progress - Advanced Topics (performance, security, best-practices complete), starting Examples
+**Next Version**: 0.7.0 (or 0.6.1 for critical fixes)  
+**Current Focus**: Stage 1 documentation complete, preparing for Stage 2 compatibility improvements  
+**Status**: Stage 1 complete ✅, Stage 2 pending - Integer Range Support next
 
 ---
 
@@ -52,7 +52,13 @@ gotemplate4j should remain a small, Java 8-compatible implementation of Go's `te
 - ✅ docs/advanced/performance.md - Performance tuning guide
 - ✅ docs/advanced/security.md - Security considerations
 - ✅ docs/advanced/best-practices.md - Best practices guide
-- ⏳ Remaining documentation sections
+- ✅ docs/examples/basic-examples.md - Basic usage examples
+- ✅ docs/examples/web-templates.md - Web application examples
+- ✅ docs/examples/email-templates.md - Email generation examples
+- ✅ docs/examples/complex-scenarios.md - Complex real-world scenarios
+- ✅ docs/faq.md - Frequently asked questions (645 lines, comprehensive)
+- ✅ docs/go-template-compatibility.md - Enhanced compatibility details
+- ✅ docs/migration-from-go-template.md - Enhanced migration guide
 
 ### 📋 Planned (v0.7.0 - Stages 2-5)
 
@@ -79,9 +85,9 @@ Positioning: v0.7.0 is the documentation and compatibility enhancement release. 
 - Do not break backward compatibility
 - Do not implement general method invocation with arguments (requires separate security design)
 
-### Stage 1: Production-Grade Documentation Structure ✅ Partially Complete
+### Stage 1: Production-Grade Documentation Structure ✅ Complete
 
-**Status**: Directory structure created, core docs started. Continuing with remaining sections.
+**Status**: All documentation sections created and verified. Stage 1 complete.
 
 Create a comprehensive documentation structure following open-source best practices:
 
@@ -139,9 +145,8 @@ docs/
 - ✅ docs/advanced/best-practices.md - Design patterns and maintainability guidelines
 
 **Next Steps for Stage 1:**
-- ✅ Create Examples sections (basic-examples ✅, web-templates ✅, email-templates ✅, complex-scenarios ✅)
-- ✅ Enhance existing compatibility and migration docs
-- ✅ Create FAQ
+- ✅ All documentation sections complete
+- ✅ Stage 1 marked as complete - moving to Stage 2
 
 **Documentation Standards:**
 
@@ -353,7 +358,7 @@ Prepare for v0.7.0 release:
 
 ### Suggested Next Session Order
 
-**Current Position**: Stage 1 - Step 18 (README and CHANGELOG updated, final review next)
+**Current Position**: Stage 1 complete ✅, ready for Stage 2 implementation
 
 1. ✅ Create documentation directory structure and templates
 2. ✅ Write Getting Started section (installation ✅, quick start ✅, concepts ✅)
@@ -373,6 +378,175 @@ Prepare for v0.7.0 release:
 16. ✅ Write FAQ
 17. ✅ Update README and CHANGELOG
 18. ⏳ Final review and verification
+
+---
+
+## Critical Issues Identified (v0.6.1 Candidate)
+
+During Executor code review, the following issues were identified that may warrant a patch release:
+
+### Issue 1: Go-style Property Name Conversion Limitation
+
+**Severity**: Medium  
+**Location**: `Executor.java` line 682-684 (`toGoStylePropertyName` method)  
+**Impact**: May not correctly handle all-caps abbreviations (e.g., `URL`, `ID`, `XML`)  
+
+**Problem Description:**
+
+The current implementation only capitalizes the first letter:
+```java
+private String toGoStylePropertyName(String propertyDescriptorName) {
+    return Character.toUpperCase(propertyDescriptorName.charAt(0)) + propertyDescriptorName.substring(1);
+}
+```
+
+This works for most cases:
+- `name` → `Name` ✅
+- `userName` → `UserName` ✅
+
+But fails for all-caps abbreviations:
+- `url` → `Url` ❌ (should be `URL`)
+- `id` → `Id` ❌ (should be `ID`)
+- `xmlParser` → `XmlParser` ❌ (should be `XMLParser`)
+
+**Example Failure Scenario:**
+```java
+public class Config {
+    private String url;
+    public String getURL() { return url; }  // Go template expects {{.URL}}
+}
+
+// In template: {{.URL}} 
+// Current behavior: Converts "url" to "Url", doesn't match "URL"
+// Expected: Should match "URL" or "Url" or "url"
+```
+
+**Proposed Fix:**
+Enhance the conversion logic to handle common abbreviation patterns:
+```java
+private String toGoStylePropertyName(String propertyDescriptorName) {
+    // If already starts with uppercase, return as-is
+    if (Character.isUpperCase(propertyDescriptorName.charAt(0))) {
+        return propertyDescriptorName;
+    }
+    
+    // Simple first-letter capitalization for most cases
+    return Character.toUpperCase(propertyDescriptorName.charAt(0)) 
+         + propertyDescriptorName.substring(1);
+}
+```
+
+**Alternative Approach:**
+Make the matching more flexible by trying multiple variations:
+1. Exact match: `identifier.equals(propertyName)`
+2. First-letter caps: `identifier.equals(toGoStyleName(propertyName))`
+3. All-caps check: If identifier is all-caps, try matching case-insensitively
+
+**Recommendation:** 
+- **For v0.6.1**: Add test cases to document current behavior, defer fix unless user reports issue
+- **For v0.7.0**: Implement enhanced matching logic with comprehensive tests
+
+**Test Cases Needed:**
+```java
+// Test nested access with various naming conventions
+{{.User.Address.City}}           // Standard camelCase
+{{.Config.URL}}                  // All-caps abbreviation
+{{.Data.XMLContent}}            // Mixed case
+{{.item.ID}}                     // Two-letter abbreviation
+```
+
+### Issue 2: MissingKeyPolicy Consistency in Nested Chains
+
+**Severity**: Low  
+**Location**: `Executor.java` line 325-422 (`executeFieldPath` method)  
+**Impact**: Error messages may not clearly indicate which segment of a chain failed  
+
+**Observation:**
+The current implementation throws errors per-segment:
+```java
+if (missingKeyPolicy == MissingKeyPolicy.ERROR) {
+    throw new TemplateExecutionException(
+        String.format("missing value for field-chain segment '%s'", identifier));
+}
+```
+
+For a chain like `.User.Address.City`, if `Address` is null, the error says:
+```
+missing value for field-chain segment 'Address'
+```
+
+This is correct but could be more helpful by showing the full path:
+```
+missing value for field-chain '.User.Address.City' at segment 'Address'
+```
+
+**Recommendation:**
+- **For v0.6.1**: No action needed - current behavior is acceptable
+- **For v0.7.0**: Consider enhancing error messages with full path context
+
+### Issue 3: Optional Unwrapping Performance
+
+**Severity**: Very Low  
+**Location**: `Executor.java` line 430-436 (`unwrapOptional` method)  
+**Impact**: Minimal - called on every field access  
+
+**Observation:**
+The `unwrapOptional` method is called frequently (lines 339, 353, 374, 390, 404, 193):
+```java
+private Object unwrapOptional(Object obj) {
+    if (obj instanceof Optional) {
+        Optional<?> optional = (Optional<?>) obj;
+        return optional.orElse(null);
+    }
+    return obj;
+}
+```
+
+This is correct but could be optimized with caching if performance becomes an issue.
+
+**Recommendation:**
+- **For v0.6.1**: No action needed
+- **For v0.7.0**: Profile and optimize only if benchmarks show this is a bottleneck
+
+---
+
+## v0.6.1 Release Criteria (If Needed)
+
+Consider a patch release if any of the following occur:
+
+1. **User reports** issues with all-caps property names (URL, ID, XML, etc.)
+2. **Critical bug** discovered in nested field access
+3. **Security vulnerability** identified in template execution
+4. **Backward compatibility break** found in v0.6.0
+
+**v0.6.1 Scope:**
+- Bug fixes only
+- No new features
+- Maintain Java 8 compatibility
+- Zero dependency changes
+- All existing tests must pass
+
+---
+
+## v0.7.0 Planned Improvements (Based on Code Review)
+
+In addition to the Stage 2-5 plan, consider these enhancements:
+
+### Documentation Enhancements
+- Add "Naming Conventions" section explaining Go-style vs Java-style property access
+- Include troubleshooting guide for common property access issues
+- Document supported naming patterns (camelCase, PascalCase, ALL_CAPS)
+
+### Testing Enhancements
+- Add comprehensive nested field access tests
+- Test all naming convention variations
+- Test Map/Bean mixed access patterns
+- Verify Optional unwrapping in deep chains
+
+### Code Quality
+- Consider adding comments to explain the three-tier lookup strategy
+- Document the Go compatibility decisions in code comments
+- Add performance notes for frequently-called methods
 
 ## Later Backlog
 
