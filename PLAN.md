@@ -4,7 +4,7 @@
 **Current Version**: 0.6.0  
 **Next Version**: 0.7.0  
 **Current Focus**: production-grade documentation and enhanced Go template compatibility  
-**Status**: Stage 1 in progress - Documentation structure created, core docs started
+**Status**: Stage 1 in progress - Advanced Topics (performance, security, best-practices complete), starting Examples
 
 ---
 
@@ -46,6 +46,12 @@ gotemplate4j should remain a small, Java 8-compatible implementation of Go's `te
 - ✅ docs/user-guide/control-flow.md - Control flow constructs
 - ✅ docs/user-guide/template-sets.md - Template sets and inheritance
 - ✅ docs/user-guide/error-handling.md - Error handling strategies
+- ✅ docs/api-reference/template-api.md - Template class API reference
+- ✅ docs/api-reference/function-api.md - Function interface API reference
+- ✅ docs/api-reference/exception-api.md - Exception hierarchy API reference
+- ✅ docs/advanced/performance.md - Performance tuning guide
+- ✅ docs/advanced/security.md - Security considerations
+- ✅ docs/advanced/best-practices.md - Best practices guide
 - ⏳ Remaining documentation sections
 
 ### 📋 Planned (v0.7.0 - Stages 2-5)
@@ -125,11 +131,16 @@ docs/
 - ✅ docs/user-guide/control-flow.md - If, range, with, break/continue
 - ✅ docs/user-guide/template-sets.md - Define, template, blocks, inheritance
 - ✅ docs/user-guide/error-handling.md - Exception handling and best practices
+- ✅ docs/api-reference/template-api.md - Complete Template class API documentation
+- ✅ docs/api-reference/function-api.md - Function interface with implementation examples
+- ✅ docs/api-reference/exception-api.md - Exception hierarchy and error handling patterns
+- ✅ docs/advanced/performance.md - Comprehensive performance optimization guide
+- ✅ docs/advanced/security.md - Security best practices and vulnerability prevention
+- ✅ docs/advanced/best-practices.md - Design patterns and maintainability guidelines
 
 **Next Steps for Stage 1:**
-- ⏳ Create API Reference sections (template-api.md, function-api.md, exception-api.md)
-- ⏳ Create Advanced Topics sections
-- ⏳ Create Examples sections
+- ⏳ Create Examples sections (basic-examples, web-templates, email-templates, complex-scenarios)
+- ⏳ Enhance existing compatibility and migration docs
 - ⏳ Create FAQ
 
 **Documentation Standards:**
@@ -342,7 +353,7 @@ Prepare for v0.7.0 release:
 
 ### Suggested Next Session Order
 
-**Current Position**: Stage 1 - Step 8 (User Guide complete, starting API Reference)
+**Current Position**: Stage 1 - Step 14 (Advanced Topics complete, starting Examples)
 
 1. ✅ Create documentation directory structure and templates
 2. ✅ Write Getting Started section (installation ✅, quick start ✅, concepts ✅)
@@ -354,14 +365,13 @@ Prepare for v0.7.0 release:
 8. ✅ Write Error Handling guide ✅
 9. ⏳ Implement integer range support with tests
 10. ⏳ Implement null display policy with tests
-11. ⏳ Write API Reference documentation (template-api, function-api, exception-api)
+11. ✅ Write API Reference documentation (template-api ✅, function-api ✅, exception-api ✅)
 12. ⏳ Implement map key sorting option with tests
 13. ⏳ Implement block action support with tests
-14. ⏳ Create comprehensive examples
-15. ⏳ Write Advanced Topics and FAQ
-16. ⏳ Enhance existing compatibility and migration docs
-17. ⏳ Update README and CHANGELOG
-18. ⏳ Final review and verification
+14. ⏳ Create comprehensive examples (basic-examples, web-templates, email-templates, complex-scenarios)
+15. ⏳ Write FAQ and enhance compatibility/migration docs
+16. ⏳ Update README and CHANGELOG
+17. ⏳ Final review and verification
 
 ## Later Backlog
 
