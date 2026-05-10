@@ -1,15 +1,19 @@
 # gotemplate4j Development Plan
 
-**Last Updated**: 2026-05-06  
-**Current Version**: 0.5.0  
-**Next Version**: 0.6.0  
-**Current Focus**: post-audit API usability, migration guidance, and high-value compatibility gaps
+**Last Updated**: 2026-05-10  
+**Current Version**: 0.6.0  
+**Next Version**: 0.7.0  
+**Current Focus**: production-grade documentation and enhanced Go template compatibility  
+**Status**: Stage 1 in progress - Documentation structure created, core docs started
 
 ---
 
 ## Direction
 
-gotemplate4j should remain a small, Java 8-compatible implementation of Go's `text/template` semantics for Java applications. v0.5.0 completed the core compatibility audit. v0.6.0 should turn that audit result into better user-facing API behavior, migration guidance, and a small number of high-value compatibility improvements.
+gotemplate4j should remain a small, Java 8-compatible implementation of Go's `text/template` semantics for Java applications. v0.6.0 completed the API usability improvements. v0.7.0 focuses on two strategic directions:
+
+1. **Production-Grade Documentation**: Create comprehensive, web-deployable user documentation following open-source best practices, organized for future static site generation.
+2. **Enhanced Go Compatibility**: Reduce migration friction by implementing high-value Go template features that lower the learning curve and reduce common pitfalls.
 
 ## Working Constraints
 
@@ -19,280 +23,364 @@ gotemplate4j should remain a small, Java 8-compatible implementation of Go's `te
 - Preserve backward compatibility unless a documented Go compatibility fix requires a behavior change.
 - Keep Go-compatible behavior, Java-specific behavior, and unsupported Go APIs clearly separated.
 
-## v0.5.0 Release Scope
+## Current Progress
 
-Target: ship a compatibility-audit release with no unresolved audit rows. v0.5.0 does not need to implement every Go API, but every gap must be visible and intentional.
+### ✅ Completed (v0.6.0)
 
-Status meanings:
-- **Covered**: implemented and protected by focused tests.
-- **Java Deviation**: intentionally different because of Java type system or public API constraints; must be documented.
-- **Deferred**: not in v0.5.0 scope; must be visible in release notes and user documentation.
-- **Not Applicable**: Go feature has no useful Java equivalent.
+- MissingKeyPolicy configuration (DEFAULT/ZERO/ERROR)
+- Template introspection API (name(), hasTemplate(), definedTemplates(), lookup(), templates())
+- File system helpers (parseFile(), parseFiles(), parseGlob())
+- Performance benchmarking (TemplateBenchmark)
+- Initial compatibility and migration documentation
 
-### Actions and Control Flow
+### 🚧 In Progress (v0.7.0 - Stage 1)
 
-| Go behavior                                            | v0.5.0 status              | Evidence                                                                        | Decision                                                                                                    |
-|--------------------------------------------------------|----------------------------|---------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------|
-| `if`, `else`, `else if`                                | Covered                    | `ParserBranchScopeTest`, `ParserCanonicalTest`, `GoCompatibilityAuditTest`      | Keep supported.                                                                                             |
-| `range` over arrays and Java collections               | Covered                    | `RangeIndexTest`, `ExecutorTest`, `GoCompatibilityAuditTest`                    | Empty and null ranges execute `else`.                                                                       |
-| `range` over maps                                      | Covered with Java ordering | `RangeIndexTest`, `GoCompatibilityAuditTest`                                    | Java `Map` iteration order is preserved; unlike Go, basic keys are not sorted by the engine.                |
-| `range` over integer, channel, `iter.Seq`, `iter.Seq2` | Deferred                   | No Java executor model                                                          | Defer beyond v0.5.0. Channels and Go iterators are not Java concepts; integer range can be revisited later. |
-| `break` and `continue` in `range`                      | Covered                    | `BreakContinueTest`                                                             | Keep supported.                                                                                             |
-| `with`, `else`, `else with`                            | Covered                    | `NestedTemplateContextTest`, `GoCompatibilityAuditTest`                         | Keep supported.                                                                                             |
-| `template "name"` with omitted pipeline                | Covered                    | `GoCompatibilityAuditTest`                                                      | Executes named template with null dot.                                                                      |
-| Template definitions and override order                | Covered                    | `ParserTemplateDefinitionTest`, `BlockOverrideTest`, `GoCompatibilityAuditTest` | Later non-empty definitions replace earlier ones.                                                           |
+- ✅ Documentation directory structure created
+- ✅ docs/index.md - Main documentation hub
+- ✅ docs/getting-started/installation.md - Installation guide
+- ✅ docs/getting-started/quick-start.md - Quick start tutorial
+- ⏳ docs/getting-started/basic-concepts.md - Next to create
+- ⏳ Remaining documentation sections
 
-### Pipelines and Variables
+### 📋 Planned (v0.7.0 - Stages 2-5)
 
-| Go behavior                           | v0.5.0 status | Evidence                                                | Decision                                                               |
-|---------------------------------------|---------------|---------------------------------------------------------|------------------------------------------------------------------------|
-| Parenthesized pipeline arguments      | Covered       | `ParserPipelineCommandTest`, `GoCompatibilityAuditTest` | Keep supported.                                                        |
-| Variable declaration `$x := pipeline` | Covered       | `PipeNodeVariableTest`, `GoCompatibilityAuditTest`      | Declarations are available within their parse scope.                   |
-| Variable assignment `$x = pipeline`   | Covered       | `GoCompatibilityAuditTest`                              | Assignment token is accepted and updates the current variable binding. |
-| Variable scope ends at matching `end` | Covered       | `ParserBranchScopeTest`, `GoCompatibilityAuditTest`     | Parser rejects references outside branch/range scope.                  |
+See detailed plan below.
 
-### Data Access and Type Semantics
+---
 
-| Go behavior                                   | v0.5.0 status             | Evidence                                                     | Decision                                                                                                 |
-|-----------------------------------------------|---------------------------|--------------------------------------------------------------|----------------------------------------------------------------------------------------------------------|
-| Struct/exported field access                  | Java Deviation            | `PublicFieldTest`                                            | Java getters and public fields correspond to Go exported field-style access.                             |
-| Public no-arg method access in chains         | Java Deviation            | `EnumHandlingTest`, `GoCompatibilityAuditTest`               | Public no-arg methods can be accessed as field-chain segments; methods with arguments are not supported. |
-| Method invocation with arguments in pipelines | Deferred                  | No general method-call executor path                         | Keep the safer function-only model for v0.5.0.                                                           |
-| Map key access via `.Key`                     | Covered with Java default | `OptionalSupportTest`, `GoCompatibilityAuditTest`            | Missing keys evaluate to null and print as empty output.                                                 |
-| `Option("missingkey=default/zero/error")`     | Deferred                  | No `Option` API                                              | Document unsupported in v0.5.0.                                                                          |
-| Nil/null behavior                             | Covered with Java default | `NullSafetyTest`, `ExecutorTest`, `GoCompatibilityAuditTest` | Null values are falsey and print as empty output, not Go's visible `<no value>` marker.                  |
-| Java `Optional` unwrapping                    | Java Deviation            | `OptionalSupportTest`, `NullSafetyTest`                      | Keep as Java-specific convenience.                                                                       |
-| Enum rendering and enum methods               | Java Deviation            | `EnumHandlingTest`, `GoCompatibilityAuditTest`               | Enums render via `toString()` and expose public no-arg methods such as `name` and `ordinal`.             |
-| Complex number constants                      | Covered parser support    | `ParserNumberTest`, `ComplexTest`                            | Parser support remains; full Go formatting parity is deferred.                                           |
+## v0.7.0 Release Plan
 
-### Built-in Functions
-
-| Go behavior                        | v0.5.0 status  | Evidence                                                   | Decision                                                                                                |
-|------------------------------------|----------------|------------------------------------------------------------|---------------------------------------------------------------------------------------------------------|
-| `and`, `or`, `not`                 | Covered        | `FunctionsLogicalTest`, `GoCompatibilityAuditTest`         | `and` and `or` short-circuit during execution.                                                          |
-| `eq`, `ne`, `lt`, `le`, `gt`, `ge` | Covered        | `FunctionsComparisonTest`                                  | Keep current Java numeric/string comparison behavior; deeper mixed numeric parity can be refined later. |
-| `index`                            | Covered        | `FunctionsCollectionTest`                                  | Supports Java maps, arrays, strings, and lists as implemented.                                          |
-| `slice`                            | Covered        | `FunctionsCollectionTest`                                  | Supports Java strings and arrays.                                                                       |
-| `call`                             | Java Deviation | `FunctionsFormattingAndCallTest`                           | Calls gotemplate4j `Function` instances only; Go function-valued fields/map entries are deferred.       |
-| `html`, `js`, `urlquery`           | Covered        | `FunctionsEscapingTest`                                    | Keep current escaping behavior.                                                                         |
-| `print`, `printf`, `println`       | Covered        | `FunctionsFormattingAndCallTest`, `FormattingFunctionTest` | Keep current Java formatting behavior.                                                                  |
-| `deepEqual`, `typeof`, `kindOf`    | Java Deviation | `FunctionsIntrospectionTest`                               | Document as library extensions, not Go predefined functions.                                            |
-| `default`                          | Java Deviation | `NullSafetyTest`                                           | Document as a library extension, not a Go predefined function.                                          |
-
-### Template Set and API Behavior
-
-| Go behavior                                                         | v0.5.0 status  | Evidence                                                | Decision                                                                       |
-|---------------------------------------------------------------------|----------------|---------------------------------------------------------|--------------------------------------------------------------------------------|
-| Custom delimiters                                                   | Covered        | `CustomDelimiterTest`, `LexerTrimDelimiterTest`         | Java constructor-based delimiter API remains.                                  |
-| `Funcs` before parse                                                | Java Deviation | Constructor-based custom functions                      | Java API uses constructors instead of Go's fluent `Funcs`.                     |
-| `Delims` fluent API                                                 | Java Deviation | Constructor-based delimiters                            | Java API uses constructors instead of Go's fluent `Delims`.                    |
-| `Option("missingkey=...")`                                          | Deferred       | No API                                                  | Defer beyond v0.5.0.                                                           |
-| `ParseFiles`, `ParseGlob`, `ParseFS`                                | Deferred       | `Template.parse(InputStream)`, `Template.parse(Reader)` | Caller-managed IO remains the v0.5.0 Java API.                                 |
-| `Lookup`, `DefinedTemplates`, `Templates`, `Name`, associated `New` | Deferred       | `executeTemplate` exists                                | Defer public introspection API decisions beyond v0.5.0.                        |
-| Parallel execution safety                                           | Covered        | `TemplateCloningTest`                                   | Parsed templates can be copied for concurrent execution with separate writers. |
-
-### Error Behavior
-
-| Go behavior                                  | v0.5.0 status  | Evidence                                            | Decision                                                               |
-|----------------------------------------------|----------------|-----------------------------------------------------|------------------------------------------------------------------------|
-| Parse errors include useful location/context | Java Deviation | `ParserErrorContextTest`, `ParserCoverageErrorTest` | Error wording is Java-specific; location/context is covered.           |
-| Execution stops on function errors           | Covered        | `GoCompatibilityAuditTest`                          | Runtime function failures are wrapped in `TemplateExecutionException`. |
-| Writer errors propagate                      | Covered        | `GoCompatibilityAuditTest`                          | Writer `IOException` is propagated to callers.                         |
-
-## v0.5.0 Completion Gate
-
-- No `Needs Audit` or undecided compatibility rows remain.
-- All deferred Go APIs are documented in README and CHANGELOG.
-- Java-specific extensions are clearly separated from Go compatibility claims.
-- Focused compatibility tests cover high-risk behavior in `GoCompatibilityAuditTest`.
-- `./mvnw test` succeeds on Java 8.
-- `./mvnw verify "-Dgpg.skip=true"` succeeds before release tagging.
-
-## v0.6.0 Release Plan
-
-Positioning: v0.6.0 is the API usability and migration release after the v0.5.0 compatibility audit. It should not reopen the entire compatibility matrix. It should make the audited behavior easier to understand, configure, and validate in real Java projects.
+Positioning: v0.7.0 is the documentation and compatibility enhancement release. It transforms gotemplate4j from a functional library into a production-ready, well-documented solution with reduced migration friction from Go templates.
 
 ### Goals
 
-- Move detailed compatibility guidance out of README into focused docs.
-- Add a configurable missing-key policy, because missing data is one of the most important production behaviors for template engines.
-- Add template introspection APIs so callers can inspect parsed template sets before execution.
-- Add a canonical compatibility fixture suite that preserves the v0.5.0 audit results and gives future changes a stable regression target.
-- Keep the implementation Java 8-compatible and dependency-light.
+- Create comprehensive, production-grade user documentation suitable for web deployment
+- Organize documentation structure for future static site generation (MkDocs, Docusaurus, etc.)
+- Implement high-priority Go compatibility improvements that reduce common migration pain points
+- Maintain Java 8 compatibility and dependency-light philosophy
+- Keep all new features well-tested and documented
 
 ### Non-Goals
 
-- Do not implement generic Java method calls with arguments in v0.6.0. The security and invocation rules need a separate design.
-- Do not implement Go channel, `iter.Seq`, `iter.Seq2`, or Go `ParseFS` equivalents.
-- Do not start broad performance refactors before establishing a baseline.
-- Do not add runtime dependencies unless a specific feature cannot be implemented cleanly with the JDK.
+- Do not implement complex Go-only features (channels, iterators, ParseFS)
+- Do not add runtime dependencies beyond vanilla Java
+- Do not break backward compatibility
+- Do not implement general method invocation with arguments (requires separate security design)
 
-### Stage 1: Documentation and Fixture Skeleton
+### Stage 1: Production-Grade Documentation Structure ✅ Partially Complete
 
-Create user-facing docs:
+**Status**: Directory structure created, core docs started. Continuing with remaining sections.
 
-- `docs/go-template-compatibility.md`
-- `docs/migration-from-go-template.md`
+Create a comprehensive documentation structure following open-source best practices:
 
-The compatibility doc should cover:
+**Documentation Organization:**
 
-- Covered core Go `text/template` behavior.
-- Java-specific behavior: getters, public fields, public no-arg methods, `Optional`, enum rendering, null and missing values.
-- Unsupported or deferred Go APIs.
-- Suggested Java alternatives for unsupported Go APIs.
-
-The migration guide should cover:
-
-- How to map Go structs to JavaBeans, public fields, maps, and enums.
-- How null and missing keys behave.
-- How map iteration order differs from Go's ordered-key behavior.
-- How custom functions map to gotemplate4j `Function`.
-- How to avoid relying on Go-only APIs such as `ParseFS`, `Option`, and function-valued fields.
-
-Add fixture test structure:
-
-- Keep Go-compatible fixtures separate from Java-deviation fixtures.
-- Prefer small, canonical fixtures with explicit expected output.
-- Cover `if`, `range`, `with`, template invocation, variables, missing keys, escaping, formatting, and errors.
-
-### Stage 2: Missing Key Policy
-
-Implement configurable missing-key behavior.
-
-Preferred public API:
-
-```java
-Template template = new Template("name");
-template.withMissingKeyPolicy(MissingKeyPolicy.ERROR);
+```
+docs/
+├── index.md                    # Landing page / overview
+├── getting-started/            # Quick start guides
+│   ├── installation.md         # Installation and setup
+│   ├── quick-start.md          # 5-minute tutorial
+│   └── basic-concepts.md       # Core concepts explained
+├── user-guide/                 # Comprehensive user guide
+│   ├── template-syntax.md      # Complete syntax reference
+│   ├── data-models.md          # Working with Java data
+│   ├── functions.md            # Built-in and custom functions
+│   ├── control-flow.md         # If, range, with, etc.
+│   ├── template-sets.md        # Define, template, blocks
+│   └── error-handling.md       # Error types and handling
+├── api-reference/              # API documentation
+│   ├── template-api.md         # Template class API
+│   ├── function-api.md         # Function interface
+│   └── exception-api.md        # Exception hierarchy
+├── advanced/                   # Advanced topics
+│   ├── compatibility.md        # Go compatibility details (existing)
+│   ├── migration.md            # Migration guide (existing)
+│   ├── performance.md          # Performance tuning
+│   ├── security.md             # Security considerations
+│   └── best-practices.md       # Best practices and patterns
+├── examples/                   # Code examples
+│   ├── basic-examples.md       # Simple use cases
+│   ├── web-templates.md        # Web application examples
+│   ├── email-templates.md      # Email generation examples
+│   └── complex-scenarios.md    # Advanced scenarios
+└── faq.md                      # Frequently asked questions
 ```
 
-Also consider a Go-compatible string entrypoint if it can be added without ambiguity:
+**Completed So Far:**
+- ✅ Created directory structure: getting-started/, user-guide/, api-reference/, advanced/, examples/
+- ✅ docs/index.md - Main documentation hub with full navigation
+- ✅ docs/getting-started/installation.md - Maven/Gradle/manual installation
+- ✅ docs/getting-started/quick-start.md - 5-minute tutorial with examples
 
+**Next Steps for Stage 1:**
+- ⏳ Create docs/getting-started/basic-concepts.md
+- ⏳ Create all User Guide sections
+- ⏳ Create API Reference sections
+- ⏳ Create Advanced Topics sections
+- ⏳ Create Examples sections
+- ⏳ Create FAQ
+
+**Documentation Standards:**
+
+- Use clear, concise language suitable for both beginners and experts
+- Include code examples for every major feature
+- Provide Go template comparison where relevant
+- Add troubleshooting sections for common issues
+- Use consistent formatting and terminology
+- Include diagrams for complex concepts (using Mermaid)
+- All examples should be tested and verified
+
+**Future-Proofing:**
+
+- Structure docs for easy conversion to MkDocs, Docusaurus, or similar tools
+- Use standard Markdown features with minimal extensions
+- Separate content from presentation concerns
+- Include metadata headers for navigation and search
+
+### Stage 2: High-Priority Compatibility Improvements
+
+Based on the v0.6.0 audit, implement features that reduce migration friction:
+
+**Priority 1: Integer Range Support**
+
+Go supports `range` over integers (e.g., `{{range $i := 5}}...{{end}}` iterates 0-4).
+
+Implementation approach:
 ```java
-template.option("missingkey=error");
+// Detect integer in range executor
+if (data instanceof Number) {
+    int count = ((Number) data).intValue();
+    for (int i = 0; i < count; i++) {
+        // Execute loop body with $index = i, $value = i
+    }
+}
 ```
 
-Policies:
+Benefits:
+- Common pattern in Go templates for generating repeated elements
+- Easy to implement in Java
+- No security concerns
 
-- `DEFAULT`: current v0.5.0 behavior; missing keys evaluate to null and print as empty output.
-- `ZERO`: return a Java zero-like value where the target type is knowable; otherwise fall back to null/empty output.
-- `ERROR`: throw `TemplateExecutionException` when a map key or field-chain segment is missing.
+**Priority 2: Enhanced Null Value Display**
 
-Implementation constraints:
-
-- Preserve v0.5.0 default behavior for backward compatibility.
-- Make policy part of `Template` state and preserve it in the copy constructor.
-- Keep exported API Java 8-compatible.
-- Add focused tests for map key access, field access, nested chains, `index`, branch truthiness, and template execution errors.
-- Document any Java-specific limits of `ZERO`, because Java often cannot infer the intended value type from a missing map entry.
-
-### Stage 3: Template Introspection API
-
-Add a small, Java-friendly template-set inspection API.
-
-Candidate API:
+Go displays `<no value>` for missing/null values by default. Add optional policy:
 
 ```java
-String name();
-boolean hasTemplate(String name);
-Set<String> definedTemplates();
-List<Template> templates();
-Template lookup(String name);
+Template template = new Template("demo")
+    .withMissingKeyPolicy(MissingKeyPolicy.ERROR)
+    .withNullDisplay("<no value>");  // New method
 ```
 
-Refine the exact return types during implementation. Avoid exposing mutable internal AST structures.
+Or via option:
+```java
+template.option("null_display=<no value>");
+```
 
-Behavior expectations:
+Benefits:
+- Easier debugging of missing values
+- Closer to Go's default behavior
+- Helps identify data issues in production
 
-- `name()` returns the root template name.
-- `definedTemplates()` returns stable names for parsed templates.
-- `hasTemplate(name)` is the safest simple query.
-- `lookup(name)` should be documented carefully. If returning a `Template`, it must not allow accidental mutation of the original template set.
+**Priority 3: Map Key Sorting Option**
 
-Testing requirements:
-
-- Root-only template.
-- Multiple `define` blocks.
-- Re-parse and override behavior.
-- Empty definition handling.
-- Copy constructor behavior.
-
-### Stage 4: Optional File Helpers
-
-This stage is optional for v0.6.0. Only include it if Stages 1-3 are complete and stable.
-
-Candidate API:
+Go sorts map keys for deterministic output. Add optional sorting:
 
 ```java
-void parseFile(Path path);
-void parseFiles(Path... paths);
-void parseGlob(Path directory, String glob);
+Template template = new Template("demo")
+    .withMapKeySorting(true);  // Sort keys alphabetically
 ```
 
-Constraints:
+Implementation:
+- When iterating maps, sort keys if enabled
+- Use natural ordering for Comparable keys
+- Fall back to toString() comparison for others
 
-- Use `java.nio.file` only.
-- Keep IO caller-visible through `IOException`.
-- Do not try to model Go `ParseFS` in Java 8.
-- Document file-name to template-name behavior before implementation.
+Benefits:
+- Deterministic output for testing
+- Matches Go's default behavior
+- Useful for generating configuration files
 
-### Stage 5: Lightweight Performance Baseline
+**Priority 4: Block Action Enhancement**
 
-This stage is optional for v0.6.0 and should not block release.
+Go's `{{block "name" .}}...{{end}}` defines and executes inline. Currently only `define` is supported.
 
-Add a lightweight benchmark or repeatable smoke harness for:
+Current workaround requires two steps:
+```gotemplate
+{{define "content"}}Default content{{end}}
+{{template "content" .}}
+```
 
-- parse throughput
-- execute throughput
-- JavaBean getter access
-- public field access
-- public no-arg method access
-- range-heavy templates
-- function-heavy pipelines
+With block support:
+```gotemplate
+{{block "content" .}}Default content{{end}}
+```
 
-Do not add reflection caching or AST caching until baseline numbers show a concrete need.
+Benefits:
+- More concise template syntax
+- Better matches Go template patterns
+- Reduces template verbosity
 
-### v0.6.0 Completion Gate
+### Stage 3: Documentation Content Creation
 
-- `README.md` and `README_zh.md` link to the detailed compatibility and migration docs instead of carrying all details inline.
-- Missing-key policy is implemented or explicitly moved out of v0.6.0 before coding begins.
-- Template introspection API is implemented or explicitly moved out of v0.6.0 before coding begins.
-- Compatibility fixtures and Java-deviation fixtures are separate.
-- `CHANGELOG` describes v0.6.0 as a post-audit API usability release.
-- `./mvnw clean verify "-Dgpg.skip=true"` succeeds on Java 8.
-- No public API additions are left undocumented in Javadocs.
+Create comprehensive documentation content:
+
+**Getting Started Section:**
+- Installation guide with Maven/Gradle examples
+- 5-minute quick start tutorial
+- Basic concepts: templates, data, execution
+- Common use cases and patterns
+
+**User Guide Section:**
+- Complete template syntax reference with examples
+- Data models: JavaBeans, Maps, Lists, Enums, Optional
+- All built-in functions with usage examples
+- Control flow: if/else, range, with, break/continue
+- Template sets: define, template, block, inheritance
+- Custom functions: implementation and registration
+- Error handling: parse errors, execution errors, best practices
+
+**API Reference:**
+- Template class: all constructors and methods
+- Function interface: how to implement custom functions
+- Exception hierarchy: when each exception is thrown
+- MissingKeyPolicy: policies and use cases
+
+**Advanced Topics:**
+- Compatibility details (enhance existing docs)
+- Migration from Go templates (enhance existing docs)
+- Performance tuning and benchmarking
+- Security considerations (template injection prevention)
+- Best practices and design patterns
+- Thread safety and concurrent execution
+
+**Examples:**
+- Basic examples for each feature
+- Web application templates (HTML generation)
+- Email templates (common business scenarios)
+- Configuration file generation
+- Complex real-world scenarios
+
+**FAQ:**
+- Common questions and answers
+- Troubleshooting guide
+- Known limitations and workarounds
+- Comparison with other Java template engines
+
+### Stage 4: Testing and Verification
+
+Ensure all new features are thoroughly tested:
+
+**Compatibility Feature Tests:**
+- Integer range: various counts, edge cases (0, negative)
+- Null display: different policies, nested templates
+- Map sorting: different key types, empty maps
+- Block action: define+execute, override behavior
+
+**Documentation Quality:**
+- All code examples compile and run correctly
+- Cross-references between docs are accurate
+- Screenshots/diagrams are clear and helpful
+- Translation-friendly structure (for future i18n)
+
+**Regression Testing:**
+- All existing tests pass
+- No backward compatibility breaks
+- Performance benchmarks show no degradation
+- Code coverage remains above thresholds
+
+### Stage 5: Release Preparation
+
+Prepare for v0.7.0 release:
+
+**Documentation Polish:**
+- Review all docs for clarity and completeness
+- Ensure consistent tone and style
+- Verify all links and references
+- Create documentation README with navigation guide
+
+**CHANGELOG Updates:**
+- Document all new compatibility features
+- List all new documentation
+- Highlight migration benefits
+- Note any behavioral changes
+
+**README Updates:**
+- Link to new comprehensive documentation
+- Update feature list with new capabilities
+- Refresh quick start examples
+- Add documentation navigation section
+
+**Final Verification:**
+- `./mvnw clean verify "-Dgpg.skip=true"` succeeds
+- All tests pass on Java 8
+- Code coverage meets thresholds
+- Documentation builds without errors
+
+### v0.7.0 Completion Gate
+
+- Complete documentation structure created with all planned sections
+- All high-priority compatibility features implemented and tested
+- Documentation includes working code examples for all major features
+- Existing docs (compatibility.md, migration.md) enhanced and integrated
+- FAQ addresses top 20 common questions
+- `./mvnw clean verify "-Dgpg.skip=true"` succeeds on Java 8
+- No backward compatibility breaks
+- Code coverage remains above configured thresholds
+- README links to comprehensive documentation hub
 
 ### Suggested Next Session Order
 
-1. Review this v0.6.0 plan against the current code and adjust API names before implementation.
-2. Add docs skeleton and fixture test structure.
-3. Implement `MissingKeyPolicy` and tests.
-4. Implement template introspection API and tests.
-5. Revisit optional file helpers only after the first three stages pass verification.
-6. Update README/README_zh/CHANGELOG and run Java 8 verification.
+**Current Position**: Stage 1 - Step 2 (Creating Getting Started docs)
+
+1. ✅ Create documentation directory structure and templates
+2. 🚧 Write Getting Started section (installation ✅, quick start ✅, concepts ⏳)
+3. ⏳ Implement integer range support with tests
+4. ⏳ Implement null display policy with tests
+5. ⏳ Write User Guide sections while implementing features
+6. ⏳ Implement map key sorting option with tests
+7. ⏳ Implement block action support with tests
+8. ⏳ Write API Reference documentation
+9. ⏳ Create comprehensive examples
+10. ⏳ Write Advanced Topics and FAQ
+11. ⏳ Enhance existing compatibility and migration docs
+12. ⏳ Update README and CHANGELOG
+13. ⏳ Final review and verification
 
 ## Later Backlog
 
-These items should stay out of v0.6.0 unless the release scope is explicitly changed.
+These items should stay out of v0.7.0 unless the release scope is explicitly changed.
+
+### Documentation Backlog
+
+- Create video tutorials for common use cases
+- Add interactive playground/demo application
+- Translate documentation to Chinese (README_zh.md already exists)
+- Create architecture decision records (ADRs)
+- Add performance profiling guides
 
 ### Quality and Tooling Backlog
 
-- Improve coverage headroom above the configured JaCoCo thresholds.
-- Add tests for error paths that are currently only incidentally covered.
-- Consider static analysis tooling such as SpotBugs or PMD after compatibility behavior stabilizes.
-- Review deprecated APIs, magic strings, and input validation boundaries.
+- Improve coverage headroom above the configured JaCoCo thresholds (target 95%/90%)
+- Add tests for error paths that are currently only incidentally covered
+- Consider static analysis tooling such as SpotBugs or PMD after compatibility behavior stabilizes
+- Review deprecated APIs, magic strings, and input validation boundaries
+- Add mutation testing to verify test quality
 
 ### Performance Backlog
 
-- Add JMH or a lightweight benchmark harness for parse, execute, field access, function calls, and range-heavy templates.
-- Establish baseline numbers before adding reflection caching or AST caching.
-- Add performance regression checks only after the benchmark harness is stable enough to avoid noisy failures.
+- Migrate TemplateBenchmark to JMH for more accurate measurements
+- Establish baseline numbers before adding reflection caching or AST caching
+- Add performance regression checks only after the benchmark harness is stable enough to avoid noisy failures
+- Profile hot paths and optimize based on real usage patterns
 
 ### API Backlog
 
-- Decide whether general Java method invocation with arguments is desirable, given security and compatibility tradeoffs.
-- Revisit Java-friendly file helpers if caller-managed IO proves too verbose in real usage.
-- Revisit broader Go API parity only after v0.6.0 missing-key policy and introspection APIs are stable.
+- Decide whether general Java method invocation with arguments is desirable, given security and compatibility tradeoffs
+- Revisit Java-friendly file helpers if caller-managed IO proves too verbose in real usage
+- Revisit broader Go API parity only after v0.7.0 documentation and compatibility improvements are stable
+- Consider template pre-compilation for improved execution performance
+- Evaluate support for template inheritance beyond block/define
 
 ## Maintenance Rules
 
