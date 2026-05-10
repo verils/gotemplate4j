@@ -22,19 +22,22 @@ This document answers the most common questions about gotemplate4j. If you don't
 
 Gotemplate4j is a Java implementation of Go's `text/template` package. It allows you to use Go template syntax in Java applications for generating dynamic text output from templates and data.
 
-### Why should I use gotemplate4j instead of other Java template engines?
+### What is the purpose of gotemplate4j?
 
-**Advantages:**
-- **Familiar syntax** if you're coming from Go
-- **Zero dependencies** - pure Java implementation
-- **Java 8 compatible** - works with older Java versions
-- **Lightweight** - small footprint, fast startup
-- **Type-safe** - leverages Java's type system
+Gotemplate4j is designed for **Java developers who need to work with Go templates**. It's not meant to replace Go's native `text/template` or compete with other Java template engines.
 
-**Consider other engines if you need:**
-- Advanced layout/inheritance features (use Thymeleaf, FreeMarker)
-- Deep Spring integration (use Thymeleaf)
-- Complex macro systems (use FreeMarker)
+**Use gotemplate4j when:**
+- You're a Java developer working in a Go ecosystem
+- You need to process existing Go templates in Java applications
+- You want familiarity with Go template syntax for cross-language projects
+- You're migrating from Go to Java and want to reuse templates
+
+**Don't use gotemplate4j if:**
+- You're building a pure Go application (use Go's native `text/template`)
+- You need advanced Java template features (use Thymeleaf, FreeMarker, etc.)
+- You're looking for maximum performance (Go's native implementation is faster)
+
+Gotemplate4j prioritizes **compatibility and simplicity** over feature richness or performance.
 
 ### Is gotemplate4j production-ready?
 
@@ -479,7 +482,7 @@ Gotemplate4j implements **core Go `text/template` features**:
 - ✅ Template definition and inclusion
 - ✅ Pipeline syntax
 
-**Known differences:** See [Go Compatibility Guide](advanced/go-template-compatibility.md)
+**Known differences:** See [Go Compatibility Guide](advanced/compatibility.md)
 
 ### Can I use my existing Go templates?
 
@@ -497,7 +500,7 @@ Most simple templates work without changes. Common issues:
 - Channel operations (not supported in Java)
 - Method calls with arguments (limited support)
 
-See [Migration Guide](migration-from-go-template.md) for details.
+See [Migration Guide](advanced/migration.md) for details.
 
 ### Why doesn't method invocation with arguments work?
 

@@ -64,8 +64,8 @@ Comprehensive documentation is available in the `docs/` directory:
 - [Error Handling](./docs/user-guide/error-handling.md) - Handle errors gracefully
 
 ### 🔧 Advanced Topics
-- [Go Template Compatibility](./docs/go-template-compatibility.md) - Detailed compatibility guide
-- [Migration from Go Templates](./docs/migration-from-go-template.md) - Step-by-step migration
+- [Go Template Compatibility](./docs/advanced/compatibility.md) - Detailed compatibility guide
+- [Migration from Go Templates](./docs/advanced/migration.md) - Step-by-step migration
 - [Performance Tuning](./docs/advanced/performance.md) - Optimize template execution
 - [Security Best Practices](./docs/advanced/security.md) - Security considerations
 - [Design Patterns](./docs/advanced/best-practices.md) - Best practices and patterns

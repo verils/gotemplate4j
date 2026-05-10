@@ -57,8 +57,8 @@ gotemplate4j should remain a small, Java 8-compatible implementation of Go's `te
 - ✅ docs/examples/email-templates.md - Email generation examples
 - ✅ docs/examples/complex-scenarios.md - Complex real-world scenarios
 - ✅ docs/faq.md - Frequently asked questions (645 lines, comprehensive)
-- ✅ docs/go-template-compatibility.md - Enhanced compatibility details
-- ✅ docs/migration-from-go-template.md - Enhanced migration guide
+- ✅ docs/advanced/compatibility.md - Enhanced compatibility details
+- ✅ docs/advanced/migration.md - Enhanced migration guide
 
 ### 📋 Planned (v0.7.0 - Stages 2-5)
 

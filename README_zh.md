@@ -64,8 +64,8 @@ System.out.print(writer.toString());  // "Hello Bob!"
 - [错误处理](./docs/user-guide/error-handling.md) - 优雅地处理错误
 
 ### 🔧 高级主题
-- [Go 模板兼容性](./docs/go-template-compatibility.md) - 详细的兼容性指南
-- [从 Go 模板迁移](./docs/migration-from-go-template.md) - 逐步迁移指南
+- [Go 模板兼容性](./docs/advanced/compatibility.md) - 详细的兼容性指南
+- [从 Go 模板迁移](./docs/advanced/migration.md) - 逐步迁移指南
 - [性能优化](./docs/advanced/performance.md) - 优化模板执行
 - [安全最佳实践](./docs/advanced/security.md) - 安全注意事项
 - [设计模式](./docs/advanced/best-practices.md) - 最佳实践和模式

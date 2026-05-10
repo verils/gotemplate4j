@@ -627,7 +627,7 @@ public void benchmarkTemplateExecution() throws Exception {
 
 ## See Also
 
-- [Compatibility Guide](go-template-compatibility.md) - Detailed compatibility information
+- [Compatibility Guide](compatibility.md) - Detailed compatibility information
 - [User Guide](user-guide/) - Comprehensive usage documentation
 - [Examples](examples/) - Real-world code examples
 - [API Reference](api-reference/) - Detailed API documentation

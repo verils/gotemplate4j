@@ -383,7 +383,7 @@ try {
 
 ## See Also
 
-- [Migration Guide](migration-from-go-template.md) - Step-by-step migration from Go templates
+- [Migration Guide](migration.md) - Step-by-step migration from Go templates
 - [User Guide](user-guide/) - Comprehensive usage documentation
 - [Examples](examples/) - Real-world code examples
 - [API Reference](api-reference/) - Detailed API documentation
