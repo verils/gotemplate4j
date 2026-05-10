@@ -73,7 +73,7 @@ class TemplateFileHelperTest {
         } catch (TemplateParseException e) {
             throw new RuntimeException(e);
         } catch (IOException e) {
-            assertTrue(e.getMessage().contains("missing.tmpl") || true); // Just checking it throws
+            assertTrue(e.getMessage().contains("missing.tmpl")); // Just checking it throws
         }
     }
 

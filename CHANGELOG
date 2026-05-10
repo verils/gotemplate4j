@@ -1,22 +1,29 @@
-v0.6.0 (unreleased)
+v0.6.0 (2026-05-10)
 
 ========
 
-**Post-Audit API Usability and Migration Release** - This version builds on the v0.5.0 compatibility audit by making high-value runtime behavior configurable and easier to inspect.
+**Post-Audit API Usability and Migration Release** - This version builds on the v0.5.0 compatibility audit by making high-value runtime behavior configurable, adding file system helpers, and providing a performance baseline.
 
-### Added
+### New Features
 
-- Added `MissingKeyPolicy` with `DEFAULT`, `ZERO`, and `ERROR` modes.
-- Added `Template.withMissingKeyPolicy(...)` and Go-style `Template.option("missingkey=...")`.
-- Added template-set introspection APIs: `name()`, `hasTemplate(...)`, `definedTemplates()`, `lookup(...)`, and `templates()`.
+- **Configurable Missing-Key Policy**: Added `MissingKeyPolicy` with `DEFAULT`, `ZERO`, and `ERROR` modes.
+  - Configured via `Template.withMissingKeyPolicy(...)` or Go-style `Template.option("missingkey=...")`.
+- **Template Introspection API**: Added methods to inspect parsed template sets: `name()`, `hasTemplate(...)`, `definedTemplates()`, `lookup(...)`, and `templates()`.
+- **File System Helpers**: Added convenient methods for loading templates from disk: `parseFile(Path)`, `parseFiles(Path...)`, and `parseGlob(Path, String)`.
+- **Performance Benchmarking**: Added a lightweight harness (`TemplateBenchmark`) for monitoring parse and execute throughput.
+
+### Documentation
+
+- Added detailed compatibility guide: `docs/go-template-compatibility.md`.
+- Added migration guide from Go `text/template`: `docs/migration-from-go-template.md`.
 - Added focused compatibility and Java-deviation fixture tests.
-- Added detailed compatibility and migration docs under `docs/`.
 
-### Notes
+### Implementation Notes
 
-- `DEFAULT` preserves v0.5.0 missing-key behavior: missing map keys evaluate to `null` and print as empty output.
-- `ZERO` currently falls back to `null` for missing map keys because Java usually cannot infer the intended value type for absent map entries.
-- `lookup(...)` and `templates()` return independent template copies to avoid accidental mutation of the original parsed template set.
+- `DEFAULT` policy preserves v0.5.0 behavior: missing map keys evaluate to `null` and print as empty output.
+- `ZERO` policy currently falls back to `null` for missing map keys due to Java type inference limits.
+- `lookup(...)` and `templates()` return independent template copies to prevent accidental mutation of the original set.
+- File helpers use UTF-8 encoding and standard `java.nio.file` APIs.
 
 v0.5.0 (2026-05-06)
 
