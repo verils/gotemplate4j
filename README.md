@@ -55,10 +55,6 @@ v0.6.0 moves detailed compatibility notes into focused docs:
 
 The short version: gotemplate4j covers core Go `text/template` control flow, pipelines, template definitions, built-in functions, and execution errors. Java-specific behavior such as JavaBean access, public fields, `Optional`, enums, nulls, missing keys, and map iteration order is documented separately from Go compatibility claims.
 
-## Contributing
-
-Contributions are welcome! Please see [CONTRIBUTING.md](./CONTRIBUTING.md) for detailed guidelines.
-
 ## Performance
 
 gotemplate4j is optimized for Java 8 environments. The following baseline metrics were measured on a standard development machine (10,000 iterations):
@@ -74,6 +70,12 @@ gotemplate4j is optimized for Java 8 environments. The following baseline metric
 
 *Note: You can run the `TemplateBenchmark` class in the test suite to verify these numbers on your own hardware.*
 
+### Test Environment
+- **CPU**: Intel i7-10870H 8C16T
+- **Memory**: 64 GB RAM
+- **OS**: Windows 25H2
+- **Java Version**: 1.8
+
 ## Roadmap
 
 See [PLAN.md](./PLAN.md) for the detailed development roadmap.
@@ -85,3 +87,7 @@ See [PLAN.md](./PLAN.md) for the detailed development roadmap.
 - [Java Template Engine (Alternative)](https://github.com/proninyaroslav/java-template-engine)
 - [Changelog](./CHANGELOG)
 - [Development Plan](./PLAN.md)
+
+## Contributing
+
+Contributions are welcome! Please see [CONTRIBUTING.md](./CONTRIBUTING.md) for detailed guidelines.
