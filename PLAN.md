@@ -39,7 +39,13 @@ gotemplate4j should remain a small, Java 8-compatible implementation of Go's `te
 - ✅ docs/index.md - Main documentation hub
 - ✅ docs/getting-started/installation.md - Installation guide
 - ✅ docs/getting-started/quick-start.md - Quick start tutorial
-- ⏳ docs/getting-started/basic-concepts.md - Next to create
+- ✅ docs/getting-started/basic-concepts.md - Basic concepts
+- ✅ docs/user-guide/template-syntax.md - Complete template syntax reference
+- ✅ docs/user-guide/data-models.md - Working with Java data
+- ✅ docs/user-guide/functions.md - Built-in and custom functions
+- ✅ docs/user-guide/control-flow.md - Control flow constructs
+- ✅ docs/user-guide/template-sets.md - Template sets and inheritance
+- ✅ docs/user-guide/error-handling.md - Error handling strategies
 - ⏳ Remaining documentation sections
 
 ### 📋 Planned (v0.7.0 - Stages 2-5)
@@ -112,11 +118,16 @@ docs/
 - ✅ docs/index.md - Main documentation hub with full navigation
 - ✅ docs/getting-started/installation.md - Maven/Gradle/manual installation
 - ✅ docs/getting-started/quick-start.md - 5-minute tutorial with examples
+- ✅ docs/getting-started/basic-concepts.md - Core concepts explained
+- ✅ docs/user-guide/template-syntax.md - Complete syntax reference
+- ✅ docs/user-guide/data-models.md - Working with Java data
+- ✅ docs/user-guide/functions.md - All built-in and custom functions
+- ✅ docs/user-guide/control-flow.md - If, range, with, break/continue
+- ✅ docs/user-guide/template-sets.md - Define, template, blocks, inheritance
+- ✅ docs/user-guide/error-handling.md - Exception handling and best practices
 
 **Next Steps for Stage 1:**
-- ⏳ Create docs/getting-started/basic-concepts.md
-- ⏳ Create all User Guide sections
-- ⏳ Create API Reference sections
+- ⏳ Create API Reference sections (template-api.md, function-api.md, exception-api.md)
 - ⏳ Create Advanced Topics sections
 - ⏳ Create Examples sections
 - ⏳ Create FAQ
@@ -331,21 +342,26 @@ Prepare for v0.7.0 release:
 
 ### Suggested Next Session Order
 
-**Current Position**: Stage 1 - Step 2 (Creating Getting Started docs)
+**Current Position**: Stage 1 - Step 8 (User Guide complete, starting API Reference)
 
 1. ✅ Create documentation directory structure and templates
-2. 🚧 Write Getting Started section (installation ✅, quick start ✅, concepts ⏳)
-3. ⏳ Implement integer range support with tests
-4. ⏳ Implement null display policy with tests
-5. ⏳ Write User Guide sections while implementing features
-6. ⏳ Implement map key sorting option with tests
-7. ⏳ Implement block action support with tests
-8. ⏳ Write API Reference documentation
-9. ⏳ Create comprehensive examples
-10. ⏳ Write Advanced Topics and FAQ
-11. ⏳ Enhance existing compatibility and migration docs
-12. ⏳ Update README and CHANGELOG
-13. ⏳ Final review and verification
+2. ✅ Write Getting Started section (installation ✅, quick start ✅, concepts ✅)
+3. ✅ Write Template Syntax reference ✅
+4. ✅ Write Data Models guide ✅
+5. ✅ Write Functions guide ✅
+6. ✅ Write Control Flow guide ✅
+7. ✅ Write Template Sets guide ✅
+8. ✅ Write Error Handling guide ✅
+9. ⏳ Implement integer range support with tests
+10. ⏳ Implement null display policy with tests
+11. ⏳ Write API Reference documentation (template-api, function-api, exception-api)
+12. ⏳ Implement map key sorting option with tests
+13. ⏳ Implement block action support with tests
+14. ⏳ Create comprehensive examples
+15. ⏳ Write Advanced Topics and FAQ
+16. ⏳ Enhance existing compatibility and migration docs
+17. ⏳ Update README and CHANGELOG
+18. ⏳ Final review and verification
 
 ## Later Backlog
 
