@@ -176,15 +176,7 @@ public class Executor {
             // Sort map keys if enabled using TreeMap for natural ordering
             List<Map.Entry<?, ?>> entries;
             if (mapKeySorting) {
-                try {
-                    // TreeMap automatically sorts keys using natural ordering
-                    map = new TreeMap<>((Map) numberOrIterable);
-                } catch (ClassCastException e) {
-                    // If keys are not Comparable, fall back to string-based sorting
-                    TreeMap<Object, Object> sortedMap = new TreeMap<>((k1, k2) -> compareKeys(k1, k2));
-                    sortedMap.putAll((Map<?, ?>) numberOrIterable);
-                    map = sortedMap;
-                }
+                map = new TreeMap<>(map);
             }
             entries = new ArrayList<>(map.entrySet());
 
@@ -781,44 +773,6 @@ public class Executor {
             return !((Map<?, ?>) value).isEmpty();
         }
         return value != null;
-    }
-
-    /**
-     * Compares two map keys for sorting.
-     * <p>
-     * Uses natural ordering if both keys implement {@link Comparable}, otherwise falls back
-     * to string comparison using {@code toString()}.
-     *
-     * @param key1 the first key
-     * @param key2 the second key
-     * @return negative if key1 < key2, zero if equal, positive if key1 > key2
-     */
-    @SuppressWarnings("unchecked")
-    private int compareKeys(Object key1, Object key2) {
-        // Handle null keys
-        if (key1 == null && key2 == null) {
-            return 0;
-        }
-        if (key1 == null) {
-            return -1;
-        }
-        if (key2 == null) {
-            return 1;
-        }
-
-        // Try natural ordering if both keys are Comparable
-        if (key1 instanceof Comparable && key2 instanceof Comparable) {
-            try {
-                return ((Comparable<Object>) key1).compareTo(key2);
-            } catch (ClassCastException e) {
-                // Incompatible types, fall back to string comparison
-            }
-        }
-
-        // Fall back to string comparison
-        String str1 = String.valueOf(key1);
-        String str2 = String.valueOf(key2);
-        return str1.compareTo(str2);
     }
 
     private void printValue(Writer writer, Object value) throws IOException {
