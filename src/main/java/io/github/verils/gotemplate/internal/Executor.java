@@ -20,26 +20,20 @@ public class Executor {
     private final Map<String, Node> rootNodes;
     private final Map<String, Function> functions;
     private final MissingKeyPolicy missingKeyPolicy;
-    private final String nullDisplay;
     private final boolean mapKeySorting;
 
     public Executor(Map<String, Node> rootNodes, Map<String, Function> functions) {
-        this(rootNodes, functions, MissingKeyPolicy.INVALID, null, true);
+        this(rootNodes, functions, MissingKeyPolicy.INVALID, true);
     }
 
     public Executor(Map<String, Node> rootNodes, Map<String, Function> functions, MissingKeyPolicy missingKeyPolicy) {
-        this(rootNodes, functions, missingKeyPolicy, null, true);
+        this(rootNodes, functions, missingKeyPolicy, true);
     }
 
-    public Executor(Map<String, Node> rootNodes, Map<String, Function> functions, MissingKeyPolicy missingKeyPolicy, String nullDisplay) {
-        this(rootNodes, functions, missingKeyPolicy, nullDisplay, true);
-    }
-
-    public Executor(Map<String, Node> rootNodes, Map<String, Function> functions, MissingKeyPolicy missingKeyPolicy, String nullDisplay, boolean mapKeySorting) {
+    public Executor(Map<String, Node> rootNodes, Map<String, Function> functions, MissingKeyPolicy missingKeyPolicy, boolean mapKeySorting) {
         this.rootNodes = rootNodes;
         this.functions = functions;
         this.missingKeyPolicy = missingKeyPolicy != null ? missingKeyPolicy : MissingKeyPolicy.INVALID;
-        this.nullDisplay = nullDisplay;
         this.mapKeySorting = mapKeySorting;
     }
 
@@ -829,9 +823,8 @@ public class Executor {
 
     private void printValue(Writer writer, Object value) throws IOException {
         if (value == null) {
-            // Use custom null display if configured, otherwise use default
-            String display = nullDisplay != null ? nullDisplay : NO_VALUE;
-            printText(writer, display);
+            // Go template behavior: display "<no value>" for null
+            printText(writer, NO_VALUE);
         } else if (value instanceof String) {
             String unescaped = StringEscapeUtils.unescape((String) value);
             printText(writer, unescaped);

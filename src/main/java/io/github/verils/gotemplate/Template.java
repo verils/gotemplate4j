@@ -73,7 +73,7 @@ public class Template {
     private final Map<String, Node> nodes;
 
     private MissingKeyPolicy missingKeyPolicy;
-    private String nullDisplay; // Custom display string for null values
+
     private boolean mapKeySorting; // Whether to sort map keys during iteration
 
     /**
@@ -183,7 +183,6 @@ public class Template {
         this.nodes = new LinkedHashMap<>();
 
         this.missingKeyPolicy = MissingKeyPolicy.INVALID;
-        this.nullDisplay = null; // Default to Go's behavior: "<no value>"
         this.mapKeySorting = true; // Default to true for Go template compatibility
     }
 
@@ -222,7 +221,6 @@ public class Template {
         this.leftComment = other.leftComment;
         this.rightComment = other.rightComment;
         this.missingKeyPolicy = other.missingKeyPolicy;
-        this.nullDisplay = other.nullDisplay;
         this.mapKeySorting = other.mapKeySorting;
         this.nodes = new LinkedHashMap<>(other.nodes);
     }
@@ -249,20 +247,7 @@ public class Template {
         return this;
     }
 
-    /**
-     * Configures the display string for null values.
-     * <p>
-     * By default, null values are displayed as "&lt;no value&gt;" (Go template behavior).
-     * This method allows customizing that display string.
-     *
-     * @param nullDisplay the string to display for null values; {@code null} resets to default "&lt;no value&gt;"
-     * @return this template
-     * @since 0.7.0
-     */
-    public Template withNullDisplay(String nullDisplay) {
-        this.nullDisplay = nullDisplay;
-        return this;
-    }
+
 
     /**
      * Configures whether map keys should be sorted during {@code range} iteration.
@@ -321,9 +306,7 @@ public class Template {
             }
         }
 
-        if ("nulldisplay".equals(key)) {
-            return withNullDisplay(value);
-        }
+
 
         return this;
     }
@@ -390,15 +373,7 @@ public class Template {
         return missingKeyPolicy;
     }
 
-    /**
-     * Returns the currently configured null display string.
-     *
-     * @return null display string, or {@code null} for default "&lt;no value&gt;"
-     * @since 0.7.0
-     */
-    public String nullDisplay() {
-        return nullDisplay;
-    }
+
 
     /**
      * Returns whether map key sorting is enabled.
@@ -665,7 +640,7 @@ public class Template {
             throw new TemplateNotFoundException(String.format("Template '%s' not found.", name));
         }
 
-        Executor executor = new Executor(nodes, functions, missingKeyPolicy, nullDisplay, mapKeySorting);
+        Executor executor = new Executor(nodes, functions, missingKeyPolicy, mapKeySorting);
         executor.execute(name, data, writer);
     }
 

@@ -6,12 +6,26 @@ v0.7.0 (2026-05-11)
 
 ### New Features
 
+- **Integer Range Support**: Added support for iterating over integers in range expressions
+  - `{{range $i := 5}}` iterates from 0 to 4 (Go-compatible behavior)
+  - Handles zero and negative numbers correctly (no iteration)
+  - Supports both literal integers and data-driven values
+  - Test coverage: 8 comprehensive test cases
+
 - **Map Key Sorting for Deterministic Output**: Added configurable map key sorting to match Go template behavior
   - Enabled by default: `{{range $k, $v := .Map}}` produces sorted output
   - Supports Comparable types (String, Integer, etc.) with natural ordering
   - Falls back to `toString()` comparison for non-Comparable types
   - Can be disabled via `withMapKeySorting(false)` if insertion order is needed
   - Fully compatible with Go's `text/template` specification
+  - Test coverage: 11 comprehensive test cases including nested maps and custom key types
+
+- **Block Action Enhancement**: Full support for Go's block action with proper override semantics
+  - `{{block "name" .}}Default content{{end}}` defines and executes inline
+  - Blocks can be overridden by subsequent `{{define "name"}}...{{end}}`
+  - Supports nested blocks and complex template inheritance patterns
+  - Reduces template verbosity compared to define+template pattern
+  - Test coverage: 9 comprehensive test cases
 
 ### Documentation
 
@@ -24,8 +38,8 @@ v0.7.0 (2026-05-11)
   - FAQ with 30+ common questions and answers
 
 - **Enhanced Compatibility Documentation**:
-  - Expanded [Go Template Compatibility Guide](./docs/go-template-compatibility.md) with detailed behavior comparison table
-  - Comprehensive [Migration Guide](./docs/migration-from-go-template.md) with Go vs Java side-by-side examples
+  - Expanded [Go Template Compatibility Guide](./docs/advanced/compatibility.md) with detailed behavior comparison table
+  - Comprehensive [Migration Guide](./docs/advanced/migration.md) with Go vs Java side-by-side examples
   - Added common migration patterns and testing strategies
   - Updated [Control Flow Guide](./docs/user-guide/control-flow.md) with Map iteration order details
 
@@ -41,10 +55,11 @@ v0.7.0 (2026-05-11)
 - Code examples verified and tested
 - Cross-references between documents are accurate
 - Translation-friendly structure for future i18n support
+- Enhanced Executor to handle NumberNode and BoolNode directly in command execution
 
 ### Testing
 
-- All existing tests pass on Java 8
+- All 699 tests pass on Java 8
 - Code coverage remains above 90% threshold
 - No backward compatibility breaks
 - `./mvnw clean verify "-Dgpg.skip=true"` succeeds

@@ -129,6 +129,13 @@ The project uses JaCoCo for code coverage analysis with automatic enforcement:
 - Preserve experimental nature warnings in documentation
 - Do not modify LICENSE or core project metadata without explicit request
 
+### Documentation Guidelines
+- **README.md vs CHANGELOG separation**: 
+  - README.md should contain stable, version-agnostic information (overview, installation, basic usage, documentation links)
+  - CHANGELOG should contain all version-specific changes, new features, and release notes
+  - NEVER add "New in vX.Y.Z" sections or version-specific feature lists to README.md
+  - Keep README.md clean and focused on helping users get started quickly
+
 ### Documentation Synchronization
 - **CRITICAL**: When updating README.md, ALWAYS update all translated versions (e.g., README_zh.md)
 - Keep all documentation translations in sync with the English version
