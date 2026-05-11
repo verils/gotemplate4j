@@ -129,6 +129,12 @@ The project uses JaCoCo for code coverage analysis with automatic enforcement:
 - Preserve experimental nature warnings in documentation
 - Do not modify LICENSE or core project metadata without explicit request
 
+### Documentation Synchronization
+- **CRITICAL**: When updating README.md, ALWAYS update all translated versions (e.g., README_zh.md)
+- Keep all documentation translations in sync with the English version
+- Ensure code examples, version numbers, and feature descriptions match across all language versions
+- If you cannot translate to a specific language, flag it for manual translation
+
 ## Handoff Protocol
 When ending session:
 1. Summarize changes made

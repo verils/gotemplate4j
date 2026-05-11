@@ -1,8 +1,17 @@
-v0.7.0 (2026-05-10)
+v0.7.0 (2026-05-11)
 
 ========
 
 **Documentation and Compatibility Enhancement Release** - This version transforms gotemplate4j from a functional library into a production-ready, well-documented solution with reduced migration friction from Go templates.
+
+### New Features
+
+- **Map Key Sorting for Deterministic Output**: Added configurable map key sorting to match Go template behavior
+  - Enabled by default: `{{range $k, $v := .Map}}` produces sorted output
+  - Supports Comparable types (String, Integer, etc.) with natural ordering
+  - Falls back to `toString()` comparison for non-Comparable types
+  - Can be disabled via `withMapKeySorting(false)` if insertion order is needed
+  - Fully compatible with Go's `text/template` specification
 
 ### Documentation
 
@@ -18,6 +27,7 @@ v0.7.0 (2026-05-10)
   - Expanded [Go Template Compatibility Guide](./docs/go-template-compatibility.md) with detailed behavior comparison table
   - Comprehensive [Migration Guide](./docs/migration-from-go-template.md) with Go vs Java side-by-side examples
   - Added common migration patterns and testing strategies
+  - Updated [Control Flow Guide](./docs/user-guide/control-flow.md) with Map iteration order details
 
 - **Production-Grade Examples**:
   - Basic examples covering all core features

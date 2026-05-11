@@ -74,6 +74,7 @@ public class Template {
 
     private MissingKeyPolicy missingKeyPolicy;
     private String nullDisplay; // Custom display string for null values
+    private boolean mapKeySorting; // Whether to sort map keys during iteration
 
     /**
      * Creates a new template with the specified name.
@@ -183,6 +184,7 @@ public class Template {
 
         this.missingKeyPolicy = MissingKeyPolicy.INVALID;
         this.nullDisplay = null; // Default to Go's behavior: "<no value>"
+        this.mapKeySorting = true; // Default to true for Go template compatibility
     }
 
     /**
@@ -221,6 +223,7 @@ public class Template {
         this.rightComment = other.rightComment;
         this.missingKeyPolicy = other.missingKeyPolicy;
         this.nullDisplay = other.nullDisplay;
+        this.mapKeySorting = other.mapKeySorting;
         this.nodes = new LinkedHashMap<>(other.nodes);
     }
 
@@ -258,6 +261,26 @@ public class Template {
      */
     public Template withNullDisplay(String nullDisplay) {
         this.nullDisplay = nullDisplay;
+        return this;
+    }
+
+    /**
+     * Configures whether map keys should be sorted during {@code range} iteration.
+     * <p>
+     * When enabled (default), map keys are sorted using natural ordering (for {@link Comparable} keys)
+     * or {@code toString()} comparison (for other keys). This provides deterministic output
+     * matching Go's default template behavior.
+     * <p>
+     * Go template specification: "If the value is a map and the keys are of basic type with a 
+     * defined order, the elements will be visited in sorted key order."
+     *
+     * @param mapKeySorting {@code true} to sort map keys (default), {@code false} to preserve insertion order
+     * @return this template
+     * @since 0.7.0
+     * @see <a href="https://pkg.go.dev/text/template#hdr-Actions">Go template range documentation</a>
+     */
+    public Template withMapKeySorting(boolean mapKeySorting) {
+        this.mapKeySorting = mapKeySorting;
         return this;
     }
 
@@ -375,6 +398,19 @@ public class Template {
      */
     public String nullDisplay() {
         return nullDisplay;
+    }
+
+    /**
+     * Returns whether map key sorting is enabled.
+     * <p>
+     * By default, this is {@code true} to match Go template behavior where map iteration
+     * produces deterministic, sorted output for keys of basic types with defined order.
+     *
+     * @return {@code true} if map keys are sorted during iteration (default), {@code false} otherwise
+     * @since 0.7.0
+     */
+    public boolean mapKeySorting() {
+        return mapKeySorting;
     }
 
     private List<String> orderedTemplateNames() {
@@ -629,7 +665,7 @@ public class Template {
             throw new TemplateNotFoundException(String.format("Template '%s' not found.", name));
         }
 
-        Executor executor = new Executor(nodes, functions, missingKeyPolicy, nullDisplay);
+        Executor executor = new Executor(nodes, functions, missingKeyPolicy, nullDisplay, mapKeySorting);
         executor.execute(name, data, writer);
     }
 

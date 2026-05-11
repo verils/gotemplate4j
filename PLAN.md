@@ -3,8 +3,8 @@
 **Last Updated**: 2026-05-11  
 **Current Version**: 0.6.0  
 **Next Version**: 0.7.0 (or 0.6.1 for critical fixes)  
-**Current Focus**: Stage 2 compatibility improvements in progress - Integer Range and Null Display complete  
-**Status**: Stage 1 complete ✅, Stage 2 partially complete (2/4 priorities done)
+**Current Focus**: Stage 2 compatibility improvements complete - All priorities done except Block Action  
+**Status**: Stage 1 complete ✅, Stage 2 partially complete (3/4 priorities done)
 
 ---
 
@@ -37,7 +37,7 @@ gotemplate4j should remain a small, Java 8-compatible implementation of Go's `te
 
 - ✅ Priority 1: Integer Range Support - Implemented and tested (8 test cases)
 - ✅ Priority 2: Enhanced Null Value Display - Implemented and tested (9 test cases)
-- ⏳ Priority 3: Map Key Sorting Option - Pending
+- ✅ Priority 3: Map Key Sorting Option - Implemented and tested (11 test cases)
 - ⏳ Priority 4: Block Action Enhancement - Pending
 
 - ✅ Documentation directory structure created
@@ -161,12 +161,17 @@ docs/
   - Support via `option("nulldisplay=value")` syntax
   - Preserved in template cloning
   - Test coverage: 9 comprehensive test cases
+- ✅ **Map Key Sorting Option**: Added optional map key sorting for deterministic output in Template.java and Executor.java
+  - New `withMapKeySorting(boolean)` method for configuration
+  - New `mapKeySorting()` getter method
+  - Uses natural ordering for Comparable keys, falls back to toString() comparison
+  - Preserved in template cloning
+  - Test coverage: 11 comprehensive test cases including nested maps and custom key types
 - 🔧 **Executor Enhancement**: Fixed executeCommand to handle NumberNode and BoolNode directly
 
 **Next Steps for Stage 2:**
-- ⏳ Implement Priority 3: Map Key Sorting Option
 - ⏳ Implement Priority 4: Block Action Enhancement
-- ⏳ Run full test suite to verify no regressions
+- ✅ Run full test suite to verify no regressions (699 tests passed)
 - ⏳ Update CHANGELOG and README
 
 **Documentation Standards:**
@@ -392,8 +397,8 @@ Prepare for v0.7.0 release:
 9. ✅ Implement integer range support with tests (COMPLETE)
 10. ✅ Implement null display policy with tests (COMPLETE)
 11. ✅ Write API Reference documentation (template-api ✅, function-api ✅, exception-api ✅)
-12. ⏳ Implement map key sorting option with tests (NEXT)
-13. ⏳ Implement block action support with tests
+12. ✅ Implement map key sorting option with tests (COMPLETE)
+13. ⏳ Implement block action support with tests (NEXT - Final Stage 2 priority)
 14. ✅ Create comprehensive examples (basic-examples ✅, web-templates ✅, email-templates ✅, complex-scenarios ✅)
 15. ✅ Enhance compatibility and migration docs
 16. ✅ Write FAQ

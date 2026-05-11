@@ -239,7 +239,69 @@ Output:
 {{end}}
 ```
 
-Note: Map iteration order is not guaranteed unless map key sorting is enabled.
+#### Map Iteration Order
+
+**By default, map keys are sorted to provide deterministic output**, matching Go template behavior.
+
+**Go Template Specification**: "If the value is a map and the keys are of basic type with a defined order, the elements will be visited in sorted key order."
+
+**Sorting Behavior**:
+- **String keys**: Sorted alphabetically (lexicographic order)
+- **Integer keys**: Sorted numerically
+- **Comparable keys**: Use natural ordering
+- **Other types**: Fall back to `toString()` comparison
+
+**Example - String Keys**:
+
+```java
+Map<String, Object> data = new HashMap<>();
+Map<String, String> config = new LinkedHashMap<>();
+config.put("zebra", "z");      // Inserted first
+config.put("apple", "a");      // Inserted second
+config.put("mango", "m");      // Inserted third
+data.put("Config", config);
+
+Template template = new Template("demo");
+template.parse("{{range $k, $v := .Config}}{{$k}}={{$v}},{{end}}");
+template.execute(writer, data);
+// Output: apple=a,mango=m,zebra=z,  (sorted alphabetically)
+```
+
+**Example - Integer Keys**:
+
+```java
+Map<Integer, String> scores = new LinkedHashMap<>();
+scores.put(3, "third");   // Inserted first
+scores.put(1, "first");   // Inserted second
+scores.put(2, "second");  // Inserted third
+data.put("Scores", scores);
+
+template.parse("{{range $k, $v := .Scores}}{{$k}}:{{$v}},{{end}}");
+// Output: 1:first,2:second,3:third  (sorted numerically)
+```
+
+#### Disabling Map Key Sorting
+
+If you need to preserve insertion order (e.g., when using `LinkedHashMap`), you can disable sorting:
+
+```java
+Template template = new Template("demo")
+    .withMapKeySorting(false);  // Disable sorting
+```
+
+Or via option string:
+
+```java
+Template template = new Template("demo");
+template.option("mapkeysorting=false");
+```
+
+**When to disable sorting**:
+- You rely on specific insertion order from `LinkedHashMap`
+- Performance-critical scenarios with very large maps
+- Maintaining compatibility with existing templates that depend on insertion order
+
+**Note**: For Go template compatibility, it's recommended to keep sorting enabled (default).
 
 ### Range Over Integer (Go-compatible)
 

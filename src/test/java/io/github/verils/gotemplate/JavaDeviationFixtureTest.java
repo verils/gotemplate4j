@@ -24,12 +24,13 @@ class JavaDeviationFixtureTest {
     }
 
     @Test
-    void mapIterationUsesJavaMapOrderFixture() throws Exception {
+    void mapIterationUsesSortedKeysByDefault() throws Exception {
+        // By default, map keys are sorted to match Go template behavior (v0.7.0+)
         Map<String, Object> data = new LinkedHashMap<>();
         data.put("b", 2);
         data.put("a", 1);
 
-        assertEquals("b=2,a=1,", TemplateTestSupport.render("{{range $k, $v := .}}{{$k}}={{$v}},{{end}}", data));
+        assertEquals("a=1,b=2,", TemplateTestSupport.render("{{range $k, $v := .}}{{$k}}={{$v}},{{end}}", data));
     }
 
     public static class JavaFixtureData {

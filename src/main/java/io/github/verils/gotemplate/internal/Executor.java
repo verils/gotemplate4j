@@ -21,20 +21,26 @@ public class Executor {
     private final Map<String, Function> functions;
     private final MissingKeyPolicy missingKeyPolicy;
     private final String nullDisplay;
+    private final boolean mapKeySorting;
 
     public Executor(Map<String, Node> rootNodes, Map<String, Function> functions) {
-        this(rootNodes, functions, MissingKeyPolicy.INVALID, null);
+        this(rootNodes, functions, MissingKeyPolicy.INVALID, null, true);
     }
 
     public Executor(Map<String, Node> rootNodes, Map<String, Function> functions, MissingKeyPolicy missingKeyPolicy) {
-        this(rootNodes, functions, missingKeyPolicy, null);
+        this(rootNodes, functions, missingKeyPolicy, null, true);
     }
 
     public Executor(Map<String, Node> rootNodes, Map<String, Function> functions, MissingKeyPolicy missingKeyPolicy, String nullDisplay) {
+        this(rootNodes, functions, missingKeyPolicy, nullDisplay, true);
+    }
+
+    public Executor(Map<String, Node> rootNodes, Map<String, Function> functions, MissingKeyPolicy missingKeyPolicy, String nullDisplay, boolean mapKeySorting) {
         this.rootNodes = rootNodes;
         this.functions = functions;
         this.missingKeyPolicy = missingKeyPolicy != null ? missingKeyPolicy : MissingKeyPolicy.INVALID;
         this.nullDisplay = nullDisplay;
+        this.mapKeySorting = mapKeySorting;
     }
 
     public void execute(String name, Object data, Writer writer) throws IOException,
@@ -112,7 +118,7 @@ public class Executor {
 
     private void writeRange(Writer writer, RangeNode rangeNode, Object data, BeanInfo beanInfo, Map<String, Object> variables) throws IOException,
             TemplateExecutionException, TemplateNotFoundException {
-        Object arrayOrList = executePipe(rangeNode.getPipeNode(), data, beanInfo, new HashMap<>(variables), false);
+        Object numberOrIterable = executePipe(rangeNode.getPipeNode(), data, beanInfo, new HashMap<>(variables), false);
 
         // Get variable names from the range node's pipe
         List<VariableNode> rangeVars = rangeNode.getPipeNode().getVariables();
@@ -134,8 +140,8 @@ public class Executor {
 
         // Support range over integers (Go compatibility)
         // e.g., {{range $i := 5}} iterates from 0 to 4
-        if (arrayOrList instanceof Number) {
-            int count = ((Number) arrayOrList).intValue();
+        if (numberOrIterable instanceof Number) {
+            int count = ((Number) numberOrIterable).intValue();
             // Only iterate if count is positive
             if (count > 0) {
                 for (int i = 0; i < count; i++) {
@@ -147,10 +153,10 @@ public class Executor {
             }
         }
 
-        if (arrayOrList != null && arrayOrList.getClass().isArray()) {
-            int length = Array.getLength(arrayOrList);
+        if (numberOrIterable != null && numberOrIterable.getClass().isArray()) {
+            int length = Array.getLength(numberOrIterable);
             for (int i = 0; i < length; i++) {
-                Object value = Array.get(arrayOrList, i);
+                Object value = Array.get(numberOrIterable, i);
                 iterated = true;
                 if (!writeRangeValue(writer, rangeNode, i, value, indexVarName, valueVarName, variables)) {
                     break;
@@ -158,8 +164,8 @@ public class Executor {
             }
         }
 
-        if (arrayOrList instanceof Collection) {
-            Collection<?> collection = (Collection<?>) arrayOrList;
+        if (numberOrIterable instanceof Collection) {
+            Collection<?> collection = (Collection<?>) numberOrIterable;
             int index = 0;
             for (Object object : collection) {
                 iterated = true;
@@ -170,9 +176,25 @@ public class Executor {
             }
         }
 
-        if (arrayOrList instanceof Map) {
-            Map<?, ?> map = (Map<?, ?>) arrayOrList;
-            for (Map.Entry<?, ?> entry : map.entrySet()) {
+        if (numberOrIterable instanceof Map) {
+            Map<?, ?> map = (Map<?, ?>) numberOrIterable;
+
+            // Sort map keys if enabled using TreeMap for natural ordering
+            List<Map.Entry<?, ?>> entries;
+            if (mapKeySorting) {
+                try {
+                    // TreeMap automatically sorts keys using natural ordering
+                    map = new TreeMap<>((Map) numberOrIterable);
+                } catch (ClassCastException e) {
+                    // If keys are not Comparable, fall back to string-based sorting
+                    TreeMap<Object, Object> sortedMap = new TreeMap<>((k1, k2) -> compareKeys(k1, k2));
+                    sortedMap.putAll((Map<?, ?>) numberOrIterable);
+                    map = sortedMap;
+                }
+            }
+            entries = new ArrayList<>(map.entrySet());
+
+            for (Map.Entry<?, ?> entry : entries) {
                 // For maps, when two vars are specified, first is key, second is value
                 Object entryValue = entry.getValue();
                 Object entryKey = entry.getKey();
@@ -765,6 +787,44 @@ public class Executor {
             return !((Map<?, ?>) value).isEmpty();
         }
         return value != null;
+    }
+
+    /**
+     * Compares two map keys for sorting.
+     * <p>
+     * Uses natural ordering if both keys implement {@link Comparable}, otherwise falls back
+     * to string comparison using {@code toString()}.
+     *
+     * @param key1 the first key
+     * @param key2 the second key
+     * @return negative if key1 < key2, zero if equal, positive if key1 > key2
+     */
+    @SuppressWarnings("unchecked")
+    private int compareKeys(Object key1, Object key2) {
+        // Handle null keys
+        if (key1 == null && key2 == null) {
+            return 0;
+        }
+        if (key1 == null) {
+            return -1;
+        }
+        if (key2 == null) {
+            return 1;
+        }
+
+        // Try natural ordering if both keys are Comparable
+        if (key1 instanceof Comparable && key2 instanceof Comparable) {
+            try {
+                return ((Comparable<Object>) key1).compareTo(key2);
+            } catch (ClassCastException e) {
+                // Incompatible types, fall back to string comparison
+            }
+        }
+
+        // Fall back to string comparison
+        String str1 = String.valueOf(key1);
+        String str2 = String.valueOf(key2);
+        return str1.compareTo(str2);
     }
 
     private void printValue(Writer writer, Object value) throws IOException {
