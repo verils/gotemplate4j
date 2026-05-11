@@ -1,10 +1,10 @@
 # gotemplate4j Development Plan
 
-**Last Updated**: 2026-05-10  
+**Last Updated**: 2026-05-11  
 **Current Version**: 0.6.0  
 **Next Version**: 0.7.0 (or 0.6.1 for critical fixes)  
-**Current Focus**: Stage 1 documentation complete, preparing for Stage 2 compatibility improvements  
-**Status**: Stage 1 complete ✅, Stage 2 pending - Integer Range Support next
+**Current Focus**: Stage 2 compatibility improvements in progress - Integer Range and Null Display complete  
+**Status**: Stage 1 complete ✅, Stage 2 partially complete (2/4 priorities done)
 
 ---
 
@@ -33,7 +33,12 @@ gotemplate4j should remain a small, Java 8-compatible implementation of Go's `te
 - Performance benchmarking (TemplateBenchmark)
 - Initial compatibility and migration documentation
 
-### 🚧 In Progress (v0.7.0 - Stage 1)
+### 🚧 In Progress (v0.7.0 - Stage 2)
+
+- ✅ Priority 1: Integer Range Support - Implemented and tested (8 test cases)
+- ✅ Priority 2: Enhanced Null Value Display - Implemented and tested (9 test cases)
+- ⏳ Priority 3: Map Key Sorting Option - Pending
+- ⏳ Priority 4: Block Action Enhancement - Pending
 
 - ✅ Documentation directory structure created
 - ✅ docs/index.md - Main documentation hub
@@ -144,9 +149,25 @@ docs/
 - ✅ docs/advanced/security.md - Security best practices and vulnerability prevention
 - ✅ docs/advanced/best-practices.md - Design patterns and maintainability guidelines
 
-**Next Steps for Stage 1:**
-- ✅ All documentation sections complete
-- ✅ Stage 1 marked as complete - moving to Stage 2
+**Stage 2 Compatibility Features Completed:**
+- ✅ **Integer Range Support**: Added support for `{{range $i := 5}}` syntax in Executor.java
+  - Iterates from 0 to n-1 for positive integers
+  - Handles zero and negative numbers correctly (no iteration)
+  - Supports both literal integers and data-driven values
+  - Test coverage: 8 comprehensive test cases
+- ✅ **Enhanced Null Value Display**: Added customizable null value display in Template.java and Executor.java
+  - New `withNullDisplay(String)` method for configuration
+  - New `nullDisplay()` getter method
+  - Support via `option("nulldisplay=value")` syntax
+  - Preserved in template cloning
+  - Test coverage: 9 comprehensive test cases
+- 🔧 **Executor Enhancement**: Fixed executeCommand to handle NumberNode and BoolNode directly
+
+**Next Steps for Stage 2:**
+- ⏳ Implement Priority 3: Map Key Sorting Option
+- ⏳ Implement Priority 4: Block Action Enhancement
+- ⏳ Run full test suite to verify no regressions
+- ⏳ Update CHANGELOG and README
 
 **Documentation Standards:**
 
@@ -358,7 +379,7 @@ Prepare for v0.7.0 release:
 
 ### Suggested Next Session Order
 
-**Current Position**: Stage 1 complete ✅, ready for Stage 2 implementation
+**Current Position**: Stage 1 complete ✅, Stage 2 partially complete (2/4 priorities done)
 
 1. ✅ Create documentation directory structure and templates
 2. ✅ Write Getting Started section (installation ✅, quick start ✅, concepts ✅)
@@ -368,10 +389,10 @@ Prepare for v0.7.0 release:
 6. ✅ Write Control Flow guide ✅
 7. ✅ Write Template Sets guide ✅
 8. ✅ Write Error Handling guide ✅
-9. ⏳ Implement integer range support with tests
-10. ⏳ Implement null display policy with tests
+9. ✅ Implement integer range support with tests (COMPLETE)
+10. ✅ Implement null display policy with tests (COMPLETE)
 11. ✅ Write API Reference documentation (template-api ✅, function-api ✅, exception-api ✅)
-12. ⏳ Implement map key sorting option with tests
+12. ⏳ Implement map key sorting option with tests (NEXT)
 13. ⏳ Implement block action support with tests
 14. ✅ Create comprehensive examples (basic-examples ✅, web-templates ✅, email-templates ✅, complex-scenarios ✅)
 15. ✅ Enhance compatibility and migration docs

@@ -73,6 +73,7 @@ public class Template {
     private final Map<String, Node> nodes;
 
     private MissingKeyPolicy missingKeyPolicy;
+    private String nullDisplay; // Custom display string for null values
 
     /**
      * Creates a new template with the specified name.
@@ -181,6 +182,7 @@ public class Template {
         this.nodes = new LinkedHashMap<>();
 
         this.missingKeyPolicy = MissingKeyPolicy.INVALID;
+        this.nullDisplay = null; // Default to Go's behavior: "<no value>"
     }
 
     /**
@@ -218,6 +220,7 @@ public class Template {
         this.leftComment = other.leftComment;
         this.rightComment = other.rightComment;
         this.missingKeyPolicy = other.missingKeyPolicy;
+        this.nullDisplay = other.nullDisplay;
         this.nodes = new LinkedHashMap<>(other.nodes);
     }
 
@@ -240,6 +243,21 @@ public class Template {
      */
     public Template withMissingKeyPolicy(MissingKeyPolicy missingKeyPolicy) {
         this.missingKeyPolicy = missingKeyPolicy != null ? missingKeyPolicy : MissingKeyPolicy.INVALID;
+        return this;
+    }
+
+    /**
+     * Configures the display string for null values.
+     * <p>
+     * By default, null values are displayed as "&lt;no value&gt;" (Go template behavior).
+     * This method allows customizing that display string.
+     *
+     * @param nullDisplay the string to display for null values; {@code null} resets to default "&lt;no value&gt;"
+     * @return this template
+     * @since 0.7.0
+     */
+    public Template withNullDisplay(String nullDisplay) {
+        this.nullDisplay = nullDisplay;
         return this;
     }
 
@@ -278,6 +296,10 @@ public class Template {
                 default:
                     throw new IllegalArgumentException("unsupported option: " + option);
             }
+        }
+
+        if ("nulldisplay".equals(key)) {
+            return withNullDisplay(value);
         }
 
         return this;
@@ -343,6 +365,16 @@ public class Template {
      */
     public MissingKeyPolicy missingKeyPolicy() {
         return missingKeyPolicy;
+    }
+
+    /**
+     * Returns the currently configured null display string.
+     *
+     * @return null display string, or {@code null} for default "&lt;no value&gt;"
+     * @since 0.7.0
+     */
+    public String nullDisplay() {
+        return nullDisplay;
     }
 
     private List<String> orderedTemplateNames() {
@@ -597,7 +629,7 @@ public class Template {
             throw new TemplateNotFoundException(String.format("Template '%s' not found.", name));
         }
 
-        Executor executor = new Executor(nodes, functions, missingKeyPolicy);
+        Executor executor = new Executor(nodes, functions, missingKeyPolicy, nullDisplay);
         executor.execute(name, data, writer);
     }
 

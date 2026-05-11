@@ -20,15 +20,21 @@ public class Executor {
     private final Map<String, Node> rootNodes;
     private final Map<String, Function> functions;
     private final MissingKeyPolicy missingKeyPolicy;
+    private final String nullDisplay;
 
     public Executor(Map<String, Node> rootNodes, Map<String, Function> functions) {
-        this(rootNodes, functions, MissingKeyPolicy.INVALID);
+        this(rootNodes, functions, MissingKeyPolicy.INVALID, null);
     }
 
     public Executor(Map<String, Node> rootNodes, Map<String, Function> functions, MissingKeyPolicy missingKeyPolicy) {
+        this(rootNodes, functions, missingKeyPolicy, null);
+    }
+
+    public Executor(Map<String, Node> rootNodes, Map<String, Function> functions, MissingKeyPolicy missingKeyPolicy, String nullDisplay) {
         this.rootNodes = rootNodes;
         this.functions = functions;
         this.missingKeyPolicy = missingKeyPolicy != null ? missingKeyPolicy : MissingKeyPolicy.INVALID;
+        this.nullDisplay = nullDisplay;
     }
 
     public void execute(String name, Object data, Writer writer) throws IOException,
@@ -125,6 +131,21 @@ public class Executor {
         }
 
         boolean iterated = false;
+
+        // Support range over integers (Go compatibility)
+        // e.g., {{range $i := 5}} iterates from 0 to 4
+        if (arrayOrList instanceof Number) {
+            int count = ((Number) arrayOrList).intValue();
+            // Only iterate if count is positive
+            if (count > 0) {
+                for (int i = 0; i < count; i++) {
+                    iterated = true;
+                    if (!writeRangeValue(writer, rangeNode, i, i, indexVarName, valueVarName, variables)) {
+                        break;
+                    }
+                }
+            }
+        }
 
         if (arrayOrList != null && arrayOrList.getClass().isArray()) {
             int length = Array.getLength(arrayOrList);
@@ -305,6 +326,19 @@ public class Executor {
         }
         if (firstArgument instanceof StringNode) {
             return ((StringNode) firstArgument).getText();
+        }
+        if (firstArgument instanceof NumberNode) {
+            NumberNode numberNode = (NumberNode) firstArgument;
+            if (numberNode.isInt()) {
+                return numberNode.getIntValue();
+            }
+            if (numberNode.isFloat()) {
+                return numberNode.getFloatValue();
+            }
+            return 0;
+        }
+        if (firstArgument instanceof BoolNode) {
+            return ((BoolNode) firstArgument).getValue();
         }
         if (firstArgument instanceof VariableNode) {
             return executeVariable((VariableNode) firstArgument, variables);
@@ -735,7 +769,9 @@ public class Executor {
 
     private void printValue(Writer writer, Object value) throws IOException {
         if (value == null) {
-            printText(writer, NO_VALUE);
+            // Use custom null display if configured, otherwise use default
+            String display = nullDisplay != null ? nullDisplay : NO_VALUE;
+            printText(writer, display);
         } else if (value instanceof String) {
             String unescaped = StringEscapeUtils.unescape((String) value);
             printText(writer, unescaped);
