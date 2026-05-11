@@ -140,7 +140,7 @@ public class Executor {
             if (count > 0) {
                 for (int i = 0; i < count; i++) {
                     iterated = true;
-                    if (!writeRangeValue(writer, rangeNode, i, i, indexVarName, valueVarName, variables)) {
+                    if (writeRangeValueAndShouldBreak(writer, rangeNode, i, i, indexVarName, valueVarName, variables)) {
                         break;
                     }
                 }
@@ -152,7 +152,7 @@ public class Executor {
             for (int i = 0; i < length; i++) {
                 Object value = Array.get(numberOrIterable, i);
                 iterated = true;
-                if (!writeRangeValue(writer, rangeNode, i, value, indexVarName, valueVarName, variables)) {
+                if (writeRangeValueAndShouldBreak(writer, rangeNode, i, value, indexVarName, valueVarName, variables)) {
                     break;
                 }
             }
@@ -163,7 +163,7 @@ public class Executor {
             int index = 0;
             for (Object object : collection) {
                 iterated = true;
-                if (!writeRangeValue(writer, rangeNode, index, object, indexVarName, valueVarName, variables)) {
+                if (writeRangeValueAndShouldBreak(writer, rangeNode, index, object, indexVarName, valueVarName, variables)) {
                     break;
                 }
                 index++;
@@ -185,7 +185,7 @@ public class Executor {
                 Object entryValue = entry.getValue();
                 Object entryKey = entry.getKey();
                 iterated = true;
-                if (!writeRangeValue(writer, rangeNode, entryKey, entryValue, indexVarName, valueVarName, variables)) {
+                if (writeRangeValueAndShouldBreak(writer, rangeNode, entryKey, entryValue, indexVarName, valueVarName, variables)) {
                     break;
                 }
             }
@@ -210,13 +210,13 @@ public class Executor {
      * @param indexVarName the range index/key variable name, or {@code null} when none was declared
      * @param valueVarName the range value variable name, or {@code null} when none was declared
      * @param variables    variables visible before this iteration starts
-     * @return {@code true} to continue the enclosing range loop, or {@code false} after a {@code break}
+     * @return {@code false} to continue the enclosing range loop, or {@code true} after a {@code break}
      * @throws IOException                if writing output fails
      * @throws TemplateExecutionException if executing the range body fails
      * @throws TemplateNotFoundException  if the range body invokes an undefined template
      */
-    private boolean writeRangeValue(Writer writer, RangeNode rangeNode, Object index, Object value,
-                                    String indexVarName, String valueVarName, Map<String, Object> variables) throws IOException,
+    private boolean writeRangeValueAndShouldBreak(Writer writer, RangeNode rangeNode, Object index, Object value,
+                                                  String indexVarName, String valueVarName, Map<String, Object> variables) throws IOException,
             TemplateExecutionException, TemplateNotFoundException {
         // Unwrap Optional if present
         value = unwrapOptional(value);
@@ -240,11 +240,11 @@ public class Executor {
                 BeanInfo itemBeanInfo = value != null ? getBeanInfo(value) : null;
                 writeNode(writer, node, value, itemBeanInfo, iterationVars);
             }
-            return true;
-        } catch (ContinueException e) {
-            return true;
-        } catch (BreakException e) {
             return false;
+        } catch (ContinueException e) {
+            return false;
+        } catch (BreakException e) {
+            return true;
         }
     }
 
