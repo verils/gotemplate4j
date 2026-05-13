@@ -474,6 +474,23 @@ public class Executor {
                             "can't access field '%s' from data", identifier), e);
                 }
             }
+            
+            // If still not found, try Go-style capitalization for public fields
+            if (!found) {
+                String goStyleName = toGoStylePropertyName(identifier);
+                if (!goStyleName.equals(identifier)) {
+                    try {
+                        Field field = findField(currentData.getClass(), goStyleName);
+                        if (field != null) {
+                            value = unwrapOptional(field.get(currentData));
+                            found = true;
+                        }
+                    } catch (IllegalAccessException e) {
+                        throw new TemplateExecutionException(String.format(
+                                "can't access field '%s' from data", identifier), e);
+                    }
+                }
+            }
 
             if (!found) {
                 throw new TemplateExecutionException(String.format("can't get value '%s' from data", identifier));
