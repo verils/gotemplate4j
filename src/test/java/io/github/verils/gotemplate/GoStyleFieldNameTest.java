@@ -17,6 +17,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 public class GoStyleFieldNameTest {
 
     // Test JavaBean with standard getter methods
+    @SuppressWarnings({"FieldMayBeFinal", "FieldCanBeLocal", "unused"})
     public static class UserBean {
         private String userName = "Alice";
         private String emailAddress = "alice@example.com";
@@ -30,6 +31,7 @@ public class GoStyleFieldNameTest {
     }
     
     // Test class with public fields
+    @SuppressWarnings("unused")
     public static class DataObject {
         public String firstName = "John";
         public String lastName = "Doe";
@@ -37,6 +39,7 @@ public class GoStyleFieldNameTest {
     }
     
     // Test nested objects
+    @SuppressWarnings({"FieldMayBeFinal", "FieldCanBeLocal", "unused"})
     public static class Address {
         private String streetName = "Main St";
         private String cityName = "Springfield";
@@ -45,6 +48,7 @@ public class GoStyleFieldNameTest {
         public String getCityName() { return cityName; }
     }
     
+    @SuppressWarnings({"FieldMayBeFinal", "FieldCanBeLocal", "unused"})
     public static class Person {
         private String fullName = "Bob Smith";
         private Address homeAddress = new Address();
