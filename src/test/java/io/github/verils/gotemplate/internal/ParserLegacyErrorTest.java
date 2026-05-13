@@ -1,16 +1,12 @@
 package io.github.verils.gotemplate.internal;
 
 import io.github.verils.gotemplate.TemplateParseException;
-import io.github.verils.gotemplate.internal.ast.Node;
-import io.github.verils.gotemplate.internal.ast.NumberNode;
-import io.github.verils.gotemplate.internal.lang.Complex;
 import org.junit.jupiter.api.Test;
 
-import java.util.Map;
-import java.util.logging.Level;
+import static io.github.verils.gotemplate.internal.ParserTestSupport.assertError;
+import static io.github.verils.gotemplate.internal.ParserTestSupport.assertOK;
 
-import static org.junit.jupiter.api.Assertions.*;
-class ParserLegacyErrorTest extends ParserTestSupport {
+class ParserLegacyErrorTest {
 
     @Test
     void testUnclosedAction() {
@@ -269,4 +265,45 @@ class ParserLegacyErrorTest extends ParserTestSupport {
         assertError("block definition", "{{block \"foo\"}}hello{{end}}");
     }
 
+    // Additional error cases from ParserCoverageErrorTest
+
+    @Test
+    void testUnclosedIf() {
+        assertError("unclosed if", "{{if .Name}}hello");
+    }
+
+    @Test
+    void testUnclosedRange() {
+        assertError("unclosed range", "{{range .Items}}item");
+    }
+
+    @Test
+    void testUnclosedWith() {
+        assertError("unclosed with", "{{with .Name}}hello");
+    }
+
+    @Test
+    void testUnexpectedElse() {
+        assertError("unexpected else", "{{else}}");
+    }
+
+    @Test
+    void testInvalidVariableDeclaration() {
+        assertError("invalid var decl", "{{:= .Name}}");
+    }
+
+    @Test
+    void testMissingPipelineInIf() {
+        assertError("missing pipeline in if", "{{if}}");
+    }
+
+    @Test
+    void testMissingPipelineInRange() {
+        assertError("missing pipeline in range", "{{range}}");
+    }
+
+    @Test
+    void testMissingPipelineInWith() {
+        assertError("missing pipeline in with", "{{with}}");
+    }
 }

@@ -7,10 +7,11 @@ import io.github.verils.gotemplate.internal.lang.Complex;
 import org.junit.jupiter.api.Test;
 
 import java.util.Map;
-import java.util.logging.Level;
 
+import static io.github.verils.gotemplate.internal.ParserTestSupport.createParser2;
 import static org.junit.jupiter.api.Assertions.*;
-class ParserNumberTest extends ParserTestSupport {
+
+class ParserNumberTest {
 
     @Test
     void testParseZero() throws TemplateParseException {
@@ -119,12 +120,7 @@ class ParserNumberTest extends ParserTestSupport {
                 assertEquals(test.isFloat, numberNode.isFloat(), String.format("invalid number: %s", test.text));
                 assertEquals(test.isComplex, numberNode.isComplex(), String.format("invalid number: %s", test.text));
             } catch (TemplateParseException e) {
-                boolean parsed = test.isInt || test.isFloat || test.isComplex;
-                if (parsed) {
-                    log.log(Level.WARNING, "unexpected error", e);
-                } else {
-                    log.log(Level.FINE, String.format("expected error: %s", e.getMessage()));
-                }
+                // Expected for invalid numbers, ignore
             }
         }
     }

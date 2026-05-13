@@ -2,15 +2,15 @@ package io.github.verils.gotemplate.internal;
 
 import io.github.verils.gotemplate.TemplateParseException;
 import io.github.verils.gotemplate.internal.ast.Node;
-import io.github.verils.gotemplate.internal.ast.NumberNode;
-import io.github.verils.gotemplate.internal.lang.Complex;
 import org.junit.jupiter.api.Test;
 
 import java.util.Map;
-import java.util.logging.Level;
 
-import static org.junit.jupiter.api.Assertions.*;
-class ParserPipelineCommandTest extends ParserTestSupport {
+import static io.github.verils.gotemplate.internal.ParserTestSupport.createParser2;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
+class ParserPipelineCommandTest {
 
     @Test
     void testChainNodeAfterVariable() throws TemplateParseException {
