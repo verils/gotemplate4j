@@ -21,6 +21,9 @@ public class Executor {
     private final Map<String, Function> functions;
     private final MissingKeyPolicy missingKeyPolicy;
     private final boolean mapKeySorting;
+    
+    // Cache for annotated field/method names: Class -> (templateName -> AccessibleObject)
+    private static final Map<Class<?>, Map<String, AccessibleObject>> ANNOTATION_CACHE = new HashMap<>();
 
     public Executor(Map<String, Node> rootNodes, Map<String, Function> functions) {
         this(rootNodes, functions, MissingKeyPolicy.INVALID, true);
@@ -398,27 +401,47 @@ public class Executor {
 
             BeanInfo currentBeanInfo = getBeanInfo(currentData);
 
-            // First, try to find a getter method
-            PropertyDescriptor[] propertyDescriptors = currentBeanInfo.getPropertyDescriptors();
+            // First, try to find by @TemplateField annotation
             Object value = null;
             boolean found = false;
-
-            for (PropertyDescriptor propertyDescriptor : propertyDescriptors) {
-                String propertyDescriptorName = propertyDescriptor.getName();
-                if ("class".equals(propertyDescriptorName)) {
-                    continue;
+            
+            // Priority 1: Check @TemplateField annotations
+            AccessibleObject annotatedMember = findAnnotatedMember(currentData.getClass(), identifier);
+            if (annotatedMember != null) {
+                try {
+                    if (annotatedMember instanceof Field) {
+                        value = unwrapOptional(((Field) annotatedMember).get(currentData));
+                    } else if (annotatedMember instanceof Method) {
+                        value = unwrapOptional(((Method) annotatedMember).invoke(currentData));
+                    }
+                    found = true;
+                } catch (IllegalAccessException | InvocationTargetException e) {
+                    throw new TemplateExecutionException(String.format(
+                            "can't get value '%s' from data", identifier), e);
                 }
+            }
 
-                String goStyleName = toGoStylePropertyName(propertyDescriptorName);
-                if (identifier.equals(propertyDescriptorName) || identifier.equals(goStyleName)) {
-                    Method readMethod = propertyDescriptor.getReadMethod();
-                    try {
-                        value = unwrapOptional(readMethod.invoke(currentData));
-                        found = true;
-                        break;
-                    } catch (IllegalAccessException | InvocationTargetException e) {
-                        throw new TemplateExecutionException(String.format(
-                                "can't get value '%s' from data", identifier), e);
+            // Priority 2: Try getter methods with exact match or Go-style name
+            if (!found) {
+                PropertyDescriptor[] propertyDescriptors = currentBeanInfo.getPropertyDescriptors();
+
+                for (PropertyDescriptor propertyDescriptor : propertyDescriptors) {
+                    String propertyDescriptorName = propertyDescriptor.getName();
+                    if ("class".equals(propertyDescriptorName)) {
+                        continue;
+                    }
+
+                    String goStyleName = toGoStylePropertyName(propertyDescriptorName);
+                    if (identifier.equals(propertyDescriptorName) || identifier.equals(goStyleName)) {
+                        Method readMethod = propertyDescriptor.getReadMethod();
+                        try {
+                            value = unwrapOptional(readMethod.invoke(currentData));
+                            found = true;
+                            break;
+                        } catch (IllegalAccessException | InvocationTargetException e) {
+                            throw new TemplateExecutionException(String.format(
+                                    "can't get value '%s' from data", identifier), e);
+                        }
                     }
                 }
             }
@@ -714,6 +737,62 @@ public class Executor {
         return beanInfo;
     }
 
+
+    /**
+     * Find a member (field or method) annotated with @TemplateField matching the template name.
+     * Uses caching to avoid repeated reflection scans.
+     *
+     * @param clazz        The class to search
+     * @param templateName The name used in the template
+     * @return The annotated Field or Method, or null if not found
+     */
+    private AccessibleObject findAnnotatedMember(Class<?> clazz, String templateName) {
+        // Check cache first
+        Map<String, AccessibleObject> classAnnotations = ANNOTATION_CACHE.get(clazz);
+        if (classAnnotations == null) {
+            classAnnotations = buildAnnotationCache(clazz);
+            ANNOTATION_CACHE.put(clazz, classAnnotations);
+        }
+        return classAnnotations.get(templateName);
+    }
+
+    /**
+     * Build annotation cache for a class by scanning fields and methods.
+     * Field annotations take precedence over method annotations.
+     *
+     * @param clazz The class to scan
+     * @return Map of template names to annotated members
+     */
+    private Map<String, AccessibleObject> buildAnnotationCache(Class<?> clazz) {
+        Map<String, AccessibleObject> cache = new HashMap<>();
+        
+        // Scan all classes in the hierarchy
+        Class<?> currentClass = clazz;
+        while (currentClass != null && currentClass != Object.class) {
+            // Scan fields first (fields take precedence)
+            // For annotated fields, we allow private access via reflection
+            for (Field field : currentClass.getDeclaredFields()) {
+                TemplateField annotation = field.getAnnotation(TemplateField.class);
+                if (annotation != null) {
+                    field.setAccessible(true);  // Allow access to private fields
+                    cache.putIfAbsent(annotation.value(), field);
+                }
+            }
+            
+            // Scan methods
+            for (Method method : currentClass.getDeclaredMethods()) {
+                TemplateField annotation = method.getAnnotation(TemplateField.class);
+                if (annotation != null && Modifier.isPublic(method.getModifiers()) 
+                        && method.getParameterTypes().length == 0) {
+                    cache.putIfAbsent(annotation.value(), method);
+                }
+            }
+            
+            currentClass = currentClass.getSuperclass();
+        }
+        
+        return cache;
+    }
 
     /**
      * Get go style property name

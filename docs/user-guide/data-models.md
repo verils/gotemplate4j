@@ -201,6 +201,183 @@ data.put("Settings", settingsMap);  // Map
 template.parse("User: {{.User.Name}}, Debug: {{.Settings.Debug}}");
 ```
 
+### Field Name Mapping with @TemplateField
+
+Starting from version 0.8.0, you can use the `@TemplateField` annotation to explicitly control how Java fields and methods are accessed in templates.
+
+#### Why Use @TemplateField?
+
+By default, gotemplate4j uses Go-style name conversion (capitalizing the first letter) to map Java property names to template identifiers. The `@TemplateField` annotation gives you explicit control over this mapping, which is useful when:
+
+- You want to use a different name in templates than the Java field name
+- You need to support legacy template names during refactoring
+- You want to expose private fields without creating public getters
+- You need precise control over the template API
+
+#### Basic Usage
+
+**On Fields:**
+
+```java
+import io.github.verils.gotemplate.TemplateField;
+
+public class User {
+    @TemplateField("UserName")
+    private String userName = "Alice";
+    
+    @TemplateField("user_email")
+    private String email = "alice@example.com";
+}
+```
+
+**Template:**
+```gotemplate
+Name: {{.UserName}}, Email: {{.user_email}}
+```
+
+**Output:**
+```
+Name: Alice, Email: alice@example.com
+```
+
+**On Methods:**
+
+```java
+public class User {
+    private String firstName = "John";
+    private String lastName = "Doe";
+    
+    @TemplateField("FullName")
+    public String getFullName() {
+        return firstName + " " + lastName;
+    }
+}
+```
+
+**Template:**
+```gotemplate
+{{.FullName}}
+```
+
+**Output:**
+```
+John Doe
+```
+
+#### Lookup Priority
+
+When resolving a template field reference, gotemplate4j checks in this order:
+
+1. **@TemplateField annotation** - Exact match on annotated fields/methods
+2. **Exact match** - Direct match on Java property/field name
+3. **Go-style capitalization** - First letter capitalized (e.g., `userName` → `UserName`)
+
+Example demonstrating priority:
+
+```java
+public class Product {
+    // This can be accessed as {{.Price}} via annotation
+    @TemplateField("Price")
+    private double price = 99.99;
+    
+    // This can be accessed as {{.name}} (exact match) or {{.Name}} (Go-style)
+    public String name = "Widget";
+}
+```
+
+#### Field vs Method Precedence
+
+If both a field and its getter method have `@TemplateField` annotations with the same value, the **field takes precedence**:
+
+```java
+public class Example {
+    @TemplateField("value")
+    public String fieldValue = "from-field";
+    
+    @TemplateField("value")
+    public String getFieldValue() {
+        return "from-method";
+    }
+}
+```
+
+**Template:**
+```gotemplate
+{{.value}}  // Outputs: from-field
+```
+
+#### Private Field Access
+
+The `@TemplateField` annotation allows templates to access private fields directly without requiring public getters:
+
+```java
+public class Config {
+    @TemplateField("ApiKey")
+    private String apiKey = "secret-key";  // Private but accessible
+    
+    // No getter needed!
+}
+```
+
+**Template:**
+```gotemplate
+API Key: {{.ApiKey}}
+```
+
+This is particularly useful for:
+- Encapsulating data while keeping templates clean
+- Avoiding boilerplate getter methods
+- Maintaining backward compatibility during refactoring
+
+#### Inheritance Support
+
+Annotations work across class hierarchies:
+
+```java
+public class BaseEntity {
+    @TemplateField("Id")
+    private Long id;
+    
+    public Long getId() { return id; }
+}
+
+public class User extends BaseEntity {
+    @TemplateField("UserName")
+    private String userName;
+    
+    public String getUserName() { return userName; }
+}
+```
+
+**Template:**
+```gotemplate
+ID: {{.Id}}, Name: {{.UserName}}
+```
+
+#### Best Practices
+
+1. **Use consistent naming**: Choose a naming convention (camelCase, PascalCase, or snake_case) and stick with it
+2. **Document your API**: When using custom names, document them for template authors
+3. **Prefer methods for computed values**: Use `@TemplateField` on methods that compute or format data
+4. **Keep annotations close to declaration**: Place annotations directly on fields/methods for clarity
+5. **Avoid duplicate names**: Don't use the same template name for multiple fields/methods
+
+#### Migration Example
+
+When refactoring field names, use `@TemplateField` to maintain backward compatibility:
+
+```java
+public class LegacyUser {
+    // Old field name - keep supporting old templates
+    @TemplateField("usr_name")
+    private String userName;  // New Java field name
+    
+    // Can gradually migrate templates from {{.usr_name}} to {{.UserName}}
+}
+```
+
+This allows you to refactor Java code without breaking existing templates.
+
 ## Lists and Arrays
 
 Collections are accessed using `range` or by index.

@@ -1,3 +1,64 @@
+v0.8.0 (2026-05-13)
+
+========
+
+**Quality Improvement and Field Name Control Release** - This version introduces explicit field name mapping via annotations, improves error messages, and enhances code quality with better test coverage.
+
+### New Features
+
+- **@TemplateField Annotation Support**: Added `@TemplateField` annotation for explicit control over field/method name mapping in templates
+  - Annotate fields or methods to specify exact template identifiers
+  - Lookup priority: @TemplateField > exact match > Go-style capitalization
+  - Supports private field access without requiring public getters
+  - Field annotations take precedence over method annotations with same name
+  - Works across class hierarchies (inheritance support)
+  - Includes caching mechanism for performance optimization
+  - Test coverage: 14 comprehensive test cases covering all scenarios
+  
+  Example:
+  ```java
+  public class User {
+      @TemplateField("UserName")
+      private String userName = "Alice";
+      
+      @TemplateField("FullName")
+      public String getFullName() {
+          return firstName + " " + lastName;
+      }
+  }
+  // Template: {{.UserName}}, {{.FullName}}
+  ```
+
+### Improvements
+
+- **Enhanced Field Access Logic**: Refactored `Executor.executeFieldPath()` to support three-tier lookup strategy
+  - Priority 1: Check @TemplateField annotated members
+  - Priority 2: Try exact match on property/field names
+  - Priority 3: Apply Go-style capitalization (first letter uppercase)
+  - Maintains full backward compatibility with existing templates
+  
+- **Performance Optimization**: Added annotation cache to avoid repeated reflection scans
+  - Cache built once per class and reused across executions
+  - Scans entire class hierarchy including superclasses
+  - Thread-safe through immutable cache structure
+
+### Documentation
+
+- Added comprehensive "Field Name Mapping with @TemplateField" section to [Data Models Guide](./docs/user-guide/data-models.md)
+  - Basic usage examples for fields and methods
+  - Lookup priority explanation with examples
+  - Field vs method precedence rules
+  - Private field access patterns
+  - Inheritance support demonstration
+  - Best practices and migration strategies
+
+### Testing
+
+- All 703 tests pass on Java 8 (added 14 new tests)
+- Code coverage: 91% instruction, 89% branch (exceeds 90%/85% thresholds)
+- No backward compatibility breaks
+- `./mvnw clean test` succeeds
+
 v0.7.0 (2026-05-11)
 
 ========
