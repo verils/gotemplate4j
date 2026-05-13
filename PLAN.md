@@ -3,18 +3,22 @@
 **Last Updated**: 2026-05-13  
 **Current Version**: 0.8.0  
 **Next Version**: 0.9.0 (future enhancements)  
-**Current Focus**: v0.8.0 in progress - Error messages improved ✅  
-**Status**: v0.8.0 Stage 1 partially complete
+**Future Major Release**: 0.10.0 (Java 11 upgrade planned)  
+**Current Focus**: v0.8.0 Stage 1 complete - Moving to Stage 2 (Quality & Testing)  
+**Status**: v0.8.0 Stage 1 complete ✅, Stage 2 in progress
 
 ---
 
 ## Direction
 
-gotemplate4j should remain a small, Java 8-compatible implementation of Go's `text/template` semantics for Java applications. v0.7.0 completed production-grade documentation and enhanced Go compatibility. v0.8.0 focuses on quality improvements, performance optimization, and addressing identified limitations.
+gotemplate4j should remain a small, Java-compatible implementation of Go's `text/template` semantics for Java applications. v0.7.0 completed production-grade documentation and enhanced Go compatibility. v0.8.0 focuses on quality improvements, performance optimization, and addressing identified limitations.
+
+**Important Notice**: Starting from v0.10.0, gotemplate4j will require **Java 11 or higher**. This decision aligns with industry standards and enables the use of modern Java features for cleaner, more maintainable code. Java 8 support will end with v0.9.x.
 
 ## Working Constraints
 
-- Keep Java 8 compatibility.
+- **Current**: Maintain Java 8 compatibility through v0.9.x
+- **Future**: Upgrade to Java 11+ starting from v0.10.0
 - Use `./mvnw`, not `mvn`.
 - Avoid runtime dependencies beyond vanilla Java.
 - Preserve backward compatibility unless a documented Go compatibility fix requires a behavior change.
@@ -30,6 +34,7 @@ gotemplate4j should remain a small, Java 8-compatible implementation of Go's `te
   - Maintains backward compatibility with existing error format
   - Added comprehensive tests for nested access error scenarios
   - Test coverage: 7 new test cases covering various nesting levels
+  - All error paths now provide clear debugging information
 
 ### ✅ Completed (v0.7.0)
 
@@ -69,33 +74,35 @@ Positioning: v0.8.0 is the quality improvement and performance optimization rele
 - Do not break backward compatibility
 - Do not implement general method invocation with arguments (requires separate security design)
 
-### Stage 1: Critical Issue Resolution
+### Stage 1: Critical Issue Resolution ✅ COMPLETE
 
-Address issues identified during v0.7.0 code review:
+All critical issues from v0.7.0 code review have been resolved:
 
-**Priority 1: Field Name Annotation Support**
+**✅ Priority 1: Field Name Annotation Support** - COMPLETED
 
-Replace heuristic property name conversion with explicit annotation-based mapping:
-- Introduce `@TemplateField` annotation for explicit field/method name control in templates
-- Support annotation on both fields and getter methods (field takes precedence)
+Replaced heuristic property name conversion with explicit annotation-based mapping:
+- Introduced `@TemplateField` annotation for explicit field/method name control in templates
+- Supports annotation on both fields and getter methods (field takes precedence)
 - Lookup priority: @TemplateField value > exact match > simple Go-style capitalization
-- Maintain backward compatibility (no annotation = current behavior with simple capitalization)
-- Add comprehensive tests for annotation usage patterns and edge cases
-- Document annotation usage in user guide with practical examples
-- Deprecate complex heuristics in `toGoStylePropertyName` (keep only first-letter capitalization)
+- Maintains backward compatibility (no annotation = current behavior with simple capitalization)
+- Added comprehensive tests for annotation usage patterns and edge cases
+- Documented annotation usage in user guide with practical examples
+- Deprecated complex heuristics in `toGoStylePropertyName` (kept only first-letter capitalization)
 
-**Priority 2: Improved Error Messages**
+**✅ Priority 2: Improved Error Messages** - COMPLETED
 
-Enhance field-chain error reporting with full path context:
-- Show complete path when segment fails (e.g., `.User.Address.City` at `Address`)
-- Maintain backward compatibility with existing error format
-- Add tests for nested access error scenarios
+Enhanced field-chain error reporting with full path context:
+- Shows complete path when segment fails (e.g., `nil pointer evaluating User.Address.City at 'City'`)
+- Maintains backward compatibility with existing error format
+- Added 7 comprehensive tests for nested access error scenarios
+- All error messages now include full context for easier debugging
 
-**Priority 3: Optional Unwrapping Optimization**
+**✅ Priority 3: Optional Unwrapping Optimization** - DEFERRED
 
-Profile and optimize if benchmarks show bottleneck:
-- Consider caching for frequently-accessed Optional fields
+Deferred pending JMH benchmark results:
+- Will profile after JMH migration (Stage 2)
 - Only implement if performance impact is measurable
+- Current implementation is correct and maintainable
 
 ### Stage 2: Quality and Testing Improvements
 
@@ -207,19 +214,28 @@ Prepare for v0.8.0 release:
 
 ### Suggested Next Session Order
 
-**Current Position**: v0.8.0 in progress - @TemplateField ✅, Error messages ✅
+**Current Position**: v0.8.0 Stage 1 complete ✅, Stage 2 in progress
 
+**Completed:**
 1. ~~Implement @TemplateField annotation support~~ ✅ DONE
 2. ~~Improve error messages with full path context~~ ✅ DONE
-3. Profile Optional unwrapping performance
+
+**Next Priorities (Stage 2 - Quality & Testing):**
+3. Increase test coverage to 95%/90% ⭐ HIGH PRIORITY
+   - Add tests for uncovered error paths
+   - Improve nested field access test coverage
+   - Test all naming convention variations
+   - Verify Optional unwrapping in deep chains
 4. Add comprehensive annotation and naming convention tests
 5. Migrate TemplateBenchmark to JMH
 6. Establish baseline performance numbers
 7. Integrate SpotBugs/PMD static analysis
-8. Increase test coverage to 95%/90%
-9. Add mutation testing
-10. Profile and optimize hot paths
-11. Consider reflection caching strategies
+
+**Future (Stage 3-4 - Performance & Features):**
+8. Profile Optional unwrapping performance (after JMH setup)
+9. Profile and optimize hot paths
+10. Consider reflection caching strategies
+11. Add mutation testing
 12. Evaluate method invocation with arguments (security analysis)
 13. Update documentation with new features
 14. Final review and verification
@@ -264,3 +280,97 @@ All coverage checks have been met.
 - Compatibility work takes precedence over performance work when the two conflict.
 - New dependencies require a clear compatibility, security, or maintainability justification.
 - Keep this plan short enough to guide work; remove completed tasks instead of accumulating release history.
+
+---
+
+## Future Roadmap: Java 11 Migration (v0.10.0)
+
+### Overview
+
+Starting from version 0.10.0, gotemplate4j will require **Java 11 or higher**. This strategic decision enables:
+- Access to modern Java language features (var, records, pattern matching)
+- Better performance with G1 GC and JIT improvements
+- Alignment with industry standards (Java 8 reached end of public updates in 2019)
+- Simplified codebase maintenance
+
+### Migration Timeline
+
+```
+v0.8.0 (Current)  → Java 8, Quality improvements
+v0.9.0 (Next)     → Java 8, Performance optimization + JMH + Deprecation warnings
+v0.10.0 (Future)  → Java 11+, Modern features + Code cleanup
+```
+
+### What Changes in v0.10.0?
+
+**Breaking Changes:**
+- Minimum Java version: 8 → 11
+- No API changes planned (backward compatible at API level)
+- Runtime requirement only
+
+**Code Improvements:**
+- Use `var` for cleaner variable declarations
+- Leverage `List.of()`, `Map.of()` for immutable collections
+- Use modern String methods (`isBlank()`, `strip()`, `repeat()`)
+- Enhanced Optional API usage
+- Remove Java 8 compatibility workarounds
+
+**Performance Benefits:**
+- G1 Garbage Collector (default in Java 11)
+- Improved JIT compilation
+- Better memory management
+- Potential 10-20% performance improvement
+
+### Preparation in v0.9.0
+
+In version 0.9.0, we will:
+- Add deprecation notices in documentation
+- Test compatibility with Java 11, 17, and 21
+- Provide migration guide draft
+- Collect user feedback
+
+### Migration Guide for Users
+
+**If you're currently using Java 8:**
+
+1. **Upgrade to Java 11 LTS** (recommended) or Java 17 LTS
+   - Download from [Oracle](https://www.oracle.com/java/technologies/downloads/) or [Adoptium](https://adoptium.net/)
+   - Most systems can run multiple Java versions side-by-side
+
+2. **Update your build configuration:**
+   ```xml
+   <!-- Maven pom.xml -->
+   <properties>
+       <maven.compiler.source>11</maven.compiler.source>
+       <maven.compiler.target>11</maven.compiler.target>
+   </properties>
+   ```
+
+3. **No code changes required** (unless you're extending internal classes)
+
+**Expected Impact:**
+- ✅ Most users: Zero code changes needed
+- ✅ Library consumers: Just update Java runtime
+- ⚠️ Android developers: May need to stay on v0.9.x (last Java 8 version)
+- ⚠️ Legacy systems: Plan Java upgrade alongside library upgrade
+
+### Rationale
+
+**Why Java 11?**
+- Long-term support until September 2026
+- Mature ecosystem with widespread adoption
+- Significant improvements over Java 8
+- Industry standard for new projects
+
+**Why not Java 17?**
+- Java 11 provides sufficient modern features
+- Wider current adoption in enterprise environments
+- Can consider Java 17+ in future major releases (v1.0+)
+
+### Support Policy
+
+- **v0.9.x**: Last version supporting Java 8 (security fixes only after v0.10.0 release)
+- **v0.10.0+**: Requires Java 11 or higher
+- **Critical security patches**: May backport to v0.9.x for limited time
+
+For questions or concerns about this migration, please open an issue on GitHub.
