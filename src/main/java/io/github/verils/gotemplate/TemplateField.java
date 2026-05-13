@@ -13,9 +13,9 @@ import java.lang.annotation.Target;
  * on heuristic name conversion.
  * </p>
  * 
- * <h3>Usage Examples</h3>
+ * <h2>Usage Examples</h2>
  * 
- * <h4>On Fields:</h4>
+ * <h3>On Fields:</h3>
  * <pre>{@code
  * public class User {
  *     @TemplateField("UserName")
@@ -26,7 +26,7 @@ import java.lang.annotation.Target;
  * }
  * }</pre>
  * 
- * <h4>On Getter Methods:</h4>
+ * <h3>On Getter Methods:</h3>
  * <pre>{@code
  * public class User {
  *     @TemplateField("FullName")
@@ -36,7 +36,7 @@ import java.lang.annotation.Target;
  * }
  * }</pre>
  * 
- * <h3>Lookup Priority</h3>
+ * <h2>Lookup Priority</h2>
  * When resolving a template field reference (e.g., {{.UserName}}), the engine
  * checks in this order:
  * <ol>
@@ -45,7 +45,7 @@ import java.lang.annotation.Target;
  *   <li>Go-style capitalization (first letter uppercase)</li>
  * </ol>
  * 
- * <h3>Precedence</h3>
+ * <h2>Precedence</h2>
  * If both a field and its getter method have {@code @TemplateField} annotations,
  * the field's annotation takes precedence.
  * 
