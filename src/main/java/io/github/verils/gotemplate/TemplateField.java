@@ -18,10 +18,10 @@ import java.lang.annotation.Target;
  * <h3>On Fields:</h3>
  * <pre>{@code
  * public class User {
- *     @TemplateField("UserName")
+ *     &#64;TemplateField("UserName")
  *     private String userName;
  *     
- *     @TemplateField("user_email")
+ *     &#64;TemplateField("user_email")
  *     private String email;
  * }
  * }</pre>
@@ -29,7 +29,7 @@ import java.lang.annotation.Target;
  * <h3>On Getter Methods:</h3>
  * <pre>{@code
  * public class User {
- *     @TemplateField("FullName")
+ *     &#64;TemplateField("FullName")
  *     public String getFullName() {
  *         return firstName + " " + lastName;
  *     }
