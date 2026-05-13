@@ -17,6 +17,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 public class TemplateFieldAnnotationTest {
 
     // Test class with annotated fields
+    @SuppressWarnings({"unused", "FieldMayBeFinal"})
     public static class UserWithAnnotatedFields {
         @TemplateField("UserName")
         private String userName = "Alice";
@@ -29,6 +30,7 @@ public class TemplateFieldAnnotationTest {
     }
     
     // Test class with annotated methods
+    @SuppressWarnings({"FieldMayBeFinal", "FieldCanBeLocal", "unused"})
     public static class UserWithAnnotatedMethods {
         private String firstName = "John";
         private String lastName = "Doe";
@@ -45,6 +47,7 @@ public class TemplateFieldAnnotationTest {
     }
     
     // Test class with both field and method annotations (field takes precedence)
+    @SuppressWarnings("unused")
     public static class FieldPrecedenceTest {
         @TemplateField("value")
         public String fieldValue = "from-field";
@@ -56,6 +59,7 @@ public class TemplateFieldAnnotationTest {
     }
     
     // Test class mixing annotated and non-annotated members
+    @SuppressWarnings({"unused", "FieldMayBeFinal"})
     public static class MixedAnnotationTest {
         @TemplateField("CustomName")
         private String customName = "Custom";
@@ -70,17 +74,20 @@ public class TemplateFieldAnnotationTest {
     }
     
     // Test class with inheritance
+    @SuppressWarnings("unused")
     public static class BaseAnnotatedClass {
         @TemplateField("BaseField")
         public String baseField = "base-value";
     }
     
+    @SuppressWarnings("unused")
     public static class DerivedAnnotatedClass extends BaseAnnotatedClass {
         @TemplateField("DerivedField")
         public String derivedField = "derived-value";
     }
     
     // Test class with nested objects
+    @SuppressWarnings("unused")
     public static class Address {
         @TemplateField("StreetName")
         public String street = "Main St";
@@ -89,6 +96,7 @@ public class TemplateFieldAnnotationTest {
         public String city = "Springfield";
     }
     
+    @SuppressWarnings("unused")
     public static class PersonWithAddress {
         @TemplateField("PersonName")
         public String name = "Bob";
@@ -260,7 +268,7 @@ public class TemplateFieldAnnotationTest {
     }
     
     @Test
-    void testMissingAnnotatedFieldWithErrorPolicy() throws IOException, TemplateException {
+    void testMissingAnnotatedFieldWithErrorPolicy() throws TemplateException {
         Template template = new Template("test")
             .withMissingKeyPolicy(MissingKeyPolicy.ERROR);
         template.parse("{{.NonExistent}}");
@@ -268,9 +276,7 @@ public class TemplateFieldAnnotationTest {
         Writer writer = new StringWriter();
         UserWithAnnotatedFields user = new UserWithAnnotatedFields();
         
-        assertThrows(TemplateExecutionException.class, () -> {
-            template.execute(writer, user);
-        });
+        assertThrows(TemplateExecutionException.class, () -> template.execute(writer, user));
     }
     
     @Test
