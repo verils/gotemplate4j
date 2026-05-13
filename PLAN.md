@@ -64,12 +64,16 @@ Positioning: v0.8.0 is the quality improvement and performance optimization rele
 
 Address issues identified during v0.7.0 code review:
 
-**Priority 1: Enhanced Property Name Conversion**
+**Priority 1: Field Name Annotation Support**
 
-Fix `toGoStylePropertyName` to handle all-caps abbreviations (URL, ID, XML):
-- Try multiple matching variations (exact, first-letter caps, case-insensitive)
-- Add comprehensive tests for naming conventions
-- Document supported patterns in user guide
+Replace heuristic property name conversion with explicit annotation-based mapping:
+- Introduce `@TemplateField` annotation for explicit field/method name control in templates
+- Support annotation on both fields and getter methods (field takes precedence)
+- Lookup priority: @TemplateField value > exact match > simple Go-style capitalization
+- Maintain backward compatibility (no annotation = current behavior with simple capitalization)
+- Add comprehensive tests for annotation usage patterns and edge cases
+- Document annotation usage in user guide with practical examples
+- Deprecate complex heuristics in `toGoStylePropertyName` (keep only first-letter capitalization)
 
 **Priority 2: Improved Error Messages**
 
@@ -164,9 +168,9 @@ Prepare for v0.8.0 release:
 - Ensure static analysis passes without warnings
 
 **Documentation Updates:**
-- Add "Naming Conventions" section for property access
+- Add "Field Name Mapping" section explaining @TemplateField annotation
 - Include troubleshooting guide for common issues
-- Document supported naming patterns (camelCase, PascalCase, ALL_CAPS)
+- Document annotation usage patterns and best practices
 - Update performance tuning guide with new optimizations
 
 **CHANGELOG and README:**
@@ -196,10 +200,10 @@ Prepare for v0.8.0 release:
 
 **Current Position**: v0.7.0 released ✅, planning v0.8.0
 
-1. Implement enhanced property name conversion (handle URL, ID, XML)
+1. Implement @TemplateField annotation support
 2. Improve error messages with full path context
 3. Profile Optional unwrapping performance
-4. Add comprehensive naming convention tests
+4. Add comprehensive annotation and naming convention tests
 5. Migrate TemplateBenchmark to JMH
 6. Establish baseline performance numbers
 7. Integrate SpotBugs/PMD static analysis
