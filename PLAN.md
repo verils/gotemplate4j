@@ -4,14 +4,14 @@
 **Current Version**: 0.8.0  
 **Next Version**: 0.9.0 (future enhancements)  
 **Future Major Release**: 0.10.0 (Java 11 upgrade planned)  
-**Current Focus**: v0.8.0 Stage 1 complete - Moving to Stage 2 (Quality & Testing)  
+**Current Focus**: v0.8.0 Stage 2 (Quality & Testing) in progress  
 **Status**: v0.8.0 Stage 1 complete ✅, Stage 2 in progress
 
 ---
 
 ## Direction
 
-gotemplate4j should remain a small, Java-compatible implementation of Go's `text/template` semantics for Java applications. v0.7.0 completed production-grade documentation and enhanced Go compatibility. v0.8.0 focuses on quality improvements, performance optimization, and addressing identified limitations.
+gotemplate4j should remain a small, Java-compatible implementation of Go's `text/template` semantics for Java applications. v0.8.0 focuses on quality improvements, performance optimization, and addressing identified limitations.
 
 **Important Notice**: Starting from v0.10.0, gotemplate4j will require **Java 11 or higher**. This decision aligns with industry standards and enables the use of modern Java features for cleaner, more maintainable code. Java 8 support will end with v0.9.x.
 
@@ -36,23 +36,6 @@ gotemplate4j should remain a small, Java-compatible implementation of Go's `text
   - Test coverage: 7 new test cases covering various nesting levels
   - All error paths now provide clear debugging information
 
-### ✅ Completed (v0.7.0)
-
-- **Integer Range Support**: Full support for `{{range $i := 5}}` syntax (Go-compatible)
-- **Map Key Sorting**: Deterministic map iteration with configurable sorting
-- **Block Action Enhancement**: Inline template definition and execution with `{{block "name" .}}`
-- **Production-Grade Documentation**: 20+ comprehensive guides covering all aspects
-- **Enhanced Compatibility**: Reduced migration friction from Go templates
-- **CHANGELOG Updated**: Comprehensive release notes for v0.7.0
-
-### ✅ Completed (v0.6.0)
-
-- MissingKeyPolicy configuration (DEFAULT/ZERO/ERROR)
-- Template introspection API (name(), hasTemplate(), definedTemplates(), lookup(), templates())
-- File system helpers (parseFile(), parseFiles(), parseGlob())
-- Performance benchmarking (TemplateBenchmark)
-- Initial compatibility and migration documentation
-
 ---
 
 ## v0.8.0 Release Plan
@@ -76,7 +59,7 @@ Positioning: v0.8.0 is the quality improvement and performance optimization rele
 
 ### Stage 1: Critical Issue Resolution ✅ COMPLETE
 
-All critical issues from v0.7.0 code review have been resolved:
+All critical issues from code review have been resolved:
 
 **✅ Priority 1: Field Name Annotation Support** - COMPLETED
 
@@ -104,7 +87,7 @@ Deferred pending JMH benchmark results:
 - Only implement if performance impact is measurable
 - Current implementation is correct and maintainable
 
-### Stage 2: Quality and Testing Improvements
+### Stage 2: Quality and Testing Improvements ⭐ IN PROGRESS
 
 Improve test coverage, quality, and establish better testing infrastructure:
 
@@ -239,39 +222,6 @@ Prepare for v0.8.0 release:
 12. Evaluate method invocation with arguments (security analysis)
 13. Update documentation with new features
 14. Final review and verification
-
----
-
-## v0.7.0 Release Summary
-
-**Release Date**: 2026-05-11  
-**Status**: ✅ COMPLETE
-
-### Key Achievements
-
-1. **Production-Grade Documentation**
-   - Created 20+ comprehensive documentation files
-   - Organized structure ready for static site generation
-   - Covered all aspects: getting started, user guide, API reference, advanced topics, examples, FAQ
-
-2. **Enhanced Go Compatibility**
-   - Integer Range Support: `{{range $i := 5}}` iterates 0-4
-   - Map Key Sorting: Deterministic output with configurable sorting
-   - Block Action: Inline template definition with `{{block "name" .}}`
-   - Total: 28 new test cases added
-
-3. **Quality Assurance**
-   - All 689 tests pass on Java 8
-   - Code coverage remains above 90% threshold
-   - No backward compatibility breaks
-
-### Test Results
-
-```
-Tests run: 689, Failures: 0, Errors: 0, Skipped: 0
-BUILD SUCCESS
-All coverage checks have been met.
-```
 
 ## Maintenance Rules
 
