@@ -373,9 +373,21 @@ public class Executor {
 
         for (int i = start; i < identifiers.length; i++) {
             String identifier = identifiers[i];
+            
+            // Build the full path context up to the current segment
+            StringBuilder pathBuilder = new StringBuilder();
+            for (int j = start; j <= i; j++) {
+                if (j > start) {
+                    pathBuilder.append(".");
+                }
+                pathBuilder.append(identifiers[j]);
+            }
+            String fullPath = pathBuilder.toString();
+            
             if (currentData == null) {
                 if (missingKeyPolicy == MissingKeyPolicy.ERROR) {
-                    throw new TemplateExecutionException(String.format("missing value for field-chain segment '%s'", identifier));
+                    throw new TemplateExecutionException(String.format(
+                            "nil pointer evaluating %s at '%s'", fullPath, identifier));
                 }
                 return null;
             }
@@ -384,7 +396,8 @@ public class Executor {
             currentData = unwrapOptional(currentData);
             if (currentData == null) {
                 if (missingKeyPolicy == MissingKeyPolicy.ERROR) {
-                    throw new TemplateExecutionException(String.format("missing value for field-chain segment '%s'", identifier));
+                    throw new TemplateExecutionException(String.format(
+                            "nil pointer evaluating %s at '%s'", fullPath, identifier));
                 }
                 return null;
             }
@@ -417,7 +430,7 @@ public class Executor {
                     found = true;
                 } catch (IllegalAccessException | InvocationTargetException e) {
                     throw new TemplateExecutionException(String.format(
-                            "can't get value '%s' from data", identifier), e);
+                            "can't evaluate field %s", fullPath), e);
                 }
             }
 
@@ -440,7 +453,7 @@ public class Executor {
                             break;
                         } catch (IllegalAccessException | InvocationTargetException e) {
                             throw new TemplateExecutionException(String.format(
-                                    "can't get value '%s' from data", identifier), e);
+                                    "can't evaluate field %s", fullPath), e);
                         }
                     }
                 }
@@ -456,7 +469,7 @@ public class Executor {
                         found = true;
                     } catch (IllegalAccessException | InvocationTargetException e) {
                         throw new TemplateExecutionException(String.format(
-                                "can't invoke method '%s' from data", identifier), e);
+                                "can't evaluate field %s", fullPath), e);
                     }
                 }
             }
@@ -471,7 +484,7 @@ public class Executor {
                     }
                 } catch (IllegalAccessException e) {
                     throw new TemplateExecutionException(String.format(
-                            "can't access field '%s' from data", identifier), e);
+                            "can't evaluate field %s", fullPath), e);
                 }
             }
             
@@ -487,13 +500,14 @@ public class Executor {
                         }
                     } catch (IllegalAccessException e) {
                         throw new TemplateExecutionException(String.format(
-                                "can't access field '%s' from data", identifier), e);
+                                "can't evaluate field %s", fullPath), e);
                     }
                 }
             }
 
             if (!found) {
-                throw new TemplateExecutionException(String.format("can't get value '%s' from data", identifier));
+                throw new TemplateExecutionException(String.format(
+                        "can't evaluate field %s", fullPath));
             }
 
             // Update currentData and beanInfo for next iteration

@@ -90,7 +90,7 @@ class MissingKeyPolicyTest {
         TemplateExecutionException exception = assertThrows(TemplateExecutionException.class,
                 () -> template.execute(new StringWriter(), TemplateTestSupport.data("User", null)));
 
-        assertTrue(exception.getMessage().contains("missing value for field-chain segment 'Name'"));
+        assertTrue(exception.getMessage().contains("nil pointer evaluating User.Name at 'Name'"));
     }
 
     @Test

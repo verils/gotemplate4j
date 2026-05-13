@@ -1,10 +1,10 @@
 # gotemplate4j Development Plan
 
-**Last Updated**: 2026-05-12  
-**Current Version**: 0.7.0  
-**Next Version**: 0.8.0 (future enhancements)  
-**Current Focus**: Planning v0.8.0 features and improvements  
-**Status**: v0.7.0 released ✅ - All stages complete
+**Last Updated**: 2026-05-13  
+**Current Version**: 0.8.0  
+**Next Version**: 0.9.0 (future enhancements)  
+**Current Focus**: v0.8.0 in progress - Error messages improved ✅  
+**Status**: v0.8.0 Stage 1 partially complete
 
 ---
 
@@ -21,6 +21,15 @@ gotemplate4j should remain a small, Java 8-compatible implementation of Go's `te
 - Keep Go-compatible behavior, Java-specific behavior, and unsupported Go APIs clearly separated.
 
 ## Current Progress
+
+### ✅ Completed (v0.8.0 - In Progress)
+
+- **@TemplateField Annotation Support**: Explicit field/method name control with annotation-based mapping
+- **Improved Error Messages**: Enhanced field-chain error reporting with full path context
+  - Shows complete path when segment fails (e.g., `nil pointer evaluating User.Address.City at 'City'`)
+  - Maintains backward compatibility with existing error format
+  - Added comprehensive tests for nested access error scenarios
+  - Test coverage: 7 new test cases covering various nesting levels
 
 ### ✅ Completed (v0.7.0)
 
@@ -198,10 +207,10 @@ Prepare for v0.8.0 release:
 
 ### Suggested Next Session Order
 
-**Current Position**: v0.7.0 released ✅, planning v0.8.0
+**Current Position**: v0.8.0 in progress - @TemplateField ✅, Error messages ✅
 
-1. Implement @TemplateField annotation support
-2. Improve error messages with full path context
+1. ~~Implement @TemplateField annotation support~~ ✅ DONE
+2. ~~Improve error messages with full path context~~ ✅ DONE
 3. Profile Optional unwrapping performance
 4. Add comprehensive annotation and naming convention tests
 5. Migrate TemplateBenchmark to JMH

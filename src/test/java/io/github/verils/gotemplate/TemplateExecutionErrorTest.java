@@ -29,7 +29,7 @@ class TemplateExecutionErrorTest {
         TemplateExecutionException exception = assertThrows(TemplateExecutionException.class,
                 () -> template.execute(new StringWriter(), TemplateTestSupport.data("User", Optional.empty())));
 
-        assertTrue(exception.getMessage().contains("missing value for field-chain segment 'Name'"));
+        assertTrue(exception.getMessage().contains("nil pointer evaluating User.Name at 'Name'"));
     }
 
     @Test
@@ -40,7 +40,7 @@ class TemplateExecutionErrorTest {
         TemplateExecutionException exception = assertThrows(TemplateExecutionException.class,
                 () -> template.execute(new StringWriter(), new SimpleBean("Bob")));
 
-        assertTrue(exception.getMessage().contains("can't get value 'Missing' from data"));
+        assertTrue(exception.getMessage().contains("can't evaluate field Missing"));
     }
 
     @Test
@@ -54,6 +54,45 @@ class TemplateExecutionErrorTest {
         assertTrue(exception.getMessage().contains("template missing not defined"));
     }
 
+    @Test
+    void nestedFieldAccessShowsFullPathOnError() throws TemplateException {
+        Template template = new Template("test").withMissingKeyPolicy(MissingKeyPolicy.ERROR);
+        template.parse("{{.User.Address.City}}");
+
+        // User exists but Address is null
+        TemplateExecutionException exception = assertThrows(TemplateExecutionException.class,
+                () -> template.execute(new StringWriter(), 
+                    TemplateTestSupport.data("User", new AddressHolder(null))));
+
+        assertTrue(exception.getMessage().contains("nil pointer evaluating User.Address.City at 'City'"));
+    }
+
+    @Test
+    void deepNestedFieldAccessShowsFullPathOnError() throws TemplateException {
+        Template template = new Template("test").withMissingKeyPolicy(MissingKeyPolicy.ERROR);
+        template.parse("{{.User.Address.Street.Number}}");
+
+        // User and Address exist but Street is null
+        TemplateExecutionException exception = assertThrows(TemplateExecutionException.class,
+                () -> template.execute(new StringWriter(), 
+                    TemplateTestSupport.data("User", new AddressHolder(new StreetHolder(null)))));
+
+        assertTrue(exception.getMessage().contains("nil pointer evaluating User.Address.Street.Number at 'Number'"));
+    }
+
+    @Test
+    void missingFieldInNestedPathShowsFullPath() throws TemplateException {
+        Template template = new Template("test");
+        template.parse("{{.User.Profile.Bio}}");
+
+        // User exists but Profile doesn't have Bio field
+        TemplateExecutionException exception = assertThrows(TemplateExecutionException.class,
+                () -> template.execute(new StringWriter(), 
+                    TemplateTestSupport.data("User", new ProfileHolder())));
+
+        assertTrue(exception.getMessage().contains("can't evaluate field User.Profile.Bio"));
+    }
+
     public static class SimpleBean {
         private final String name;
 
@@ -63,6 +102,48 @@ class TemplateExecutionErrorTest {
 
         public String getName() {
             return name;
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class AddressHolder {
+        private final Object address;
+
+        AddressHolder(Object address) {
+            this.address = address;
+        }
+
+        public Object getAddress() {
+            return address;
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class StreetHolder {
+        private final Object street;
+
+        StreetHolder(Object street) {
+            this.street = street;
+        }
+
+        public Object getStreet() {
+            return street;
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class ProfileHolder {
+        private final Profile profile = new Profile();
+
+        public Profile getProfile() {
+            return profile;
+        }
+    }
+
+    public static class Profile {
+        // Intentionally missing 'bio' field to test error message
+        public String getName() {
+            return "Test Profile";
         }
     }
 }
