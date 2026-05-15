@@ -24,9 +24,9 @@ public class Functions {
         BUILTIN.put("urlquery", urlquery());
 
         // Logical operations
-        BUILTIN.put("and", and());
-        BUILTIN.put("or", or());
-        BUILTIN.put("not", not());
+        BUILTIN.put("and", Functions::and);
+        BUILTIN.put("or", Functions::or);
+        BUILTIN.put("not", Functions::not);
 
         // Comparisons
         BUILTIN.put("eq", eq());
@@ -40,7 +40,7 @@ public class Functions {
         BUILTIN.put("deepEqual", deepEqual());
         BUILTIN.put("typeof", typeof());
         BUILTIN.put("kindOf", kindOf());
-        
+
         // Null-safety functions (Phase 2.2.4)
         BUILTIN.put("default", defaultValue());
     }
@@ -83,10 +83,6 @@ public class Functions {
             stringBuilder.append("\n");
             return stringBuilder.toString();
         };
-    }
-
-    private static Function not() {
-        return args -> !isTruthy(args[0]);
     }
 
     // Comparison operators
@@ -158,26 +154,35 @@ public class Functions {
     }
 
     // Logical operators
-    private static Function and() {
-        return args -> {
-            for (Object arg : args) {
-                if (!isTruthy(arg)) {
-                    return arg;
-                }
-            }
-            return args.length > 0 ? args[args.length - 1] : null;
-        };
+
+    /**
+     * Short-circuit AND function.
+     * This method is never actually invoked because short-circuit evaluation
+     * is handled directly in Executor#executeShortCircuitFunction.
+     * It exists only as a placeholder for function registration.
+     */
+    private static Object and(Object[] args) {
+        throw new UnsupportedOperationException("Not implemented");
     }
 
-    private static Function or() {
-        return args -> {
-            for (Object arg : args) {
-                if (isTruthy(arg)) {
-                    return arg;
-                }
-            }
-            return args.length > 0 ? args[args.length - 1] : null;
-        };
+    /**
+     * Short-circuit OR function.
+     * This method is never actually invoked because short-circuit evaluation
+     * is handled directly in Executor#executeShortCircuitFunction.
+     * It exists only as a placeholder for function registration.
+     */
+    private static Object or(Object[] args) {
+        throw new UnsupportedOperationException("Not implemented");
+    }
+
+    /**
+     * Logical NOT operation.
+     *
+     * @param args array containing a single argument to negate
+     * @return true if the argument is falsy, false otherwise
+     */
+    private static boolean not(Object[] args) {
+        return isFalsy(args[0]);
     }
 
     // Collection functions
@@ -215,12 +220,12 @@ public class Functions {
             if (collection == null) {
                 return null;
             }
-            
+
             if (collection instanceof Map) {
                 Map<?, ?> map = (Map<?, ?>) collection;
                 return map.get(args[1]);
             }
-            
+
             if (collection.getClass().isArray()) {
                 int index = toInt(args[1]);
                 int arrayLength = Array.getLength(collection);
@@ -229,7 +234,7 @@ public class Functions {
                 }
                 return null;
             }
-            
+
             if (collection instanceof String) {
                 String str = (String) collection;
                 int index = toInt(args[1]);
@@ -238,7 +243,7 @@ public class Functions {
                 }
                 return "";
             }
-            
+
             throw new IllegalArgumentException("index: invalid type " + collection.getClass().getName());
         };
     }
@@ -251,7 +256,7 @@ public class Functions {
             Object collection = args[0];
             int start = toInt(args[1]);
             int end = toInt(args[2]);
-            
+
             if (collection instanceof String) {
                 String str = (String) collection;
                 if (start < 0) start = 0;
@@ -259,7 +264,7 @@ public class Functions {
                 if (start >= end) return "";
                 return str.substring(start, end);
             }
-            
+
             if (collection.getClass().isArray()) {
                 int arrayLength = Array.getLength(collection);
                 if (start < 0) start = 0;
@@ -272,7 +277,7 @@ public class Functions {
                 System.arraycopy(collection, start, newArray, 0, length);
                 return newArray;
             }
-            
+
             throw new IllegalArgumentException("slice: invalid type " + collection.getClass().getName());
         };
     }
@@ -381,20 +386,34 @@ public class Functions {
         return a.equals(b);
     }
 
-    private static boolean isTruthy(Object obj) {
+    /**
+     * Determines if a value is falsy according to Go template semantics.
+     * <p>
+     * Falsy values include:
+     * <ul>
+     *   <li>null</li>
+     *   <li>false (Boolean)</li>
+     *   <li>0 or 0.0 (Number)</li>
+     *   <li>empty string (String)</li>
+     * </ul>
+     *
+     * @param obj the object to check
+     * @return true if the value is falsy, false otherwise
+     */
+    private static boolean isFalsy(Object obj) {
         if (obj == null) {
-            return false;
+            return true;
         }
         if (obj instanceof Boolean) {
-            return (Boolean) obj;
+            return !(Boolean) obj;
         }
         if (obj instanceof Number) {
-            return ((Number) obj).doubleValue() != 0;
+            return ((Number) obj).doubleValue() == 0;
         }
         if (obj instanceof String) {
-            return !((String) obj).isEmpty();
+            return ((String) obj).isEmpty();
         }
-        return true;
+        return false;
     }
 
     private static boolean compare(Object[] args, int expectedSign) {
@@ -405,7 +424,7 @@ public class Functions {
         if (args.length < 2) {
             return false;
         }
-        
+
         for (int i = 0; i < args.length - 1; i++) {
             int cmp = compareValues(args[i], args[i + 1]);
             if (reverseForGe) {
@@ -436,8 +455,8 @@ public class Functions {
         if (a instanceof String && b instanceof String) {
             return ((String) a).compareTo((String) b);
         }
-        throw new IllegalArgumentException("incompatible types for comparison: " + 
-            a.getClass().getName() + " and " + b.getClass().getName());
+        throw new IllegalArgumentException("incompatible types for comparison: " +
+                a.getClass().getName() + " and " + b.getClass().getName());
     }
 
     private static int toInt(Object obj) {
@@ -579,9 +598,9 @@ public class Functions {
             }
             Object value = args[0];
             Object defaultValue = args[1];
-            
+
             // Return default value if the first argument is null or falsy
-            if (value == null || !isTruthy(value)) {
+            if (isFalsy(value)) {
                 return defaultValue;
             }
             return value;
