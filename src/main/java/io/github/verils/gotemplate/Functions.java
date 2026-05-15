@@ -45,10 +45,6 @@ public class Functions {
         BUILTIN.put("default", defaultValue());
     }
 
-    private static Function noop() {
-        return args -> null;
-    }
-
     private static Function print() {
         return args -> {
             StringBuilder stringBuilder = new StringBuilder();
@@ -274,6 +270,7 @@ public class Functions {
                 }
                 int length = end - start;
                 Object newArray = Array.newInstance(collection.getClass().getComponentType(), length);
+                //noinspection SuspiciousSystemArraycopy
                 System.arraycopy(collection, start, newArray, 0, length);
                 return newArray;
             }
