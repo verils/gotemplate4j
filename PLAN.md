@@ -98,8 +98,18 @@ Improve test coverage, quality, and establish better testing infrastructure:
 - Verify Optional unwrapping in deep chains
 
 **Testing Infrastructure:**
-- Migrate TemplateBenchmark to JMH for accurate measurements
-- Establish baseline performance numbers
+- ✅ Migrate TemplateBenchmark to JMH for accurate measurements - COMPLETED
+  - Created TemplateJmhBenchmark with comprehensive benchmark scenarios
+  - Configured JMH dependencies and exec-maven-plugin in pom.xml
+  - Established baseline performance numbers (see results below)
+  - Baseline results (ops/sec):
+    * parseBenchmark: ~223,427 ops/sec
+    * executeBenchmark: ~987,607 ops/sec
+    * beanAccessBenchmark: ~961,966 ops/sec
+    * mapAccessBenchmark: ~2,290,887 ops/sec
+    * rangeHeavyBenchmark (100 items): ~25,141 ops/sec
+    * functionHeavyBenchmark: ~843,460 ops/sec
+  - Usage: `./mvnw test-compile exec:java "-Dexec.mainClass=io.github.verils.gotemplate.TemplateJmhBenchmark" "-Dexec.classpathScope=test"`
 - Add mutation testing to verify test quality
 - Consider adding property-based testing for edge cases
 
