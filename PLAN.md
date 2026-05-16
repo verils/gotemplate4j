@@ -1,11 +1,11 @@
 # gotemplate4j Development Plan
 
-**Last Updated**: 2026-05-15  
+**Last Updated**: 2026-05-16  
 **Current Version**: 0.8.0  
 **Next Version**: 0.9.0 (future enhancements)  
 **Future Major Release**: 0.10.0 (Java 11 upgrade planned)  
-**Current Focus**: v0.8.0 Stage 2 (Quality & Testing) nearly complete  
-**Status**: v0.8.0 Stage 1 complete ✅, Stage 2 mostly complete (JMH ✅, Optional deep chains ✅)
+**Current Focus**: v0.8.0 Stage 2 (Quality & Testing) complete  
+**Status**: v0.8.0 Stage 1 complete ✅, Stage 2 complete ✅ (JMH ✅, Optional deep chains ✅, Input validation ✅)
 
 ---
 
@@ -213,7 +213,7 @@ Prepare for v0.8.0 release:
 
 ### Suggested Next Session Order
 
-**Current Position**: v0.8.0 Stage 1 complete ✅, Stage 2 in progress
+**Current Position**: v0.8.0 Stage 1 complete ✅, Stage 2 complete ✅
 
 **Completed:**
 1. ~~Implement @TemplateField annotation support~~ ✅ DONE
@@ -223,11 +223,14 @@ Prepare for v0.8.0 release:
 5. ~~Verify Optional unwrapping in deep chains~~ ✅ DONE
 
 **Next Priorities (Stage 2 - Quality & Testing):**
-6. Maintain test coverage quality
-   - Current: 763 tests, all passing
-   - Add tests for critical error paths as discovered
-   - Focus on meaningful test scenarios over coverage metrics
-7. Review deprecated APIs and strengthen input validation
+6. ~~Maintain test coverage quality~~ ✅ DONE
+   - Current: 778 tests, all passing (~92% instruction, ~89% branch)
+   - Coverage thresholds met (90%/85%)
+7. ~~Review deprecated APIs and strengthen input validation~~ ✅ DONE
+   - No deprecated APIs found
+   - Added comprehensive constructor parameter validation
+   - Validates template name, delimiters, and comment delimiters
+   - Added 15 new tests for input validation scenarios
 
 **Future (Stage 3-4 - Performance & Features):**
 8. Profile Optional unwrapping performance using JMH benchmarks

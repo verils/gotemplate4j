@@ -171,6 +171,27 @@ public class Template {
      */
     public Template(String name, Map<String, Function> functions, String leftDelimiter, String rightDelimiter,
                     String leftComment, String rightComment) {
+        // Validate required parameters
+        if (name == null || name.isEmpty()) {
+            throw new IllegalArgumentException("Template name cannot be null or empty");
+        }
+        
+        // Validate delimiters
+        if (leftDelimiter != null && leftDelimiter.isEmpty()) {
+            throw new IllegalArgumentException("Left delimiter cannot be empty");
+        }
+        if (rightDelimiter != null && rightDelimiter.isEmpty()) {
+            throw new IllegalArgumentException("Right delimiter cannot be empty");
+        }
+        
+        // Validate comment delimiters
+        if (leftComment != null && leftComment.isEmpty()) {
+            throw new IllegalArgumentException("Left comment delimiter cannot be empty");
+        }
+        if (rightComment != null && rightComment.isEmpty()) {
+            throw new IllegalArgumentException("Right comment delimiter cannot be empty");
+        }
+        
         this.name = name;
         this.customFunctions = functions != null ? new LinkedHashMap<>(functions) : Collections.emptyMap();
         this.functions = Stream.concat(Functions.BUILTIN.entrySet().stream(), this.customFunctions.entrySet().stream())
