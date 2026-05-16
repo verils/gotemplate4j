@@ -1,11 +1,11 @@
 # gotemplate4j Development Plan
 
-**Last Updated**: 2026-05-13  
+**Last Updated**: 2026-05-15  
 **Current Version**: 0.8.0  
 **Next Version**: 0.9.0 (future enhancements)  
 **Future Major Release**: 0.10.0 (Java 11 upgrade planned)  
-**Current Focus**: v0.8.0 Stage 2 (Quality & Testing) in progress  
-**Status**: v0.8.0 Stage 1 complete ✅, Stage 2 in progress
+**Current Focus**: v0.8.0 Stage 2 (Quality & Testing) nearly complete  
+**Status**: v0.8.0 Stage 1 complete ✅, Stage 2 mostly complete (JMH ✅, Optional deep chains ✅)
 
 ---
 
@@ -100,21 +100,28 @@ Improve test coverage, quality, and establish better testing infrastructure:
 **Testing Infrastructure:**
 - ✅ Migrate TemplateBenchmark to JMH for accurate measurements - COMPLETED
   - Created TemplateJmhBenchmark with comprehensive benchmark scenarios
-  - Configured JMH dependencies and exec-maven-plugin in pom.xml
-  - Established baseline performance numbers (see results below)
-  - Baseline results (ops/sec):
-    * parseBenchmark: ~223,427 ops/sec
-    * executeBenchmark: ~987,607 ops/sec
-    * beanAccessBenchmark: ~961,966 ops/sec
-    * mapAccessBenchmark: ~2,290,887 ops/sec
-    * rangeHeavyBenchmark (100 items): ~25,141 ops/sec
-    * functionHeavyBenchmark: ~843,460 ops/sec
-  - Usage: `./mvnw test-compile exec:java "-Dexec.mainClass=io.github.verils.gotemplate.TemplateJmhBenchmark" "-Dexec.classpathScope=test"`
-- Add mutation testing to verify test quality
-- Consider adding property-based testing for edge cases
+  - Configured JMH dependencies (jmh-core 1.37, jmh-generator-annprocess 1.37)
+  - Configured exec-maven-plugin for easy benchmark execution
+  - Established baseline performance numbers (ops/sec):
+    * parseBenchmark: ~223,427
+    * executeBenchmark: ~987,607
+    * beanAccessBenchmark: ~961,966
+    * mapAccessBenchmark: ~2,290,887
+    * rangeHeavyBenchmark (100 items): ~25,141
+    * functionHeavyBenchmark: ~843,460
+  - Benchmark configuration: 3 warmup iterations (2s), 5 measurement iterations (3s)
+  - Usage: `./mvnw test-compile exec:java -Dexec.mainClass="io.github.verils.gotemplate.TemplateJmhBenchmark"`
+- ✅ Verify Optional unwrapping in deep chains - COMPLETED
+  - Added 6 comprehensive tests for nested Optional scenarios
+  - Verified proper unwrapping at multiple levels (User -> Optional<Address> -> Optional<City>)
+  - Tested empty Optional handling at different chain positions
+  - Validated three-level Optional nesting (Optional<String> inside Optional<City> inside Optional<Address>)
+  - All 763 tests pass including new deep chain scenarios
+- Add mutation testing to verify test quality (deferred)
+- Consider adding property-based testing for edge cases (deferred)
 
 **Static Analysis:**
-- Integrate SpotBugs or PMD for code quality checks
+- Integrate SpotBugs or PMD for code quality checks (deferred - requires external dependencies)
 - Review deprecated APIs and magic strings
 - Strengthen input validation boundaries
 - Add code quality gates to CI/CD pipeline
@@ -211,25 +218,29 @@ Prepare for v0.8.0 release:
 **Completed:**
 1. ~~Implement @TemplateField annotation support~~ ✅ DONE
 2. ~~Improve error messages with full path context~~ ✅ DONE
+3. ~~Migrate TemplateBenchmark to JMH~~ ✅ DONE
+4. ~~Establish baseline performance numbers~~ ✅ DONE
+5. ~~Verify Optional unwrapping in deep chains~~ ✅ DONE
 
 **Next Priorities (Stage 2 - Quality & Testing):**
-3. Maintain test coverage quality ⭐ HIGH PRIORITY
+6. Maintain test coverage quality
+   - Current: 763 tests, all passing
    - Add tests for critical error paths as discovered
    - Focus on meaningful test scenarios over coverage metrics
-   - Verify Optional unwrapping in deep chains
-4. Add comprehensive annotation and naming convention tests
-5. Migrate TemplateBenchmark to JMH
-6. Establish baseline performance numbers
-7. Integrate SpotBugs/PMD static analysis
+7. Review deprecated APIs and strengthen input validation
 
 **Future (Stage 3-4 - Performance & Features):**
-8. Profile Optional unwrapping performance (after JMH setup)
-9. Profile and optimize hot paths
+8. Profile Optional unwrapping performance using JMH benchmarks
+9. Profile and optimize hot paths in Executor
 10. Consider reflection caching strategies
-11. Add mutation testing
-12. Evaluate method invocation with arguments (security analysis)
-13. Update documentation with new features
-14. Final review and verification
+11. Evaluate method invocation with arguments (security analysis)
+12. Update documentation with new features
+13. Final review and verification
+
+**Deferred (Low Priority):**
+- Add mutation testing (PITest)
+- Add property-based testing
+- Integrate SpotBugs/PMD static analysis
 
 ## Maintenance Rules
 
