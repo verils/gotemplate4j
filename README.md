@@ -1,7 +1,6 @@
 # Golang Template Engine for Java
 
-[![Testing](https://github.com/verils/gotemplate4j/actions/workflows/maven.yml/badge.svg)](https://github.com/verils/gotemplate4j/actions/workflows/maven.yml)
-
+[![Test and Verify](https://github.com/verils/gotemplate4j/actions/workflows/test.yml/badge.svg)](https://github.com/verils/gotemplate4j/actions/workflows/test.yml)
 [中文文档](./README_zh.md)
 
 A Go template engine implementation for Java that evaluates Go templates and generates textual output.
