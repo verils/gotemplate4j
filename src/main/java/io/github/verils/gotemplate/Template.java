@@ -7,10 +7,7 @@ import io.github.verils.gotemplate.internal.ast.ListNode;
 import io.github.verils.gotemplate.internal.ast.Node;
 import io.github.verils.gotemplate.internal.ast.TextNode;
 
-import java.beans.BeanInfo;
-import java.beans.PropertyDescriptor;
 import java.io.*;
-import java.lang.reflect.AccessibleObject;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.util.*;
@@ -80,18 +77,9 @@ public class Template {
 
     private boolean mapKeySorting; // Whether to sort map keys during iteration
     
-    // Cache for BeanInfo to avoid repeated introspection within this template's lifecycle
-    // This cache is instance-level, so it gets GC'd when the Template is GC'd
-    private final Map<Class<?>, BeanInfo> beanInfoCache = new ConcurrentHashMap<>();
-    
-    // Cache for annotated field/method names: Class -> (templateName -> AccessibleObject)
-    // Instance-level to prevent memory leaks
-    private final Map<Class<?>, Map<String, AccessibleObject>> annotationCache = new ConcurrentHashMap<>();
-    
-    // Cache for PropertyDescriptor indexing: Class -> (name -> PropertyDescriptor)
-    // Provides O(1) lookup instead of linear search through PropertyDescriptor array
-    // Instance-level to prevent memory leaks and share Template lifecycle
-    private final Map<Class<?>, Map<String, PropertyDescriptor>> propertyDescriptorCache = new ConcurrentHashMap<>();
+    // Unified ClassMetadata cache: replaces beanInfoCache, annotationCache, and propertyDescriptorCache
+    // This cache is instance-level, so it gets GC'd when the Template is GC'd (no memory leak)
+    private final Map<Class<?>, io.github.verils.gotemplate.internal.ClassMetadata> classMetadataCache = new ConcurrentHashMap<>();
 
     /**
      * Creates a new template with the specified name.
@@ -678,8 +666,7 @@ public class Template {
             throw new TemplateNotFoundException(String.format("Template '%s' not found.", name));
         }
 
-        Executor executor = new Executor(nodes, functions, missingKeyPolicy, mapKeySorting, 
-                beanInfoCache, annotationCache, propertyDescriptorCache);
+        Executor executor = new Executor(nodes, functions, missingKeyPolicy, mapKeySorting, classMetadataCache);
         executor.execute(name, data, writer);
     }
 

@@ -5,13 +5,12 @@ import io.github.verils.gotemplate.internal.ast.*;
 import io.github.verils.gotemplate.internal.lang.StringEscapeUtils;
 
 import java.beans.BeanInfo;
-import java.beans.IntrospectionException;
-import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
 import java.io.IOException;
 import java.io.Writer;
 import java.lang.reflect.*;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class Executor {
 
@@ -22,54 +21,39 @@ public class Executor {
     private final MissingKeyPolicy missingKeyPolicy;
     private final boolean mapKeySorting;
     
-    // Instance-level cache for BeanInfo to avoid repeated introspection
-    // This cache is passed from Template and shares its lifecycle
-    private final Map<Class<?>, BeanInfo> beanInfoCache;
-    
-    // Instance-level cache for annotated field/method names
-    // This cache is passed from Template and shares its lifecycle
-    private final Map<Class<?>, Map<String, AccessibleObject>> annotationCache;
-    
-    // Instance-level cache for PropertyDescriptor indexing: Class -> (name -> PropertyDescriptor)
-    // Provides O(1) lookup instead of linear search through PropertyDescriptor array
-    // This cache is passed from Template and shares its lifecycle
-    private final Map<Class<?>, Map<String, PropertyDescriptor>> propertyDescriptorCache;
+    // Unified ClassMetadata cache: replaces beanInfoCache, annotationCache, and propertyDescriptorCache
+    // This cache is passed from Template and shares its lifecycle (instance-level, no memory leak)
+    private final Map<Class<?>, ClassMetadata> classMetadataCache;
 
     public Executor(Map<String, Node> rootNodes, Map<String, Function> functions) {
-        this(rootNodes, functions, MissingKeyPolicy.INVALID, true, null, null, null);
+        this(rootNodes, functions, MissingKeyPolicy.INVALID, true, null);
     }
 
     public Executor(Map<String, Node> rootNodes, Map<String, Function> functions, MissingKeyPolicy missingKeyPolicy) {
-        this(rootNodes, functions, missingKeyPolicy, true, null, null, null);
+        this(rootNodes, functions, missingKeyPolicy, true, null);
     }
 
     public Executor(Map<String, Node> rootNodes, Map<String, Function> functions, MissingKeyPolicy missingKeyPolicy, boolean mapKeySorting) {
-        this(rootNodes, functions, missingKeyPolicy, mapKeySorting, null, null, null);
+        this(rootNodes, functions, missingKeyPolicy, mapKeySorting, null);
     }
     
     /**
-     * Constructor with BeanInfo cache for performance optimization.
+     * Constructor with ClassMetadata cache for performance optimization.
      *
      * @param rootNodes      The parsed template nodes
      * @param functions      Available functions
      * @param missingKeyPolicy Policy for handling missing keys
      * @param mapKeySorting  Whether to sort map keys during iteration
-     * @param beanInfoCache  Shared BeanInfo cache (instance-level, from Template)
-     * @param annotationCache Shared annotation cache (instance-level, from Template)
-     * @param propertyDescriptorCache Shared PropertyDescriptor index cache (instance-level, from Template)
+     * @param classMetadataCache Shared ClassMetadata cache (instance-level, from Template)
      */
     public Executor(Map<String, Node> rootNodes, Map<String, Function> functions, 
                     MissingKeyPolicy missingKeyPolicy, boolean mapKeySorting,
-                    Map<Class<?>, BeanInfo> beanInfoCache,
-                    Map<Class<?>, Map<String, AccessibleObject>> annotationCache,
-                    Map<Class<?>, Map<String, PropertyDescriptor>> propertyDescriptorCache) {
+                    Map<Class<?>, ClassMetadata> classMetadataCache) {
         this.rootNodes = rootNodes;
         this.functions = functions;
         this.missingKeyPolicy = missingKeyPolicy != null ? missingKeyPolicy : MissingKeyPolicy.INVALID;
         this.mapKeySorting = mapKeySorting;
-        this.beanInfoCache = beanInfoCache != null ? beanInfoCache : new HashMap<>();
-        this.annotationCache = annotationCache != null ? annotationCache : new HashMap<>();
-        this.propertyDescriptorCache = propertyDescriptorCache != null ? propertyDescriptorCache : new HashMap<>();
+        this.classMetadataCache = classMetadataCache != null ? classMetadataCache : new ConcurrentHashMap<>();
     }
 
     public void execute(String name, Object data, Writer writer) throws IOException,
@@ -444,84 +428,23 @@ public class Executor {
                 continue;
             }
 
-            BeanInfo currentBeanInfo = getBeanInfo(currentData);
-
-            // First, try to find by @TemplateField annotation
+            // Get ClassMetadata for fast access
+            Class<?> clazz = currentData.getClass();
+            ClassMetadata classMetadata = classMetadataCache.computeIfAbsent(clazz, ClassMetadata::new);
+            
             Object value = null;
             boolean found = false;
-            
-            // Priority 1: Check @TemplateField annotations
-            AccessibleObject annotatedMember = findAnnotatedMember(currentData.getClass(), identifier);
-            if (annotatedMember != null) {
-                try {
-                    if (annotatedMember instanceof Field) {
-                        value = unwrapOptional(((Field) annotatedMember).get(currentData));
-                    } else if (annotatedMember instanceof Method) {
-                        value = unwrapOptional(((Method) annotatedMember).invoke(currentData));
-                    }
-                    found = true;
-                } catch (IllegalAccessException | InvocationTargetException e) {
-                    throw new TemplateExecutionException(String.format(
-                            "can't evaluate field %s", fullPath), e);
-                }
-            }
 
-            // Priority 2: Try getter methods using PropertyDescriptor index cache (O(1) lookup)
-            if (!found) {
-                // Try indexed lookup first for performance
-                PropertyDescriptor pd = findPropertyDescriptor(currentData.getClass(), identifier);
-                if (pd != null) {
-                    Method readMethod = pd.getReadMethod();
-                    if (readMethod != null) {
-                        try {
-                            value = unwrapOptional(readMethod.invoke(currentData));
-                            found = true;
-                        } catch (IllegalArgumentException e) {
-                            // "object is not an instance of declaring class" - method from incompatible class
-                            // Fall through to linear search or other methods
-                        } catch (IllegalAccessException | InvocationTargetException e) {
-                            throw new TemplateExecutionException(String.format(
-                                    "can't evaluate field %s", fullPath), e);
-                        }
-                    }
-                }
-                
-                // Fallback to linear search if index didn't find it (for compatibility)
-                if (!found) {
-                    PropertyDescriptor[] propertyDescriptors = currentBeanInfo.getPropertyDescriptors();
-                    for (PropertyDescriptor propertyDescriptor : propertyDescriptors) {
-                        String propertyDescriptorName = propertyDescriptor.getName();
-                        if ("class".equals(propertyDescriptorName)) {
-                            continue;
-                        }
-
-                        String goStyleName = toGoStylePropertyName(propertyDescriptorName);
-                        if (identifier.equals(propertyDescriptorName) || identifier.equals(goStyleName)) {
-                            Method readMethod = propertyDescriptor.getReadMethod();
-                            if (readMethod != null) {
-                                try {
-                                    value = unwrapOptional(readMethod.invoke(currentData));
-                                    found = true;
-                                    break;
-                                } catch (IllegalArgumentException e) {
-                                    // "object is not an instance of declaring class" - skip this descriptor
-                                } catch (IllegalAccessException | InvocationTargetException e) {
-                                    throw new TemplateExecutionException(String.format(
-                                            "can't evaluate field %s", fullPath), e);
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
-            // Go permits no-arg method access in chains. In Java, only public no-arg methods
-            // are exposed this way; methods with arguments remain unsupported.
-            if (!found) {
-                Method method = findNoArgMethod(currentData.getClass(), identifier);
-                if (method != null) {
+            // Priority 1: Check @TemplateField annotations (fast-fail if no annotated members)
+            if (classMetadata.hasAnnotatedMembers()) {
+                AccessibleObject annotatedMember = classMetadata.getAnnotatedMembers().get(identifier);
+                if (annotatedMember != null) {
                     try {
-                        value = unwrapOptional(method.invoke(currentData));
+                        if (annotatedMember instanceof Field) {
+                            value = unwrapOptional(((Field) annotatedMember).get(currentData));
+                        } else if (annotatedMember instanceof Method) {
+                            value = unwrapOptional(((Method) annotatedMember).invoke(currentData));
+                        }
                         found = true;
                     } catch (IllegalAccessException | InvocationTargetException e) {
                         throw new TemplateExecutionException(String.format(
@@ -530,14 +453,50 @@ public class Executor {
                 }
             }
 
-            // If no getter found, try public fields
-            if (!found) {
-                try {
-                    Field field = findField(currentData.getClass(), identifier);
-                    if (field != null) {
-                        value = unwrapOptional(field.get(currentData));
-                        found = true;
+            // Priority 2: Try PropertyDescriptor index (fast-fail if no property descriptors)
+            if (!found && classMetadata.hasPropertyDescriptors()) {
+                PropertyDescriptor pd = classMetadata.getPropertyIndex().get(identifier);
+                if (pd != null) {
+                    Method readMethod = pd.getReadMethod();
+                    if (readMethod != null) {
+                        try {
+                            value = unwrapOptional(readMethod.invoke(currentData));
+                            found = true;
+                        } catch (IllegalArgumentException e) {
+                            // "object is not an instance of declaring class" - method from incompatible class
+                            // Fall through to other methods
+                        } catch (IllegalAccessException | InvocationTargetException e) {
+                            throw new TemplateExecutionException(String.format(
+                                    "can't evaluate field %s", fullPath), e);
+                        }
                     }
+                }
+            }
+
+            // Go permits no-arg method access in chains. In Java, only public no-arg methods
+            // are exposed this way; methods with arguments remain unsupported.
+            // Fast-fail if no public methods
+            if (!found && classMetadata.hasPublicMethods() && classMetadata.getPublicMethodNames().contains(identifier)) {
+                try {
+                    Method method = clazz.getMethod(identifier);
+                    value = unwrapOptional(method.invoke(currentData));
+                    found = true;
+                } catch (NoSuchMethodException e) {
+                    // Should not happen since we checked publicMethodNames, but be safe
+                } catch (IllegalAccessException | InvocationTargetException e) {
+                    throw new TemplateExecutionException(String.format(
+                            "can't evaluate field %s", fullPath), e);
+                }
+            }
+
+            // If no getter found, try public fields (fast-fail if no public fields)
+            if (!found && classMetadata.hasPublicFields() && classMetadata.getPublicFieldNames().contains(identifier)) {
+                try {
+                    Field field = clazz.getField(identifier);
+                    value = unwrapOptional(field.get(currentData));
+                    found = true;
+                } catch (NoSuchFieldException e) {
+                    // Should not happen since we checked publicFieldNames, but be safe
                 } catch (IllegalAccessException e) {
                     throw new TemplateExecutionException(String.format(
                             "can't evaluate field %s", fullPath), e);
@@ -547,13 +506,13 @@ public class Executor {
             // If still not found, try Go-style capitalization for public fields
             if (!found) {
                 String goStyleName = toGoStylePropertyName(identifier);
-                if (!goStyleName.equals(identifier)) {
+                if (!goStyleName.equals(identifier) && classMetadata.hasPublicFields() && classMetadata.getPublicFieldNames().contains(goStyleName)) {
                     try {
-                        Field field = findField(currentData.getClass(), goStyleName);
-                        if (field != null) {
-                            value = unwrapOptional(field.get(currentData));
-                            found = true;
-                        }
+                        Field field = clazz.getField(goStyleName);
+                        value = unwrapOptional(field.get(currentData));
+                        found = true;
+                    } catch (NoSuchFieldException e) {
+                        // Should not happen since we checked publicFieldNames, but be safe
                     } catch (IllegalAccessException e) {
                         throw new TemplateExecutionException(String.format(
                                 "can't evaluate field %s", fullPath), e);
@@ -566,7 +525,7 @@ public class Executor {
                         "can't evaluate field %s", fullPath));
             }
 
-            // Update currentData and beanInfo for next iteration
+            // Update currentData for next iteration
             currentData = value;
         }
 
@@ -585,34 +544,6 @@ public class Executor {
             return optional.orElse(null);
         }
         return obj;
-    }
-
-    /**
-     * Find a field by name in the class hierarchy
-     *
-     * @param clazz     The class to search
-     * @param fieldName The field name to find
-     * @return The Field object if found, null otherwise
-     */
-    private Field findField(Class<?> clazz, String fieldName) {
-        try {
-            Field field = clazz.getField(fieldName);
-            return Modifier.isPublic(field.getModifiers()) ? field : null;
-        } catch (NoSuchFieldException e) {
-            return null;
-        }
-    }
-
-    private Method findNoArgMethod(Class<?> clazz, String methodName) {
-        for (Method method : clazz.getMethods()) {
-            if (method.getParameterTypes().length == 0
-                    && Modifier.isPublic(method.getModifiers())
-                    && method.getName().equals(methodName)
-                    && !"getClass".equals(method.getName())) {
-                return method;
-            }
-        }
-        return null;
     }
 
     private Object executeVariable(VariableNode variableNode, Map<String, Object> variables) throws TemplateExecutionException {
@@ -807,9 +738,9 @@ public class Executor {
 
 
     /**
-     * Introspect the data object with instance-level caching.
+     * Introspect the data object with unified ClassMetadata caching.
      * <p>
-     * Performance note: BeanInfo is cached per Template instance to avoid repeated
+     * Performance note: BeanInfo is cached per Template instance via ClassMetadata to avoid repeated
      * introspection operations during template execution. The cache shares the lifecycle
      * of the Template, preventing memory leaks.
      *
@@ -818,74 +749,10 @@ public class Executor {
      */
     private BeanInfo getBeanInfo(Object data) {
         Class<?> type = data.getClass();
-        
-        // Use computeIfAbsent for thread-safe lazy initialization within this template's cache
-        return beanInfoCache.computeIfAbsent(type, clazz -> {
-            try {
-                return Introspector.getBeanInfo(clazz);
-            } catch (IntrospectionException e) {
-                throw new IllegalArgumentException(
-                    String.format("无法获取类型'%s'的Bean信息", clazz.getName()), e);
-            }
-        });
+        ClassMetadata classMetadata = classMetadataCache.computeIfAbsent(type, ClassMetadata::new);
+        return classMetadata.getBeanInfo();
     }
 
-
-    /**
-     * Find a member (field or method) annotated with @TemplateField matching the template name.
-     * Uses instance-level caching to avoid repeated reflection scans and prevent memory leaks.
-     *
-     * @param clazz        The class to search
-     * @param templateName The name used in the template
-     * @return The annotated Field or Method, or null if not found
-     */
-    private AccessibleObject findAnnotatedMember(Class<?> clazz, String templateName) {
-        // Check cache first
-        Map<String, AccessibleObject> classAnnotations = annotationCache.get(clazz);
-        if (classAnnotations == null) {
-            classAnnotations = buildAnnotationCache(clazz);
-            annotationCache.put(clazz, classAnnotations);
-        }
-        return classAnnotations.get(templateName);
-    }
-
-    /**
-     * Build annotation cache for a class by scanning fields and methods.
-     * Field annotations take precedence over method annotations.
-     *
-     * @param clazz The class to scan
-     * @return Map of template names to annotated members
-     */
-    private Map<String, AccessibleObject> buildAnnotationCache(Class<?> clazz) {
-        Map<String, AccessibleObject> cache = new HashMap<>();
-        
-        // Scan all classes in the hierarchy
-        Class<?> currentClass = clazz;
-        while (currentClass != null && currentClass != Object.class) {
-            // Scan fields first (fields take precedence)
-            // For annotated fields, we allow private access via reflection
-            for (Field field : currentClass.getDeclaredFields()) {
-                TemplateField annotation = field.getAnnotation(TemplateField.class);
-                if (annotation != null) {
-                    field.setAccessible(true);  // Allow access to private fields
-                    cache.putIfAbsent(annotation.value(), field);
-                }
-            }
-            
-            // Scan methods
-            for (Method method : currentClass.getDeclaredMethods()) {
-                TemplateField annotation = method.getAnnotation(TemplateField.class);
-                if (annotation != null && Modifier.isPublic(method.getModifiers()) 
-                        && method.getParameterTypes().length == 0) {
-                    cache.putIfAbsent(annotation.value(), method);
-                }
-            }
-            
-            currentClass = currentClass.getSuperclass();
-        }
-        
-        return cache;
-    }
 
     /**
      * Get go style property name
@@ -897,37 +764,6 @@ public class Executor {
         return Character.toUpperCase(propertyDescriptorName.charAt(0)) + propertyDescriptorName.substring(1);
     }
 
-    /**
-     * Find a PropertyDescriptor by name using indexed cache for O(1) lookup.
-     * <p>
-     * Performance note: This method builds a name-indexed cache per class on first access,
-     * converting linear search O(n) to constant time O(1) lookup. The cache is instance-level
-     * and shares the Template lifecycle to prevent memory leaks.
-     *
-     * @param clazz The class to search
-     * @param name  The property name to find (supports both original and Go-style names)
-     * @return The PropertyDescriptor if found, null otherwise
-     */
-    private PropertyDescriptor findPropertyDescriptor(Class<?> clazz, String name) {
-        // Use computeIfAbsent for thread-safe lazy initialization
-        Map<String, PropertyDescriptor> index = propertyDescriptorCache.computeIfAbsent(clazz, k -> {
-            Map<String, PropertyDescriptor> map = new HashMap<>();
-            BeanInfo info = getBeanInfo(k);
-            for (PropertyDescriptor pd : info.getPropertyDescriptors()) {
-                if ("class".equals(pd.getName())) continue;
-                
-                // Index by original name
-                map.put(pd.getName(), pd);
-                
-                // Also index by Go-style name (first letter capitalized)
-                String goStyle = toGoStylePropertyName(pd.getName());
-                map.putIfAbsent(goStyle, pd);
-            }
-            return map;
-        });
-        
-        return index.get(name);
-    }
 
 
     /**
@@ -1007,4 +843,5 @@ public class Executor {
     private static class ContinueException extends RuntimeException {
         private static final ContinueException INSTANCE = new ContinueException();
     }
+
 }
