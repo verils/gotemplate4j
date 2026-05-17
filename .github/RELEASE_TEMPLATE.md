@@ -61,4 +61,4 @@
 
 Thanks to all contributors and early adopters who helped shape this release!
 
-[View the full changelog](CHANGELOG.md) · [Report an issue](https://github.com/verils/gotemplate4j/issues)
+[View the full changelog](CHANGELOG) · [Report an issue](https://github.com/verils/gotemplate4j/issues)
