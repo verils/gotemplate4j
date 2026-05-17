@@ -45,7 +45,7 @@ Yes, gotemplate4j is stable and well-tested with 90%+ code coverage. However, it
 
 ### What is the current version and release cycle?
 
-Current version is **0.6.0**. The project follows semantic versioning. Check the [CHANGELOG](../CHANGELOG) for release history and upcoming features in v0.7.0.
+Current version is **0.8.0**. The project follows semantic versioning. Check the [CHANGELOG](../CHANGELOG) for release history.
 
 ---
 
@@ -59,7 +59,7 @@ Add this dependency to your `pom.xml`:
 <dependency>
     <groupId>io.github.verils</groupId>
     <artifactId>gotemplate4j</artifactId>
-    <version>0.6.0</version>
+    <version>0.8.0</version>
 </dependency>
 ```
 
@@ -68,7 +68,7 @@ Add this dependency to your `pom.xml`:
 Add this to your `build.gradle`:
 
 ```groovy
-implementation 'io.github.verils:gotemplate4j:0.6.0'
+implementation 'io.github.verils:gotemplate4j:0.8.0'
 ```
 
 ### Can I use gotemplate4j without a build tool?
