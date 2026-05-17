@@ -1,8 +1,14 @@
 # AI Agent Guidelines for gotemplate4j
 
-## Project Context
+## Project Overview
 - This is a Go template engine implementation for Java
 - Targets Java 8 compatibility with no external dependencies
+
+### File Structure Awareness
+- Main source: `src/main/java/io/github/verils/gotemplate/`
+- Test source: `src/test/java/io/github/verils/gotemplate/`
+- Templates: `src/test/resources/*.tmpl`
+- Core components: Lexer, Parser, Executor, AST nodes
 
 ## Development Environment
 - Java Version: 1.8 (Project targets Java 8 compatibility)
@@ -47,12 +53,20 @@
    - Create `.mvn/toolchains.xml` to specify JDK 8 for this project
    - This allows Maven to use Java 8 even when your system default is different
 
-## Code Style Guidelines
+## Code & Quality Standards
+
+### Code Style Guidelines
 - Follow standard Java naming conventions (camelCase for variables/methods, PascalCase for classes)
 - Use UTF-8 encoding for all files
 - Keep methods concise and focused on single responsibility
 - Add Javadoc comments for public APIs
 - Use meaningful variable names that reflect purpose
+
+### Quality Standards
+- Maintain backward compatibility when possible
+- Follow existing error handling patterns (TemplateException hierarchy)
+- Preserve experimental nature warnings in documentation
+- Do not modify LICENSE or core project metadata without explicit request
 
 ## Testing Requirements
 - All new features must include unit tests
@@ -98,7 +112,7 @@ The project uses JaCoCo for code coverage analysis with automatic enforcement:
    - Add tests for edge cases and error handling paths
    - Use HTML report to identify uncovered lines (marked in red)
 
-## Build & Deployment Commands
+## Build & Deployment
 - Compile: `./mvnw compile`
 - Run tests: `./mvnw test`
 - Generate coverage report: `./mvnw test jacoco:report`
@@ -110,42 +124,33 @@ The project uses JaCoCo for code coverage analysis with automatic enforcement:
 
 **Note**: When running locally without GPG keys, always add `"-Dgpg.skip=true"` to skip artifact signing.
 
-## Task Management Rules
+## Workflow Guidelines
+
+### Task Management Rules
 - For changes >200 lines: create detailed plan before implementation
 - Break complex tasks into smaller, verifiable steps
 - Verify each step before proceeding to next
 - Use existing code patterns as reference
 
-## File Structure Awareness
-- Main source: `src/main/java/io/github/verils/gotemplate/`
-- Test source: `src/test/java/io/github/verils/gotemplate/`
-- Templates: `src/test/resources/*.tmpl`
-- Core components: Lexer, Parser, Executor, AST nodes
+## Documentation Guidelines
 
-## Quality Standards
-- Maintain backward compatibility when possible
-- Follow existing error handling patterns (TemplateException hierarchy)
-- Preserve experimental nature warnings in documentation
-- Do not modify LICENSE or core project metadata without explicit request
+### Document Purpose and Responsibilities
+- **README.md**: Developer-facing project documentation (overview, installation, basic usage, API reference links)
+- **AGENTS.md**: AI Agent technical reference guide (development environment, code standards, testing requirements, build commands)
+- **PLAN.md**: Development planning and progress tracking document (roadmap, priorities, task breakdown, current status)
+- **CHANGELOG**: Released version release notes (version-specific changes, new features, bug fixes, breaking changes)
 
-### Documentation Guidelines
-- **Document Purpose and Responsibilities**:
-  - **README.md**: Developer-facing project documentation (overview, installation, basic usage, API reference links)
-  - **AGENTS.md**: AI Agent technical reference guide (development environment, code standards, testing requirements, build commands)
-  - **PLAN.md**: Development planning and progress tracking document (roadmap, priorities, task breakdown, current status)
-  - **CHANGELOG**: Released version release notes (version-specific changes, new features, bug fixes, breaking changes)
-  
-- **Documentation Separation Principles**:
-  - README.md should contain stable, version-agnostic information
-  - CHANGELOG should contain all version-specific changes and release notes
-  - NEVER add "New in vX.Y.Z" sections or version-specific feature lists to README.md
-  - Keep README.md clean and focused on helping users get started quickly
-  - PLAN.md tracks ongoing work and future plans, not completed releases
-  
-- **Documentation Creation Policy**:
-  - Do NOT create new documentation files unless explicitly requested by the user
-  - Prefer updating existing documentation over creating new files
-  - Follow existing documentation patterns and structure
+### Documentation Separation Principles
+- README.md should contain stable, version-agnostic information
+- CHANGELOG should contain all version-specific changes and release notes
+- NEVER add "New in vX.Y.Z" sections or version-specific feature lists to README.md
+- Keep README.md clean and focused on helping users get started quickly
+- PLAN.md tracks ongoing work and future plans, not completed releases
+
+### Documentation Creation Policy
+- Do NOT create new documentation files unless explicitly requested by the user
+- Prefer updating existing documentation over creating new files
+- Follow existing documentation patterns and structure
 
 ### Documentation Synchronization
 - **CRITICAL**: When updating README.md, ALWAYS update all translated versions (e.g., README_zh.md)
@@ -153,7 +158,7 @@ The project uses JaCoCo for code coverage analysis with automatic enforcement:
 - Ensure code examples, version numbers, and feature descriptions match across all language versions
 - If you cannot translate to a specific language, flag it for manual translation
 
-## Handoff Protocol
+### Handoff Protocol
 When ending session:
 1. Summarize changes made
 2. List any remaining TODOs or incomplete tasks  
