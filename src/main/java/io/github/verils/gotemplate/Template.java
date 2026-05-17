@@ -8,6 +8,7 @@ import io.github.verils.gotemplate.internal.ast.Node;
 import io.github.verils.gotemplate.internal.ast.TextNode;
 
 import java.beans.BeanInfo;
+import java.beans.PropertyDescriptor;
 import java.io.*;
 import java.lang.reflect.AccessibleObject;
 import java.nio.charset.StandardCharsets;
@@ -86,6 +87,11 @@ public class Template {
     // Cache for annotated field/method names: Class -> (templateName -> AccessibleObject)
     // Instance-level to prevent memory leaks
     private final Map<Class<?>, Map<String, AccessibleObject>> annotationCache = new ConcurrentHashMap<>();
+    
+    // Cache for PropertyDescriptor indexing: Class -> (name -> PropertyDescriptor)
+    // Provides O(1) lookup instead of linear search through PropertyDescriptor array
+    // Instance-level to prevent memory leaks and share Template lifecycle
+    private final Map<Class<?>, Map<String, PropertyDescriptor>> propertyDescriptorCache = new ConcurrentHashMap<>();
 
     /**
      * Creates a new template with the specified name.
@@ -672,7 +678,8 @@ public class Template {
             throw new TemplateNotFoundException(String.format("Template '%s' not found.", name));
         }
 
-        Executor executor = new Executor(nodes, functions, missingKeyPolicy, mapKeySorting, beanInfoCache, annotationCache);
+        Executor executor = new Executor(nodes, functions, missingKeyPolicy, mapKeySorting, 
+                beanInfoCache, annotationCache, propertyDescriptorCache);
         executor.execute(name, data, writer);
     }
 

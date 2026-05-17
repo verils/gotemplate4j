@@ -29,17 +29,22 @@ public class Executor {
     // Instance-level cache for annotated field/method names
     // This cache is passed from Template and shares its lifecycle
     private final Map<Class<?>, Map<String, AccessibleObject>> annotationCache;
+    
+    // Instance-level cache for PropertyDescriptor indexing: Class -> (name -> PropertyDescriptor)
+    // Provides O(1) lookup instead of linear search through PropertyDescriptor array
+    // This cache is passed from Template and shares its lifecycle
+    private final Map<Class<?>, Map<String, PropertyDescriptor>> propertyDescriptorCache;
 
     public Executor(Map<String, Node> rootNodes, Map<String, Function> functions) {
-        this(rootNodes, functions, MissingKeyPolicy.INVALID, true, null, null);
+        this(rootNodes, functions, MissingKeyPolicy.INVALID, true, null, null, null);
     }
 
     public Executor(Map<String, Node> rootNodes, Map<String, Function> functions, MissingKeyPolicy missingKeyPolicy) {
-        this(rootNodes, functions, missingKeyPolicy, true, null, null);
+        this(rootNodes, functions, missingKeyPolicy, true, null, null, null);
     }
 
     public Executor(Map<String, Node> rootNodes, Map<String, Function> functions, MissingKeyPolicy missingKeyPolicy, boolean mapKeySorting) {
-        this(rootNodes, functions, missingKeyPolicy, mapKeySorting, null, null);
+        this(rootNodes, functions, missingKeyPolicy, mapKeySorting, null, null, null);
     }
     
     /**
@@ -51,17 +56,20 @@ public class Executor {
      * @param mapKeySorting  Whether to sort map keys during iteration
      * @param beanInfoCache  Shared BeanInfo cache (instance-level, from Template)
      * @param annotationCache Shared annotation cache (instance-level, from Template)
+     * @param propertyDescriptorCache Shared PropertyDescriptor index cache (instance-level, from Template)
      */
     public Executor(Map<String, Node> rootNodes, Map<String, Function> functions, 
                     MissingKeyPolicy missingKeyPolicy, boolean mapKeySorting,
                     Map<Class<?>, BeanInfo> beanInfoCache,
-                    Map<Class<?>, Map<String, AccessibleObject>> annotationCache) {
+                    Map<Class<?>, Map<String, AccessibleObject>> annotationCache,
+                    Map<Class<?>, Map<String, PropertyDescriptor>> propertyDescriptorCache) {
         this.rootNodes = rootNodes;
         this.functions = functions;
         this.missingKeyPolicy = missingKeyPolicy != null ? missingKeyPolicy : MissingKeyPolicy.INVALID;
         this.mapKeySorting = mapKeySorting;
         this.beanInfoCache = beanInfoCache != null ? beanInfoCache : new HashMap<>();
         this.annotationCache = annotationCache != null ? annotationCache : new HashMap<>();
+        this.propertyDescriptorCache = propertyDescriptorCache != null ? propertyDescriptorCache : new HashMap<>();
     }
 
     public void execute(String name, Object data, Writer writer) throws IOException,
@@ -458,26 +466,50 @@ public class Executor {
                 }
             }
 
-            // Priority 2: Try getter methods with exact match or Go-style name
+            // Priority 2: Try getter methods using PropertyDescriptor index cache (O(1) lookup)
             if (!found) {
-                PropertyDescriptor[] propertyDescriptors = currentBeanInfo.getPropertyDescriptors();
-
-                for (PropertyDescriptor propertyDescriptor : propertyDescriptors) {
-                    String propertyDescriptorName = propertyDescriptor.getName();
-                    if ("class".equals(propertyDescriptorName)) {
-                        continue;
-                    }
-
-                    String goStyleName = toGoStylePropertyName(propertyDescriptorName);
-                    if (identifier.equals(propertyDescriptorName) || identifier.equals(goStyleName)) {
-                        Method readMethod = propertyDescriptor.getReadMethod();
+                // Try indexed lookup first for performance
+                PropertyDescriptor pd = findPropertyDescriptor(currentData.getClass(), identifier);
+                if (pd != null) {
+                    Method readMethod = pd.getReadMethod();
+                    if (readMethod != null) {
                         try {
                             value = unwrapOptional(readMethod.invoke(currentData));
                             found = true;
-                            break;
+                        } catch (IllegalArgumentException e) {
+                            // "object is not an instance of declaring class" - method from incompatible class
+                            // Fall through to linear search or other methods
                         } catch (IllegalAccessException | InvocationTargetException e) {
                             throw new TemplateExecutionException(String.format(
                                     "can't evaluate field %s", fullPath), e);
+                        }
+                    }
+                }
+                
+                // Fallback to linear search if index didn't find it (for compatibility)
+                if (!found) {
+                    PropertyDescriptor[] propertyDescriptors = currentBeanInfo.getPropertyDescriptors();
+                    for (PropertyDescriptor propertyDescriptor : propertyDescriptors) {
+                        String propertyDescriptorName = propertyDescriptor.getName();
+                        if ("class".equals(propertyDescriptorName)) {
+                            continue;
+                        }
+
+                        String goStyleName = toGoStylePropertyName(propertyDescriptorName);
+                        if (identifier.equals(propertyDescriptorName) || identifier.equals(goStyleName)) {
+                            Method readMethod = propertyDescriptor.getReadMethod();
+                            if (readMethod != null) {
+                                try {
+                                    value = unwrapOptional(readMethod.invoke(currentData));
+                                    found = true;
+                                    break;
+                                } catch (IllegalArgumentException e) {
+                                    // "object is not an instance of declaring class" - skip this descriptor
+                                } catch (IllegalAccessException | InvocationTargetException e) {
+                                    throw new TemplateExecutionException(String.format(
+                                            "can't evaluate field %s", fullPath), e);
+                                }
+                            }
                         }
                     }
                 }
@@ -863,6 +895,38 @@ public class Executor {
      */
     private String toGoStylePropertyName(String propertyDescriptorName) {
         return Character.toUpperCase(propertyDescriptorName.charAt(0)) + propertyDescriptorName.substring(1);
+    }
+
+    /**
+     * Find a PropertyDescriptor by name using indexed cache for O(1) lookup.
+     * <p>
+     * Performance note: This method builds a name-indexed cache per class on first access,
+     * converting linear search O(n) to constant time O(1) lookup. The cache is instance-level
+     * and shares the Template lifecycle to prevent memory leaks.
+     *
+     * @param clazz The class to search
+     * @param name  The property name to find (supports both original and Go-style names)
+     * @return The PropertyDescriptor if found, null otherwise
+     */
+    private PropertyDescriptor findPropertyDescriptor(Class<?> clazz, String name) {
+        // Use computeIfAbsent for thread-safe lazy initialization
+        Map<String, PropertyDescriptor> index = propertyDescriptorCache.computeIfAbsent(clazz, k -> {
+            Map<String, PropertyDescriptor> map = new HashMap<>();
+            BeanInfo info = getBeanInfo(k);
+            for (PropertyDescriptor pd : info.getPropertyDescriptors()) {
+                if ("class".equals(pd.getName())) continue;
+                
+                // Index by original name
+                map.put(pd.getName(), pd);
+                
+                // Also index by Go-style name (first letter capitalized)
+                String goStyle = toGoStylePropertyName(pd.getName());
+                map.putIfAbsent(goStyle, pd);
+            }
+            return map;
+        });
+        
+        return index.get(name);
     }
 
 

@@ -126,9 +126,11 @@ Improve test coverage, quality, and establish better testing infrastructure:
 - Strengthen input validation boundaries
 - Add code quality gates to CI/CD pipeline
 
-### Stage 3: Performance Optimization ⭐ PLANNED
+### Stage 3: Performance Optimization ⭐ IN PROGRESS
 
 Profile and optimize based on real usage patterns. Target: 10-30% performance improvement in hot paths.
+
+**Current Status**: PropertyDescriptor Indexing optimization completed ✅
 
 **Phase 1: Performance Profiling & Baseline (1-2 days)**
 - Run existing JMH benchmarks to establish current baseline
@@ -149,9 +151,9 @@ Profile and optimize based on real usage patterns. Target: 10-30% performance im
 **Completed Optimizations:**
 1. ✅ BeanInfo Caching (+32.2% bean access, +20.5% execute)
 2. ✅ Annotation Cache memory leak fix (static → instance-level)
+3. ✅ PropertyDescriptor Indexing (implemented with fallback for compatibility)
 
 **Planned Optimizations:**
-3. PropertyDescriptor Indexing (10-20% expected)
 4. Method/Field Object Caching (5-10% expected)
 5. Optional Unwrapping Optimization (data-driven)
 6. String Building Optimization (<5% expected)
@@ -195,31 +197,19 @@ Profile and optimize based on real usage patterns. Target: 10-30% performance im
   }
   ```
 
-*Optimization 2: PropertyDescriptor Indexing* 🔥 HIGH PRIORITY
+*Optimization 2: PropertyDescriptor Indexing* ✅ COMPLETED
 - **Problem**: Linear search through PropertyDescriptor array on every field access
-- **Solution**: Build name-indexed cache per class: `Class -> (name -> PropertyDescriptor)`
+- **Solution**: Build name-indexed cache per class: `Class -> (name -> PropertyDescriptor)` with fallback to linear search for compatibility
 - **Expected gain**: 10-20% improvement (reduces O(n) to O(1) lookup)
-- **Risk**: Low-Medium (cache invalidation not needed for immutable classes)
-- **Implementation**:
-  ```java
-  private static final Map<Class<?>, Map<String, PropertyDescriptor>> PROPERTY_CACHE = 
-      new ConcurrentHashMap<>();
-  
-  private PropertyDescriptor findPropertyDescriptor(Class<?> clazz, String name) {
-      Map<String, PropertyDescriptor> index = PROPERTY_CACHE.computeIfAbsent(clazz, k -> {
-          Map<String, PropertyDescriptor> map = new HashMap<>();
-          BeanInfo info = getBeanInfo(k);
-          for (PropertyDescriptor pd : info.getPropertyDescriptors()) {
-              if ("class".equals(pd.getName())) continue;
-              String goStyle = Character.toUpperCase(pd.getName().charAt(0)) + pd.getName().substring(1);
-              map.put(pd.getName(), pd);
-              map.putIfAbsent(goStyle, pd);
-          }
-          return map;
-      });
-      return index.get(name);
-  }
-  ```
+- **Actual gain**: Performance improvement varies by workload; index provides fast path while maintaining full compatibility
+- **Risk**: Low (instance-level cache, fallback ensures compatibility)
+- **Status**: Implemented and validated ✅
+- **Implementation details**:
+  - Instance-level cache in Template, passed to Executor
+  - Indexes both original property names and Go-style capitalized names
+  - Handles IllegalArgumentException from incompatible method invocations gracefully
+  - Falls back to linear search if indexed lookup fails
+  - All 778 tests pass including edge cases with public fields and inheritance
 
 *Optimization 3: Method/Field Object Caching* ⚡ MEDIUM PRIORITY
 - **Problem**: Repeated reflection lookups for same members
@@ -354,7 +344,7 @@ Prepare for v0.8.0 release:
 
 ### Suggested Next Session Order
 
-**Current Position**: v0.8.0 Stage 1 complete ✅, Stage 2 complete ✅
+**Current Position**: v0.8.0 Stage 1 complete ✅, Stage 2 complete ✅, Stage 3 in progress 🔄
 
 **Completed:**
 1. ~~Implement @TemplateField annotation support~~ ✅ DONE
@@ -362,8 +352,6 @@ Prepare for v0.8.0 release:
 3. ~~Migrate TemplateBenchmark to JMH~~ ✅ DONE
 4. ~~Establish baseline performance numbers~~ ✅ DONE
 5. ~~Verify Optional unwrapping in deep chains~~ ✅ DONE
-
-**Next Priorities (Stage 2 - Quality & Testing):**
 6. ~~Maintain test coverage quality~~ ✅ DONE
    - Current: 778 tests, all passing (~92% instruction, ~89% branch)
    - Coverage thresholds met (90%/85%)
@@ -372,18 +360,21 @@ Prepare for v0.8.0 release:
    - Added comprehensive constructor parameter validation
    - Validates template name, delimiters, and comment delimiters
    - Added 15 new tests for input validation scenarios
+8. ~~PropertyDescriptor Indexing optimization~~ ✅ DONE
+   - Instance-level cache for O(1) PropertyDescriptor lookup
+   - Fallback to linear search for compatibility
+   - Handles edge cases with public fields and inheritance
+   - All 778 tests pass
 
 **Future (Stage 3-4 - Performance & Features):**
-8. ~~Profile and optimize hot paths in Executor~~ 📋 DETAILED PLAN READY
-   - BeanInfo caching (15-25% expected gain)
-   - PropertyDescriptor indexing (10-20% expected gain)
+9. Profile and optimize remaining hot paths in Executor
    - Method/Field caching (5-10% expected gain)
    - Optional unwrapping optimization (data-driven)
    - String building optimization (<5% gain)
-9. Profile Optional unwrapping performance using JMH benchmarks
-10. Evaluate method invocation with arguments (security analysis)
-11. Update documentation with new features
-12. Final review and verification
+10. Run JMH benchmarks to measure PropertyDescriptor Indexing performance gains
+11. Evaluate method invocation with arguments (security analysis)
+12. Update documentation with new features
+13. Final review and verification
 
 **Deferred (Low Priority):**
 - Add mutation testing (PITest)
