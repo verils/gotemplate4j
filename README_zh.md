@@ -21,7 +21,9 @@
 
 ### 安装
 
-将依赖项添加到您的 Maven 项目中：
+#### Maven
+
+将依赖项添加到您的 `pom.xml`：
 
 ```xml
 <dependency>
@@ -30,6 +32,26 @@
     <version>0.8.0</version>
 </dependency>
 ```
+
+#### Gradle
+
+将依赖项添加到您的 `build.gradle`：
+
+```groovy
+dependencies {
+    implementation 'io.github.verils:gotemplate4j:0.8.0'
+}
+```
+
+对于 Gradle Kotlin DSL (`build.gradle.kts`)：
+
+```kotlin
+dependencies {
+    implementation("io.github.verils:gotemplate4j:0.8.0")
+}
+```
+
+更多安装选项，请参阅 [安装指南](./docs/getting-started/installation.md)。
 
 ### 基本用法
 

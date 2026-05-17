@@ -51,33 +51,14 @@ Current version is **0.8.0**. The project follows semantic versioning. Check the
 
 ## Installation & Setup
 
-### How do I add gotemplate4j to my Maven project?
+For detailed installation instructions, please refer to the [Installation Guide](getting-started/installation.md).
 
-Add this dependency to your `pom.xml`:
+### Quick Links
 
-```xml
-<dependency>
-    <groupId>io.github.verils</groupId>
-    <artifactId>gotemplate4j</artifactId>
-    <version>0.8.0</version>
-</dependency>
-```
-
-### How do I add gotemplate4j to my Gradle project?
-
-Add this to your `build.gradle`:
-
-```groovy
-implementation 'io.github.verils:gotemplate4j:0.8.0'
-```
-
-### Can I use gotemplate4j without a build tool?
-
-Yes, download the JAR from [Maven Central](https://central.sonatype.com/artifact/io.github.verils/gotemplate4j) and add it to your classpath manually.
-
-### Does gotemplate4j require any dependencies?
-
-No, gotemplate4j has **zero runtime dependencies**. It only requires Java 8 or later.
+- **Maven/Gradle setup**: See [Installation Guide - Maven & Gradle](getting-started/installation.md#maven)
+- **Manual installation**: See [Installation Guide - Manual Installation](getting-started/installation.md#manual-installation)
+- **Verify installation**: See [Installation Guide - Verify Installation](getting-started/installation.md#verify-installation)
+- **Troubleshooting**: See [Installation Guide - Troubleshooting](getting-started/installation.md#troubleshooting)
 
 ---
 

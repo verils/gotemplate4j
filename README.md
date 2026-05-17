@@ -21,7 +21,9 @@ A Go template engine implementation for Java that evaluates Go templates and gen
 
 ### Installation
 
-Add the dependency to your Maven project:
+#### Maven
+
+Add the dependency to your `pom.xml`:
 
 ```xml
 <dependency>
@@ -30,6 +32,26 @@ Add the dependency to your Maven project:
     <version>0.8.0</version>
 </dependency>
 ```
+
+#### Gradle
+
+Add the dependency to your `build.gradle`:
+
+```groovy
+dependencies {
+    implementation 'io.github.verils:gotemplate4j:0.8.0'
+}
+```
+
+For Gradle Kotlin DSL (`build.gradle.kts`):
+
+```kotlin
+dependencies {
+    implementation("io.github.verils:gotemplate4j:0.8.0")
+}
+```
+
+For more installation options, see the [Installation Guide](./docs/getting-started/installation.md).
 
 ### Basic Usage
 
