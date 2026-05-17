@@ -197,7 +197,7 @@ public class ClassMetadata {
     }
     
     /**
-     * Gets the map of annotated members (template name -> AccessibleObject).
+     * Gets the map of annotated members (template name -&gt; AccessibleObject).
      *
      * @return unmodifiable map of annotated members
      */
@@ -206,7 +206,7 @@ public class ClassMetadata {
     }
     
     /**
-     * Gets the property descriptor index (property name -> PropertyDescriptor).
+     * Gets the property descriptor index (property name -&gt; PropertyDescriptor).
      * Supports both original and Go-style capitalized names.
      *
      * @return unmodifiable map of property descriptors
