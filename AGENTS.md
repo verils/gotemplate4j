@@ -3,6 +3,7 @@
 ## Project Context
 - This is a Go template engine implementation for Java
 - Before making changes, read ./README.md for project overview and basic usage
+- Review ./PLAN.md for current development roadmap, priorities, and future plans
 - Check ./CHANGELOG for recent updates and development direction
 
 ## Development Environment
