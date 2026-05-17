@@ -1,4 +1,4 @@
-name: Default Workflow
+name: Test and Verify
 
 on:
   push:
@@ -11,15 +11,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
+
       - name: Set up JDK 8
         uses: actions/setup-java@v4
         with:
           java-version: '8'
           distribution: 'temurin'
           cache: maven
-      - name: Test with Maven
-        run: mvn -B test --file pom.xml
-      - name: Verify with Maven (including coverage check)
+
+      - name: Test and Verify with Maven (including coverage check)
         run: mvn -B verify --file pom.xml -Dgpg.skip=true
+
       - name: Update dependency graph
         uses: advanced-security/maven-dependency-submission-action@v5
