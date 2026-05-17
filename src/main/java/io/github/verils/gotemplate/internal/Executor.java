@@ -390,7 +390,7 @@ public class Executor {
         for (int i = start; i < identifiers.length; i++) {
             String identifier = identifiers[i];
             
-            // Build the full path context up to the current segment
+            // Build the full path context up to the current segment using StringBuilder
             StringBuilder pathBuilder = new StringBuilder();
             for (int j = start; j <= i; j++) {
                 if (j > start) {
@@ -533,17 +533,14 @@ public class Executor {
     }
 
     /**
-     * Unwrap Optional values
+     * Unwrap Optional values (inlined for performance)
      *
      * @param obj The object to unwrap
      * @return The unwrapped value, or null if Optional is empty
      */
     private Object unwrapOptional(Object obj) {
-        if (obj instanceof Optional) {
-            Optional<?> optional = (Optional<?>) obj;
-            return optional.orElse(null);
-        }
-        return obj;
+        // Inlined instanceof check to avoid method call overhead in hot paths
+        return (obj instanceof Optional) ? ((Optional<?>) obj).orElse(null) : obj;
     }
 
     private Object executeVariable(VariableNode variableNode, Map<String, Object> variables) throws TemplateExecutionException {

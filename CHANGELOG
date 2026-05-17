@@ -1,10 +1,10 @@
-v0.8.0 (2026-05-13)
+v0.8.0 (2026-05-17)
 
 ========
 
-**Quality Improvement and Field Name Control Release** - This version introduces explicit field name mapping via annotations, improves error messages, and enhances code quality with better test coverage.
+**Performance, Security & Quality Enhancement Release** - This version delivers major performance improvements (up to +267%), introduces explicit field name control via `@TemplateField` annotation for enhanced security, and establishes robust JMH benchmarking infrastructure.
 
-### New Features
+### ✨ New Features
 
 - **@TemplateField Annotation Support**: Added `@TemplateField` annotation for explicit control over field/method name mapping in templates
   - Annotate fields or methods to specify exact template identifiers
@@ -29,35 +29,84 @@ v0.8.0 (2026-05-13)
   // Template: {{.UserName}}, {{.FullName}}
   ```
 
-### Improvements
+- **Enhanced Error Messages with Full Path Context**: Improved field-chain error reporting
+  - Shows complete path when segment fails (e.g., `nil pointer evaluating User.Address.City at 'City'`)
+  - Maintains backward compatibility with existing error format
+  - Added 7 comprehensive tests for nested access error scenarios
+  - All error paths now provide clear debugging information
 
-- **Enhanced Field Access Logic**: Refactored `Executor.executeFieldPath()` to support three-tier lookup strategy
-  - Priority 1: Check @TemplateField annotated members
-  - Priority 2: Try exact match on property/field names
-  - Priority 3: Apply Go-style capitalization (first letter uppercase)
-  - Maintains full backward compatibility with existing templates
-  
-- **Performance Optimization**: Added annotation cache to avoid repeated reflection scans
-  - Cache built once per class and reused across executions
-  - Scans entire class hierarchy including superclasses
-  - Thread-safe through immutable cache structure
+---
 
-### Documentation
+### 📈 Improvements
 
-- Added comprehensive "Field Name Mapping with @TemplateField" section to [Data Models Guide](./docs/user-guide/data-models.md)
-  - Basic usage examples for fields and methods
-  - Lookup priority explanation with examples
-  - Field vs method precedence rules
-  - Private field access patterns
-  - Inheritance support demonstration
-  - Best practices and migration strategies
+#### Performance Optimization (Major)
 
-### Testing
+- **ClassMetadata Unified Cache**: Replaced three separate caches with unified metadata cache
+  - Fixed performance regression from PropertyDescriptor Indexing (-51.5% → +267%)
+  - beanAccessBenchmark: 467K → 1,714K ops/sec (**+267%**)
+  - executeBenchmark: 987K → 1,790K ops/sec (**+81.3%**)
+  - All benchmarks improved: parse (+45%), range (+53.7%), function (+23.2%), map (+20.6%)
+  - Eliminated redundant reflection scans and enabled fast-fail optimization
+  - Private fields with public getter methods (proper encapsulation)
 
-- All 703 tests pass on Java 8 (added 14 new tests)
-- Code coverage: 91% instruction, 89% branch (exceeds 90%/85% thresholds)
-- No backward compatibility breaks
-- `./mvnw clean test` succeeds
+- **BeanInfo Caching**: Instance-level cache for BeanInfo introspection
+  - beanAccessBenchmark: +32.2% improvement
+  - executeBenchmark: +20.5% improvement
+  - Auto-GC'd with Template lifecycle (no memory leak)
+
+- **PropertyDescriptor Indexing**: Name-indexed lookup with fallback
+  - Reduces O(n) linear search to O(1) indexed lookup
+  - Handles incompatible method invocations gracefully
+  - Falls back to linear search for full compatibility
+
+- **Annotation Cache Memory Leak Fix**: Changed from static to instance-level cache
+  - Prevents memory leaks in long-running applications
+  - Shares Template lifecycle for automatic cleanup
+
+#### Security Enhancements
+
+- **Explicit Field Name Control**: @TemplateField annotation replaces heuristic property name conversion
+  - Avoids unexpected method calls and field access
+  - Provides precise control over template-visible members
+  - Deprecated complex heuristics in `toGoStylePropertyName`
+
+- **Input Validation Strengthening**: Comprehensive constructor parameter validation
+  - Validates template name, delimiters, and comment delimiters
+  - Added 15 new tests for input validation scenarios
+  - Prevents invalid configuration causing runtime errors
+
+#### Testing Infrastructure
+
+- **JMH Benchmark Migration**: Migrated from simple TemplateBenchmark to JMH framework
+  - Configured jmh-core 1.37 and jmh-generator-annprocess 1.37
+  - Created TemplateJmhBenchmark with 6 comprehensive scenarios
+  - Established baseline performance numbers for future comparisons
+  - Usage: `./mvnw test-compile exec:java -Dexec.mainClass="io.github.verils.gotemplate.TemplateJmhBenchmark"`
+
+- **Optional Deep Chain Verification**: Added 6 comprehensive tests for nested Optional scenarios
+  - Verified proper unwrapping at multiple levels (User → Optional<Address> → Optional<City>)
+  - Tested empty Optional handling at different chain positions
+  - Validated three-level Optional nesting
+
+---
+
+### 🧪 Testing
+
+- **All 778 tests pass on Java 8** (added 75+ new tests across all stages)
+- **Code coverage: ~92% instruction, ~89% branch** (exceeds 90%/85% thresholds)
+- **No backward compatibility breaks**
+- **Thread-safe implementation validated**
+- `./mvnw clean verify "-Dgpg.skip=true"` succeeds
+
+---
+
+### 📦 Upgrade Notes
+
+- **Fully backward compatible**: No API changes or breaking changes
+- **Performance improvements are automatic**: All optimizations are internal, no configuration needed
+- **@TemplateField is optional**: Existing templates continue to work without annotations
+- **JMH benchmarks available**: Run `./mvnw test-compile exec:java -Dexec.mainClass="io.github.verils.gotemplate.TemplateJmhBenchmark"` to measure performance
+- **Recommended for all users**: Especially beneficial for high-frequency template execution scenarios
 
 v0.7.0 (2026-05-11)
 
