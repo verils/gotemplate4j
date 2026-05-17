@@ -2,9 +2,7 @@
 
 ## Project Context
 - This is a Go template engine implementation for Java
-- Before making changes, read ./README.md for project overview and basic usage
-- Review ./PLAN.md for current development roadmap, priorities, and future plans
-- Check ./CHANGELOG for recent updates and development direction
+- Targets Java 8 compatibility with no external dependencies
 
 ## Development Environment
 - Java Version: 1.8 (Project targets Java 8 compatibility)
@@ -26,12 +24,12 @@
 
 3. **Set JAVA_HOME temporarily for this project:**
    ```bash
-   # Windows PowerShell
-   $env:JAVA_HOME="C:\Program Files\Eclipse Adoptium\jdk-8.0.482.8-hotspot"
+   # Windows PowerShell (Adjust path to your installed JDK 8)
+   $env:JAVA_HOME="C:\Program Files\Eclipse Adoptium\jdk-8.0.xxx.x-hotspot"
    $env:PATH="$env:JAVA_HOME\bin;$env:PATH"
    
    # Windows CMD
-   set JAVA_HOME=C:\Program Files\Eclipse Adoptium\jdk-8.0.482.8-hotspot
+   set JAVA_HOME=C:\Program Files\Eclipse Adoptium\jdk-8.0.xxx.x-hotspot
    set PATH=%JAVA_HOME%\bin;%PATH%
    
    # Linux/Mac
@@ -61,7 +59,7 @@
 - Run tests with: `./mvnw test`
 - Test files located in: `src/test/java/io/github/verils/gotemplate/`
 - Use JUnit 5 (Jupiter) for testing
-- Maintain existing test patterns and structure
+- Maintain existing test patterns and structure. For detailed test placement rules, see [CONTRIBUTING.md](./CONTRIBUTING.md#where-to-put-tests)
 - **All existing tests and new tests must succeed** - no test failures are acceptable
 - **Code coverage must not be lower than 90%** - template engines require exceptional test coverage due to complex parsing logic, security implications, and numerous edge cases
 
@@ -131,11 +129,23 @@ The project uses JaCoCo for code coverage analysis with automatic enforcement:
 - Do not modify LICENSE or core project metadata without explicit request
 
 ### Documentation Guidelines
-- **README.md vs CHANGELOG separation**: 
-  - README.md should contain stable, version-agnostic information (overview, installation, basic usage, documentation links)
-  - CHANGELOG should contain all version-specific changes, new features, and release notes
+- **Document Purpose and Responsibilities**:
+  - **README.md**: Developer-facing project documentation (overview, installation, basic usage, API reference links)
+  - **AGENTS.md**: AI Agent technical reference guide (development environment, code standards, testing requirements, build commands)
+  - **PLAN.md**: Development planning and progress tracking document (roadmap, priorities, task breakdown, current status)
+  - **CHANGELOG**: Released version release notes (version-specific changes, new features, bug fixes, breaking changes)
+  
+- **Documentation Separation Principles**:
+  - README.md should contain stable, version-agnostic information
+  - CHANGELOG should contain all version-specific changes and release notes
   - NEVER add "New in vX.Y.Z" sections or version-specific feature lists to README.md
   - Keep README.md clean and focused on helping users get started quickly
+  - PLAN.md tracks ongoing work and future plans, not completed releases
+  
+- **Documentation Creation Policy**:
+  - Do NOT create new documentation files unless explicitly requested by the user
+  - Prefer updating existing documentation over creating new files
+  - Follow existing documentation patterns and structure
 
 ### Documentation Synchronization
 - **CRITICAL**: When updating README.md, ALWAYS update all translated versions (e.g., README_zh.md)
