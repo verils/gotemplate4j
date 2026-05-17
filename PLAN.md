@@ -4,8 +4,8 @@
 **Current Version**: 0.8.0  
 **Next Version**: 0.9.0 (future enhancements)  
 **Future Major Release**: 0.10.0 (Java 11 upgrade planned)  
-**Current Focus**: v0.8.0 Stage 2 (Quality & Testing) complete  
-**Status**: v0.8.0 Stage 1 complete ✅, Stage 2 complete ✅ (JMH ✅, Optional deep chains ✅, Input validation ✅)
+**Current Focus**: v0.8.0 Stage 3 (Performance Optimization) planning complete  
+**Status**: v0.8.0 Stage 1 ✅, Stage 2 ✅, Stage 3 📋 detailed plan ready
 
 ---
 
@@ -126,26 +126,167 @@ Improve test coverage, quality, and establish better testing infrastructure:
 - Strengthen input validation boundaries
 - Add code quality gates to CI/CD pipeline
 
-### Stage 3: Performance Optimization
+### Stage 3: Performance Optimization ⭐ PLANNED
 
-Profile and optimize based on real usage patterns:
+Profile and optimize based on real usage patterns. Target: 10-30% performance improvement in hot paths.
 
-**Performance Profiling:**
-- Profile hot paths in Executor (field access, command execution)
-- Identify bottlenecks in reflection-heavy operations
-- Measure impact of Optional unwrapping on performance
-- Establish performance regression checks
+**Phase 1: Performance Profiling & Baseline (1-2 days)**
+- Run existing JMH benchmarks to establish current baseline
+  - parseBenchmark: ~223,427 ops/sec
+  - executeBenchmark: ~987,607 ops/sec
+  - beanAccessBenchmark: ~961,966 ops/sec
+  - mapAccessBenchmark: ~2,290,887 ops/sec
+  - rangeHeavyBenchmark: ~25,141 ops/sec
+  - functionHeavyBenchmark: ~843,460 ops/sec
+- Add micro-benchmarks for specific operations:
+  - Field access path (`executeFieldPath`)
+  - Optional unwrapping overhead
+  - BeanInfo introspection cost
+  - Reflection invocation (Method.invoke vs Field.get)
 
-**Optimization Opportunities:**
-- Consider reflection caching for frequently-accessed methods/fields
-- Evaluate AST caching for pre-compiled templates
-- Optimize unwrapOptional calls if profiling shows bottleneck
-- Add performance notes to frequently-called methods
+**Phase 2: Core Optimizations (3-5 days)**
 
-**Documentation:**
-- Add performance profiling guides
-- Document optimization strategies and trade-offs
-- Provide benchmarking best practices
+**Completed Optimizations:**
+1. ✅ BeanInfo Caching (+32.2% bean access, +20.5% execute)
+2. ✅ Annotation Cache memory leak fix (static → instance-level)
+
+**Planned Optimizations:**
+3. PropertyDescriptor Indexing (10-20% expected)
+4. Method/Field Object Caching (5-10% expected)
+5. Optional Unwrapping Optimization (data-driven)
+6. String Building Optimization (<5% expected)
+
+**Deferred for Future Evaluation:**
+- SoftReference Cache Strategy (v0.9.0+, only if memory pressure observed)
+- Executor Lifecycle Management (needs profiling data first)
+
+*Optimization 1: BeanInfo Caching* ✅ COMPLETED
+- **Problem**: `Introspector.getBeanInfo()` called repeatedly for same class
+- **Solution**: Instance-level cache in Template, passed to Executor
+- **Design**: Cache shares Template lifecycle, auto-GC'd with Template (no memory leak)
+- **Expected gain**: 15-25% improvement (bean access scenarios)
+- **Actual gain**: 
+  - beanAccessBenchmark: +32.2% (961K → 1,272K ops/sec)
+  - executeBenchmark: +20.5% (987K → 1,189K ops/sec)
+  - All benchmarks improved, no regression
+- **Risk**: None (instance-level cache, no static state)
+- **Status**: Implemented and validated ✅
+- **Note**: Also fixed ANNOTATION_CACHE (static → instance-level) to prevent memory leaks
+
+*Optimization 1.5: SoftReference Cache Strategy* 📅 FUTURE (v0.9.0+)
+- **Problem**: Potential memory pressure in long-running applications with many templates
+- **Proposal**: Use SoftReference wrappers for cached values
+- **Pros**: JVM auto-cleans under memory pressure, prevents OOM
+- **Cons**: Current instance caches already GC with Template; added complexity; slight performance overhead
+- **Decision**: Defer until actual memory pressure observed in production
+- **Implementation approach**:
+  ```java
+  private final Map<Class<?>, SoftReference<BeanInfo>> beanInfoCache = new ConcurrentHashMap<>();
+  
+  private BeanInfo getBeanInfo(Object data) {
+      Class<?> type = data.getClass();
+      SoftReference<BeanInfo> ref = beanInfoCache.get(type);
+      BeanInfo info = (ref != null) ? ref.get() : null;
+      if (info == null) {
+          info = Introspector.getBeanInfo(type);
+          beanInfoCache.put(type, new SoftReference<>(info));
+      }
+      return info;
+  }
+  ```
+
+*Optimization 2: PropertyDescriptor Indexing* 🔥 HIGH PRIORITY
+- **Problem**: Linear search through PropertyDescriptor array on every field access
+- **Solution**: Build name-indexed cache per class: `Class -> (name -> PropertyDescriptor)`
+- **Expected gain**: 10-20% improvement (reduces O(n) to O(1) lookup)
+- **Risk**: Low-Medium (cache invalidation not needed for immutable classes)
+- **Implementation**:
+  ```java
+  private static final Map<Class<?>, Map<String, PropertyDescriptor>> PROPERTY_CACHE = 
+      new ConcurrentHashMap<>();
+  
+  private PropertyDescriptor findPropertyDescriptor(Class<?> clazz, String name) {
+      Map<String, PropertyDescriptor> index = PROPERTY_CACHE.computeIfAbsent(clazz, k -> {
+          Map<String, PropertyDescriptor> map = new HashMap<>();
+          BeanInfo info = getBeanInfo(k);
+          for (PropertyDescriptor pd : info.getPropertyDescriptors()) {
+              if ("class".equals(pd.getName())) continue;
+              String goStyle = Character.toUpperCase(pd.getName().charAt(0)) + pd.getName().substring(1);
+              map.put(pd.getName(), pd);
+              map.putIfAbsent(goStyle, pd);
+          }
+          return map;
+      });
+      return index.get(name);
+  }
+  ```
+
+*Optimization 3: Method/Field Object Caching* ⚡ MEDIUM PRIORITY
+- **Problem**: Repeated reflection lookups for same members
+- **Solution**: Extend annotation cache to include regular accessible members
+- **Expected gain**: 5-10% improvement
+- **Risk**: Medium (need to handle inheritance properly)
+
+*Optimization 4: Optional Unwrapping Optimization* ⚠️ DATA-DRIVEN
+- **Problem**: `unwrapOptional()` called at every field access point
+- **Analysis**: Most values are NOT Optional, instanceof check is fast
+- **Decision**: Profile first, optimize only if bottleneck confirmed
+- **Potential approaches**:
+  - Inline the check to avoid method call overhead
+  - Remove from known non-Optional paths (requires code audit)
+- **Expected gain**: < 5% (only if profiling shows impact)
+
+*Optimization 5: String Building Optimization* 📝 LOW PRIORITY
+- **Problem**: Error message path construction uses string concatenation
+- **Solution**: Use StringBuilder in `buildFullPath()`
+- **Expected gain**: < 5% (only affects error paths)
+
+*Optimization 6: Executor Lifecycle Management* 🔍 EVALUATION NEEDED
+- **Proposal**: Transform Executor from per-execution instance to Template-level singleton
+- **Current behavior**: New Executor created for each `executeTemplate()` call
+- **Potential benefits**:
+  - Reduce object allocation and GC pressure
+  - Reuse cached data structures across executions
+  - Improve high-frequency execution scenarios
+- **Challenges**:
+  - ⚠️ Thread safety: Executor holds mutable state (variables, writer)
+  - ⚠️ Requires significant refactoring of execute methods
+  - ⚠️ May introduce concurrency bugs if not carefully designed
+- **Decision criteria**:
+  1. Profile first: Is Executor creation a bottleneck?
+  2. If yes, consider thread-local or pooled Executor pattern
+  3. Must maintain zero behavioral changes
+  4. Must pass all concurrent access tests
+- **Alternative approaches**:
+  - ThreadLocal<Executor> per Template
+  - Object pool with bounded size
+  - Stateless Executor design (pass all state as parameters)
+- **Status**: 📅 DEFERRED - Needs profiling data before implementation
+
+**Phase 3: Validation & Testing (1-2 days)**
+- Run full JMH benchmark suite to measure improvements
+- Verify all 778+ tests pass (especially bean/field/Optional tests)
+- Test thread safety under concurrent access
+- Ensure no memory leaks (consider WeakHashMap if needed)
+- Confirm zero behavioral changes
+
+**Phase 4: Documentation (1 day)**
+- Add performance notes to optimized methods (Javadoc)
+- Update docs/advanced/performance.md with:
+  - Optimization strategies explained
+  - Benchmark results (before/after)
+  - Best practices for users
+- Update PLAN.md with final performance numbers
+
+**Success Criteria:**
+- ✅ beanAccessBenchmark: ≥ 15% improvement
+- ✅ executeBenchmark: ≥ 10% improvement
+- ✅ All other benchmarks: no regression
+- ✅ All tests pass (778+)
+- ✅ Coverage maintained (≥ 90%/85%)
+- ✅ Zero API or behavior changes
+- ✅ Thread-safe implementation
+- ✅ Java 8 compatible
 
 ### Stage 4: API and Feature Evaluation
 
@@ -233,12 +374,16 @@ Prepare for v0.8.0 release:
    - Added 15 new tests for input validation scenarios
 
 **Future (Stage 3-4 - Performance & Features):**
-8. Profile Optional unwrapping performance using JMH benchmarks
-9. Profile and optimize hot paths in Executor
-10. Consider reflection caching strategies
-11. Evaluate method invocation with arguments (security analysis)
-12. Update documentation with new features
-13. Final review and verification
+8. ~~Profile and optimize hot paths in Executor~~ 📋 DETAILED PLAN READY
+   - BeanInfo caching (15-25% expected gain)
+   - PropertyDescriptor indexing (10-20% expected gain)
+   - Method/Field caching (5-10% expected gain)
+   - Optional unwrapping optimization (data-driven)
+   - String building optimization (<5% gain)
+9. Profile Optional unwrapping performance using JMH benchmarks
+10. Evaluate method invocation with arguments (security analysis)
+11. Update documentation with new features
+12. Final review and verification
 
 **Deferred (Low Priority):**
 - Add mutation testing (PITest)

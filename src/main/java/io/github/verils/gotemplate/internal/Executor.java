@@ -22,22 +22,46 @@ public class Executor {
     private final MissingKeyPolicy missingKeyPolicy;
     private final boolean mapKeySorting;
     
-    // Cache for annotated field/method names: Class -> (templateName -> AccessibleObject)
-    private static final Map<Class<?>, Map<String, AccessibleObject>> ANNOTATION_CACHE = new HashMap<>();
+    // Instance-level cache for BeanInfo to avoid repeated introspection
+    // This cache is passed from Template and shares its lifecycle
+    private final Map<Class<?>, BeanInfo> beanInfoCache;
+    
+    // Instance-level cache for annotated field/method names
+    // This cache is passed from Template and shares its lifecycle
+    private final Map<Class<?>, Map<String, AccessibleObject>> annotationCache;
 
     public Executor(Map<String, Node> rootNodes, Map<String, Function> functions) {
-        this(rootNodes, functions, MissingKeyPolicy.INVALID, true);
+        this(rootNodes, functions, MissingKeyPolicy.INVALID, true, null, null);
     }
 
     public Executor(Map<String, Node> rootNodes, Map<String, Function> functions, MissingKeyPolicy missingKeyPolicy) {
-        this(rootNodes, functions, missingKeyPolicy, true);
+        this(rootNodes, functions, missingKeyPolicy, true, null, null);
     }
 
     public Executor(Map<String, Node> rootNodes, Map<String, Function> functions, MissingKeyPolicy missingKeyPolicy, boolean mapKeySorting) {
+        this(rootNodes, functions, missingKeyPolicy, mapKeySorting, null, null);
+    }
+    
+    /**
+     * Constructor with BeanInfo cache for performance optimization.
+     *
+     * @param rootNodes      The parsed template nodes
+     * @param functions      Available functions
+     * @param missingKeyPolicy Policy for handling missing keys
+     * @param mapKeySorting  Whether to sort map keys during iteration
+     * @param beanInfoCache  Shared BeanInfo cache (instance-level, from Template)
+     * @param annotationCache Shared annotation cache (instance-level, from Template)
+     */
+    public Executor(Map<String, Node> rootNodes, Map<String, Function> functions, 
+                    MissingKeyPolicy missingKeyPolicy, boolean mapKeySorting,
+                    Map<Class<?>, BeanInfo> beanInfoCache,
+                    Map<Class<?>, Map<String, AccessibleObject>> annotationCache) {
         this.rootNodes = rootNodes;
         this.functions = functions;
         this.missingKeyPolicy = missingKeyPolicy != null ? missingKeyPolicy : MissingKeyPolicy.INVALID;
         this.mapKeySorting = mapKeySorting;
+        this.beanInfoCache = beanInfoCache != null ? beanInfoCache : new HashMap<>();
+        this.annotationCache = annotationCache != null ? annotationCache : new HashMap<>();
     }
 
     public void execute(String name, Object data, Writer writer) throws IOException,
@@ -751,27 +775,33 @@ public class Executor {
 
 
     /**
-     * Introspect the data object
+     * Introspect the data object with instance-level caching.
+     * <p>
+     * Performance note: BeanInfo is cached per Template instance to avoid repeated
+     * introspection operations during template execution. The cache shares the lifecycle
+     * of the Template, preventing memory leaks.
      *
      * @param data Data object for the template
      * @return BeanInfo telling the details of data object
      */
     private BeanInfo getBeanInfo(Object data) {
         Class<?> type = data.getClass();
-
-        BeanInfo beanInfo;
-        try {
-            beanInfo = Introspector.getBeanInfo(type);
-        } catch (IntrospectionException e) {
-            throw new IllegalArgumentException(String.format("无法获取类型'%s'的Bean信息", type.getName()), e);
-        }
-        return beanInfo;
+        
+        // Use computeIfAbsent for thread-safe lazy initialization within this template's cache
+        return beanInfoCache.computeIfAbsent(type, clazz -> {
+            try {
+                return Introspector.getBeanInfo(clazz);
+            } catch (IntrospectionException e) {
+                throw new IllegalArgumentException(
+                    String.format("无法获取类型'%s'的Bean信息", clazz.getName()), e);
+            }
+        });
     }
 
 
     /**
      * Find a member (field or method) annotated with @TemplateField matching the template name.
-     * Uses caching to avoid repeated reflection scans.
+     * Uses instance-level caching to avoid repeated reflection scans and prevent memory leaks.
      *
      * @param clazz        The class to search
      * @param templateName The name used in the template
@@ -779,10 +809,10 @@ public class Executor {
      */
     private AccessibleObject findAnnotatedMember(Class<?> clazz, String templateName) {
         // Check cache first
-        Map<String, AccessibleObject> classAnnotations = ANNOTATION_CACHE.get(clazz);
+        Map<String, AccessibleObject> classAnnotations = annotationCache.get(clazz);
         if (classAnnotations == null) {
             classAnnotations = buildAnnotationCache(clazz);
-            ANNOTATION_CACHE.put(clazz, classAnnotations);
+            annotationCache.put(clazz, classAnnotations);
         }
         return classAnnotations.get(templateName);
     }

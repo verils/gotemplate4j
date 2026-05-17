@@ -7,10 +7,13 @@ import io.github.verils.gotemplate.internal.ast.ListNode;
 import io.github.verils.gotemplate.internal.ast.Node;
 import io.github.verils.gotemplate.internal.ast.TextNode;
 
+import java.beans.BeanInfo;
 import java.io.*;
+import java.lang.reflect.AccessibleObject;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -75,6 +78,14 @@ public class Template {
     private MissingKeyPolicy missingKeyPolicy;
 
     private boolean mapKeySorting; // Whether to sort map keys during iteration
+    
+    // Cache for BeanInfo to avoid repeated introspection within this template's lifecycle
+    // This cache is instance-level, so it gets GC'd when the Template is GC'd
+    private final Map<Class<?>, BeanInfo> beanInfoCache = new ConcurrentHashMap<>();
+    
+    // Cache for annotated field/method names: Class -> (templateName -> AccessibleObject)
+    // Instance-level to prevent memory leaks
+    private final Map<Class<?>, Map<String, AccessibleObject>> annotationCache = new ConcurrentHashMap<>();
 
     /**
      * Creates a new template with the specified name.
@@ -661,7 +672,7 @@ public class Template {
             throw new TemplateNotFoundException(String.format("Template '%s' not found.", name));
         }
 
-        Executor executor = new Executor(nodes, functions, missingKeyPolicy, mapKeySorting);
+        Executor executor = new Executor(nodes, functions, missingKeyPolicy, mapKeySorting, beanInfoCache, annotationCache);
         executor.execute(name, data, writer);
     }
 
