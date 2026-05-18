@@ -13,14 +13,10 @@ gotemplate4j should remain a small, Java-compatible implementation of Go's `text
 
 **Important Notice**: Starting from v0.10.0, gotemplate4j will require **Java 11 or higher**. This decision aligns with industry standards and enables the use of modern Java features for cleaner, more maintainable code. Java 8 support will end with v0.9.x.
 
-## Working Constraints
+### Document Maintenance
 
-- **Current**: Maintain Java 8 compatibility through v0.9.x
-- **Future**: Upgrade to Java 11+ starting from v0.10.0
-- Use `./mvnw`, not `mvn`.
-- Avoid runtime dependencies beyond vanilla Java.
-- Preserve backward compatibility unless a documented Go compatibility fix requires a behavior change.
-- Keep Go-compatible behavior, Java-specific behavior, and unsupported Go APIs clearly separated.
+- Keep this plan short enough to guide work; remove completed tasks instead of accumulating release history.
+- Items in "Future Backlog" should be reviewed periodically and either promoted to active development or removed.
 
 ## Current Progress
 
@@ -390,15 +386,6 @@ See dedicated section: [Future Roadmap: Java 11 Migration (v0.10.0)](#future-roa
 - ⏳ Collect user feedback on Java version requirements (Stage 3 - ongoing)
 
 ---
-
-## Maintenance Rules
-
-- Every behavior change needs focused tests.
-- Every known Go difference must be visible in this plan or user-facing documentation.
-- Compatibility work takes precedence over performance work when the two conflict.
-- New dependencies require a clear compatibility, security, or maintainability justification.
-- Keep this plan short enough to guide work; remove completed tasks instead of accumulating release history.
-- Items in "Future Backlog" should be reviewed periodically and either promoted to active development or removed.
 
 ---
 

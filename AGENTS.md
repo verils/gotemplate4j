@@ -53,7 +53,16 @@
    - Create `.mvn/toolchains.xml` to specify JDK 8 for this project
    - This allows Maven to use Java 8 even when your system default is different
 
-## Code & Quality Standards
+## Development Principles
+
+### Core Principles
+- Every behavior change needs focused tests
+- Every known Go difference must be documented in user-facing documentation
+- Compatibility work takes precedence over performance work when the two conflict
+- No external dependencies allowed (Vanilla Java only)
+- Maintain backward compatibility when possible
+
+### Code & Quality Standards
 
 ### Code Style Guidelines
 - Follow standard Java naming conventions (camelCase for variables/methods, PascalCase for classes)
