@@ -2,6 +2,7 @@ package io.github.verils.gotemplate.internal;
 
 import io.github.verils.gotemplate.*;
 import io.github.verils.gotemplate.internal.ast.*;
+import io.github.verils.gotemplate.internal.lang.ErrorUtils;
 import io.github.verils.gotemplate.internal.lang.StringEscapeUtils;
 
 import java.beans.BeanInfo;
@@ -20,7 +21,7 @@ public class Executor {
     private final Map<String, Function> functions;
     private final MissingKeyPolicy missingKeyPolicy;
     private final boolean mapKeySorting;
-    
+
     // Unified ClassMetadata cache: replaces beanInfoCache, annotationCache, and propertyDescriptorCache
     // This cache is passed from Template and shares its lifecycle (instance-level, no memory leak)
     private final Map<Class<?>, ClassMetadata> classMetadataCache;
@@ -36,17 +37,17 @@ public class Executor {
     public Executor(Map<String, Node> rootNodes, Map<String, Function> functions, MissingKeyPolicy missingKeyPolicy, boolean mapKeySorting) {
         this(rootNodes, functions, missingKeyPolicy, mapKeySorting, null);
     }
-    
+
     /**
      * Constructor with ClassMetadata cache for performance optimization.
      *
-     * @param rootNodes      The parsed template nodes
-     * @param functions      Available functions
-     * @param missingKeyPolicy Policy for handling missing keys
-     * @param mapKeySorting  Whether to sort map keys during iteration
+     * @param rootNodes          The parsed template nodes
+     * @param functions          Available functions
+     * @param missingKeyPolicy   Policy for handling missing keys
+     * @param mapKeySorting      Whether to sort map keys during iteration
      * @param classMetadataCache Shared ClassMetadata cache (instance-level, from Template)
      */
-    public Executor(Map<String, Node> rootNodes, Map<String, Function> functions, 
+    public Executor(Map<String, Node> rootNodes, Map<String, Function> functions,
                     MissingKeyPolicy missingKeyPolicy, boolean mapKeySorting,
                     Map<Class<?>, ClassMetadata> classMetadataCache) {
         this.rootNodes = rootNodes;
@@ -389,7 +390,7 @@ public class Executor {
 
         for (int i = start; i < identifiers.length; i++) {
             String identifier = identifiers[i];
-            
+
             // Build the full path context up to the current segment using StringBuilder
             StringBuilder pathBuilder = new StringBuilder();
             for (int j = start; j <= i; j++) {
@@ -399,7 +400,7 @@ public class Executor {
                 pathBuilder.append(identifiers[j]);
             }
             String fullPath = pathBuilder.toString();
-            
+
             if (currentData == null) {
                 if (missingKeyPolicy == MissingKeyPolicy.ERROR) {
                     throw new TemplateExecutionException(String.format(
@@ -431,7 +432,7 @@ public class Executor {
             // Get ClassMetadata for fast access
             Class<?> clazz = currentData.getClass();
             ClassMetadata classMetadata = classMetadataCache.computeIfAbsent(clazz, ClassMetadata::new);
-            
+
             Object value = null;
             boolean found = false;
 
@@ -502,7 +503,7 @@ public class Executor {
                             "can't evaluate field %s", fullPath), e);
                 }
             }
-            
+
             // If still not found, try Go-style capitalization for public fields
             if (!found) {
                 String goStyleName = toGoStylePropertyName(identifier);
@@ -521,8 +522,9 @@ public class Executor {
             }
 
             if (!found) {
-                throw new TemplateExecutionException(String.format(
-                        "can't evaluate field %s", fullPath));
+                // Build enhanced error message with available fields and suggestions
+                String errorMessage = buildFieldNotFoundError(fullPath, identifier, classMetadata);
+                throw new TemplateExecutionException(errorMessage);
             }
 
             // Update currentData for next iteration
@@ -761,6 +763,89 @@ public class Executor {
         return Character.toUpperCase(propertyDescriptorName.charAt(0)) + propertyDescriptorName.substring(1);
     }
 
+    /**
+     * Builds an enhanced error message when a field is not found.
+     * <p>
+     * The error message includes:
+     * <ul>
+     *   <li>The full field path that failed</li>
+     *   <li>A list of available fields/methods on the current object</li>
+     *   <li>A suggestion if the field name appears to be a typo</li>
+     * </ul>
+     *
+     * @param fullPath      The full field path (e.g., "User.Address.City")
+     * @param missingField  The specific field that was not found
+     * @param classMetadata The cached metadata for the class
+     * @return A detailed error message
+     */
+    private String buildFieldNotFoundError(String fullPath, String missingField, ClassMetadata classMetadata) {
+        StringBuilder message = new StringBuilder();
+        message.append(String.format("can't evaluate field %s", fullPath));
+
+        // Collect all available field/method names
+        Set<String> availableNames = new TreeSet<>();
+
+        // Add annotated members
+        if (classMetadata.hasAnnotatedMembers()) {
+            availableNames.addAll(classMetadata.getAnnotatedMembers().keySet());
+        }
+
+        // Add property descriptors (use original names, not Go-style)
+        if (classMetadata.hasPropertyDescriptors()) {
+            for (String name : classMetadata.getPropertyIndex().keySet()) {
+                // Only add original property names (lowercase first char)
+                if (!name.isEmpty() && Character.isLowerCase(name.charAt(0))) {
+                    availableNames.add(name);
+                }
+            }
+        }
+
+        // Add public methods (excluding Object methods like getClass, hashCode, etc.)
+        if (classMetadata.hasPublicMethods()) {
+            for (String methodName : classMetadata.getPublicMethodNames()) {
+                // Filter out common Object methods that aren't useful for templates
+                if (!isObjectMethod(methodName)) {
+                    availableNames.add(methodName);
+                }
+            }
+        }
+
+        // Add public fields
+        if (classMetadata.hasPublicFields()) {
+            availableNames.addAll(classMetadata.getPublicFieldNames());
+        }
+
+        // If we have available fields, show them
+        if (!availableNames.isEmpty()) {
+            message.append(". Available fields: [");
+            message.append(String.join(", ", availableNames));
+            message.append("]");
+
+            // Check for typos and provide suggestions
+            String suggestion = ErrorUtils.generateSuggestion(missingField, availableNames);
+            if (!suggestion.isEmpty()) {
+                message.append(suggestion);
+            }
+        }
+
+        return message.toString();
+    }
+
+    /**
+     * Checks if a method name is a common Object method that should be excluded from suggestions.
+     *
+     * @param methodName the method name to check
+     * @return true if this is an Object method that shouldn't be suggested
+     */
+    private boolean isObjectMethod(String methodName) {
+        return "getClass".equals(methodName) ||
+                "hashCode".equals(methodName) ||
+                "notify".equals(methodName) ||
+                "notifyAll".equals(methodName) ||
+                "wait".equals(methodName) ||
+                "toString".equals(methodName) ||
+                "equals".equals(methodName);
+    }
 
 
     /**

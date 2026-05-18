@@ -129,6 +129,36 @@ public class TemplateJMHTest {
 }
 ```
 
+### Performance Baseline (v0.8.0)
+
+Reference performance data measured with JMH on JDK 1.8:
+
+| Benchmark | Throughput (ops/s) | Description |
+|-----------|-------------------|-------------|
+| **mapAccessBenchmark** | ~2,562,000 | Simple Map field access |
+| **executeBenchmark** | ~1,570,000 | Basic template execution |
+| **beanAccessBenchmark** | ~1,514,000 | JavaBean field access |
+| **functionHeavyBenchmark** | ~956,000 | With upper/lower/len functions |
+| **parseBenchmark** | ~296,000 | Template parsing (one-time cost) |
+| **rangeHeavyBenchmark** | ~34,700 | Iterating 100 items |
+
+**Test Environment:**
+- **JMH Version**: 1.37
+- **JDK**: 1.8.0_482 (OpenJDK 64-Bit Server VM)
+- **CPU**: Intel i7-10870H 8C16T
+- **Memory**: 64 GB RAM
+- **OS**: Windows 25H2
+- **Warmup**: 3 iterations × 2s
+- **Measurement**: 5 iterations × 3s
+- **Threads**: 1
+
+**To reproduce:**
+```bash
+./mvnw test-compile exec:java -Dexec.mainClass=io.github.verils.gotemplate.TemplateJmhBenchmark
+```
+
+**Note:** These numbers serve as a baseline for future performance comparisons. Actual performance may vary based on hardware and JVM configuration. For more details, see [TemplateJmhBenchmark.java](../../src/test/java/io/github/verils/gotemplate/TemplateJmhBenchmark.java).
+
 ---
 
 ## Template Reuse

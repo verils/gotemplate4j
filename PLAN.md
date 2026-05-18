@@ -147,32 +147,54 @@ Improve error messages and provide better debugging information to help develope
    - [x] Include line and column numbers in all parse errors
    - [x] Show the problematic template line with visual indicator (`buildErrorMessage` in `Parser.java`)
    - [x] Provide context about what was expected vs what was found
+   - [x] Add line/column fields to `TemplateParseException` for programmatic access
 
-2. **Execution Error Context** 🟡 PARTIAL
+2. **Error Utility Infrastructure** ✅ COMPLETED
+   - [x] Created `ErrorUtils` with Levenshtein distance algorithm
+   - [x] Implemented similarity scoring and matching functions
+   - [x] Added suggestion generation for typos
+   - [x] Comprehensive test coverage (9 test cases)
+
+3. **Execution Error Context** ✅ COMPLETED
    - [x] Display full field path in evaluation errors (e.g., "can't evaluate field Address.City")
-   - [ ] List available fields when accessing non-existent fields (**MISSING**)
-   - [ ] Show data type information for better understanding (**MISSING**)
+   - [x] List available fields when accessing non-existent fields (**COMPLETED - P1**)
+   - [ ] Show data type information for better understanding (**OPTIONAL**)
 
-3. **Intelligent Suggestions** 🔴 MISSING
-   - [ ] Detect typos in field names and suggest corrections (**MISSING**)
-   - [ ] Show similar map keys when a key is not found (**MISSING**)
-   - [ ] Provide helpful hints for common mistakes (**MISSING**)
+4. **Intelligent Suggestions** 🟡 PARTIAL
+   - [x] Detect typos in field names and suggest corrections (**COMPLETED - P1**)
+   - [ ] Show similar map keys when a key is not found (**MISSING - P2**)
+   - [ ] Provide helpful hints for common mistakes (**PARTIAL**)
 
-4. **Function Call Error Details** 🔴 MISSING
-   - [ ] Show expected function signature (**MISSING**)
-   - [ ] Display actual arguments provided (**MISSING**)
-   - [ ] List available functions when calling undefined function (**MISSING**)
+5. **Function Call Error Details** 🔴 MISSING
+   - [ ] Show expected function signature (**MISSING - P3**)
+   - [ ] Display actual arguments provided (**MISSING - P3**)
+   - [ ] List available functions when calling undefined function (**MISSING - P3**)
 
 **Prioritized Action Plan:**
 
-| Priority | Task | Description | Estimated Effort |
-| :--- | :--- | :--- | :--- |
-| **P0** | Implement `ErrorUtils` | Create utility for Levenshtein distance calculation and similarity matching. | 0.5 day |
-| **P0.5** | Enhance `TemplateParseException` | Add line/column fields to the exception class so callers can programmatically access error location details. | 0.5 day |
-| **P1** | Enhance Field Errors | Update `Executor.executeFieldPath` to show available fields and typo suggestions using `ClassMetadata`. | 1 day |
-| **P2** | Enhance Map Key Errors | Update `Executor.handleMissingMapKey` to list available keys and suggest corrections. | 0.5 day |
-| **P3** | Enhance Function Errors | Improve `Executor.executeFunction` to show argument mismatches and list defined functions. | 1 day |
-| **P4** | Testing & Polish | Add comprehensive tests for new error formats and ensure backward compatibility. | 1 day |
+| Priority | Task | Description | Estimated Effort | Status |
+| :--- | :--- | :--- | :--- | :--- |
+| **P0** | Implement `ErrorUtils` ✅ | Create utility for Levenshtein distance calculation and similarity matching. | 0.5 day | ✅ DONE |
+| **P0.5** | Enhance `TemplateParseException` ✅ | Add line/column fields to the exception class so callers can programmatically access error location details. | 0.5 day | ✅ DONE |
+| **P1** | Enhance Field Errors ✅ | Update `Executor.executeFieldPath` to show available fields and typo suggestions using `ClassMetadata`. | 1 day | ✅ DONE |
+| **P2** | Enhance Map Key Errors | Update `Executor.handleMissingMapKey` to list available keys and suggest corrections. | 0.5 day | ⏳ NEXT |
+| **P3** | Enhance Function Errors | Improve `Executor.executeFunction` to show argument mismatches and list defined functions. | 1 day | 🔲 PENDING |
+| **P4** | Testing & Polish | Add comprehensive tests for new error formats and ensure backward compatibility. | 1 day | 🔄 IN PROGRESS |
+
+**Completed Work (P1):**
+- ✅ Enhanced `Executor.executeFieldPath` to display available fields on error
+- ✅ Integrated `ErrorUtils` for intelligent typo suggestions
+- ✅ Filtered out Object class methods from suggestions (hashCode, toString, etc.)
+- ✅ Lowered similarity threshold to 0.5 for better typo detection
+- ✅ Added case-insensitive exact match check before fuzzy matching
+- ✅ Created comprehensive test suite (6 test cases in `EnhancedFieldErrorTest`)
+- ✅ All 807 tests passing, code coverage maintained >90%
+
+**Example Output:**
+```
+Before: can't evaluate field FristName
+After:  can't evaluate field User.FristName. Available fields: [age, firstName, getAge, getFirstName, getName, name] Did you mean 'firstName'?
+```
 
 **Implementation Approach:**
 - Use existing `ClassMetadata` cache to efficiently retrieve available fields/methods without performance penalty.
@@ -183,10 +205,11 @@ Improve error messages and provide better debugging information to help develope
 **Testing Strategy:**
 - Add tests for parse error location accuracy (verify existing logic).
 - Verify field path completeness in execution errors.
-- Test suggestion quality for common typos (e.g., `FristName` -> `FirstName`).
+- Test suggestion quality for common typos (e.g., `FristName` -> `firstName`).
 - Ensure error messages are clear and actionable.
 
-**Estimated Effort**: 3-4 days total
+**Estimated Effort**: 3-4 days total  
+**Progress**: ~50% complete (P0, P0.5, P1 done; P2, P3 pending)
 
 #### Stage 4: Testing & Documentation 🔲 PENDING
 

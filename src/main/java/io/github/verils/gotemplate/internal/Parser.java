@@ -934,7 +934,9 @@ public class Parser {
 
     private void throwUnexpectErrorWithContext(String message, Token token, State state) throws TemplateParseException {
         String detailedMessage = buildErrorMessage(message, token, state.templateText);
-        throw new TemplateParseException(detailedMessage);
+        int line = (token != null) ? token.line() : -1;
+        int column = (token != null) ? token.column() : -1;
+        throw new TemplateParseException(detailedMessage, line, column);
     }
 
     private String buildErrorMessage(String message, Token token, String templateText) {

@@ -19,11 +19,71 @@ package io.github.verils.gotemplate;
 
 public class TemplateParseException extends TemplateException {
 
+    private final int line;
+    private final int column;
+
+    /**
+     * Creates a new template parse exception without location information.
+     *
+     * @param message the error message
+     */
     public TemplateParseException(String message) {
-        super(message);
+        this(message, -1, -1);
     }
 
-    public TemplateParseException(String message, Throwable cause) {
-        super(message, cause);
+    /**
+     * Creates a new template parse exception with location information.
+     *
+     * @param message the error message
+     * @param line    the line number where the error occurred (1-based), or -1 if unknown
+     * @param column  the column number where the error occurred (1-based), or -1 if unknown
+     */
+    public TemplateParseException(String message, int line, int column) {
+        super(message);
+        this.line = line;
+        this.column = column;
     }
+
+    /**
+     * Creates a new template parse exception with a cause and without location information.
+     *
+     * @param message the error message
+     * @param cause   the underlying cause
+     */
+    public TemplateParseException(String message, Throwable cause) {
+        this(message, -1, -1, cause);
+    }
+
+    /**
+     * Creates a new template parse exception with a cause and location information.
+     *
+     * @param message the error message
+     * @param line    the line number where the error occurred (1-based), or -1 if unknown
+     * @param column  the column number where the error occurred (1-based), or -1 if unknown
+     * @param cause   the underlying cause
+     */
+    public TemplateParseException(String message, int line, int column, Throwable cause) {
+        super(message, cause);
+        this.line = line;
+        this.column = column;
+    }
+
+    /**
+     * Gets the line number where the parse error occurred.
+     *
+     * @return the line number (1-based), or -1 if location is unknown
+     */
+    public int getLine() {
+        return line;
+    }
+
+    /**
+     * Gets the column number where the parse error occurred.
+     *
+     * @return the column number (1-based), or -1 if location is unknown
+     */
+    public int getColumn() {
+        return column;
+    }
+
 }
