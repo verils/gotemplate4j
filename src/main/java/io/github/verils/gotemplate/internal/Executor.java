@@ -437,26 +437,24 @@ public class Executor {
             boolean found = false;
 
             // Priority 1: Check @TemplateField annotations (fast-fail if no annotated members)
-            if (classMetadata.hasAnnotatedMembers()) {
-                AccessibleObject annotatedMember = classMetadata.getAnnotatedMembers().get(identifier);
-                if (annotatedMember != null) {
-                    try {
-                        if (annotatedMember instanceof Field) {
-                            value = unwrapOptional(((Field) annotatedMember).get(currentData));
-                        } else if (annotatedMember instanceof Method) {
-                            value = unwrapOptional(((Method) annotatedMember).invoke(currentData));
-                        }
-                        found = true;
-                    } catch (IllegalAccessException | InvocationTargetException e) {
-                        throw new TemplateExecutionException(String.format(
-                                "can't evaluate field %s", fullPath), e);
+            AccessibleObject annotatedMember = classMetadata.getAnnotatedMember(identifier);
+            if (annotatedMember != null) {
+                try {
+                    if (annotatedMember instanceof Field) {
+                        value = unwrapOptional(((Field) annotatedMember).get(currentData));
+                    } else if (annotatedMember instanceof Method) {
+                        value = unwrapOptional(((Method) annotatedMember).invoke(currentData));
                     }
+                    found = true;
+                } catch (IllegalAccessException | InvocationTargetException e) {
+                    throw new TemplateExecutionException(String.format(
+                            "can't evaluate field %s", fullPath), e);
                 }
             }
 
             // Priority 2: Try PropertyDescriptor index (fast-fail if no property descriptors)
-            if (!found && classMetadata.hasPropertyDescriptors()) {
-                PropertyDescriptor pd = classMetadata.getPropertyIndex().get(identifier);
+            if (!found) {
+                PropertyDescriptor pd = classMetadata.getPropertyDescriptor(identifier);
                 if (pd != null) {
                     Method readMethod = pd.getReadMethod();
                     if (readMethod != null) {
@@ -477,37 +475,39 @@ public class Executor {
             // Go permits no-arg method access in chains. In Java, only public no-arg methods
             // are exposed this way; methods with arguments remain unsupported.
             // Fast-fail if no public methods
-            if (!found && classMetadata.hasPublicMethods() && classMetadata.getPublicMethodNames().contains(identifier)) {
-                try {
-                    Method method = clazz.getMethod(identifier);
-                    value = unwrapOptional(method.invoke(currentData));
-                    found = true;
-                } catch (NoSuchMethodException e) {
-                    // Should not happen since we checked publicMethodNames, but be safe
-                } catch (IllegalAccessException | InvocationTargetException e) {
-                    throw new TemplateExecutionException(String.format(
-                            "can't evaluate field %s", fullPath), e);
+            if (!found)
+                if (classMetadata.hasPublicMethod(identifier)) {
+                    try {
+                        Method method = clazz.getMethod(identifier);
+                        value = unwrapOptional(method.invoke(currentData));
+                        found = true;
+                    } catch (NoSuchMethodException e) {
+                        // Should not happen since we checked publicMethodNames, but be safe
+                    } catch (IllegalAccessException | InvocationTargetException e) {
+                        throw new TemplateExecutionException(String.format(
+                                "can't evaluate field %s", fullPath), e);
+                    }
                 }
-            }
 
             // If no getter found, try public fields (fast-fail if no public fields)
-            if (!found && classMetadata.hasPublicFields() && classMetadata.getPublicFieldNames().contains(identifier)) {
-                try {
-                    Field field = clazz.getField(identifier);
-                    value = unwrapOptional(field.get(currentData));
-                    found = true;
-                } catch (NoSuchFieldException e) {
-                    // Should not happen since we checked publicFieldNames, but be safe
-                } catch (IllegalAccessException e) {
-                    throw new TemplateExecutionException(String.format(
-                            "can't evaluate field %s", fullPath), e);
+            if (!found)
+                if (classMetadata.hasPublicField(identifier)) {
+                    try {
+                        Field field = clazz.getField(identifier);
+                        value = unwrapOptional(field.get(currentData));
+                        found = true;
+                    } catch (NoSuchFieldException e) {
+                        // Should not happen since we checked publicFieldNames, but be safe
+                    } catch (IllegalAccessException e) {
+                        throw new TemplateExecutionException(String.format(
+                                "can't evaluate field %s", fullPath), e);
+                    }
                 }
-            }
 
             // If still not found, try Go-style capitalization for public fields
             if (!found) {
                 String goStyleName = toGoStylePropertyName(identifier);
-                if (!goStyleName.equals(identifier) && classMetadata.hasPublicFields() && classMetadata.getPublicFieldNames().contains(goStyleName)) {
+                if (!goStyleName.equals(identifier) && classMetadata.hasPublicField(goStyleName)) {
                     try {
                         Field field = clazz.getField(goStyleName);
                         value = unwrapOptional(field.get(currentData));
@@ -783,37 +783,28 @@ public class Executor {
         message.append(String.format("can't evaluate field %s", fullPath));
 
         // Collect all available field/method names
-        Set<String> availableNames = new TreeSet<>();
 
         // Add annotated members
-        if (classMetadata.hasAnnotatedMembers()) {
-            availableNames.addAll(classMetadata.getAnnotatedMembers().keySet());
-        }
+        Set<String> availableNames = new TreeSet<>(classMetadata.getAnnotatedMembers().keySet());
 
         // Add property descriptors (use original names, not Go-style)
-        if (classMetadata.hasPropertyDescriptors()) {
-            for (String name : classMetadata.getPropertyIndex().keySet()) {
-                // Only add original property names (lowercase first char)
-                if (!name.isEmpty() && Character.isLowerCase(name.charAt(0))) {
-                    availableNames.add(name);
-                }
+        for (String name : classMetadata.getPropertyDescriptors().keySet()) {
+            // Only add original property names (lowercase first char)
+            if (!name.isEmpty() && Character.isLowerCase(name.charAt(0))) {
+                availableNames.add(name);
             }
         }
 
         // Add public methods (excluding Object methods like getClass, hashCode, etc.)
-        if (classMetadata.hasPublicMethods()) {
-            for (String methodName : classMetadata.getPublicMethodNames()) {
-                // Filter out common Object methods that aren't useful for templates
-                if (!isObjectMethod(methodName)) {
-                    availableNames.add(methodName);
-                }
+        for (String methodName : classMetadata.getPublicMethodNames()) {
+            // Filter out common Object methods that aren't useful for templates
+            if (!isObjectMethod(methodName)) {
+                availableNames.add(methodName);
             }
         }
 
         // Add public fields
-        if (classMetadata.hasPublicFields()) {
-            availableNames.addAll(classMetadata.getPublicFieldNames());
-        }
+        availableNames.addAll(classMetadata.getPublicFieldNames());
 
         // If we have available fields, show them
         if (!availableNames.isEmpty()) {
