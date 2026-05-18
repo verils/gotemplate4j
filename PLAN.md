@@ -141,46 +141,52 @@ Improve error messages and provide better debugging information to help develope
 - Offer intelligent suggestions for common mistakes (typos, missing keys)
 - Maintain consistent error message formatting across the codebase
 
-**Key Improvements:**
+**Current Status & Gaps Analysis:**
 
-1. **Parse Error Enhancements**
-   - Include line and column numbers in all parse errors
-   - Show the problematic template line with visual indicator
-   - Provide context about what was expected vs what was found
-   - Example: `"Parse error at line 5, column 12: unclosed action"`
+1. **Parse Error Enhancements** ✅ COMPLETED
+   - [x] Include line and column numbers in all parse errors
+   - [x] Show the problematic template line with visual indicator (`buildErrorMessage` in `Parser.java`)
+   - [x] Provide context about what was expected vs what was found
 
-2. **Execution Error Context**
-   - Display full field path in evaluation errors (e.g., "can't evaluate field Address.City in type User")
-   - List available fields when accessing non-existent fields
-   - Show data type information for better understanding
-   - Example: `"Available fields in Address: [Street, ZipCode, Country]"`
+2. **Execution Error Context** 🟡 PARTIAL
+   - [x] Display full field path in evaluation errors (e.g., "can't evaluate field Address.City")
+   - [ ] List available fields when accessing non-existent fields (**MISSING**)
+   - [ ] Show data type information for better understanding (**MISSING**)
 
-3. **Intelligent Suggestions**
-   - Detect typos in field names and suggest corrections
-   - Show similar map keys when a key is not found
-   - Provide helpful hints for common mistakes
-   - Example: `"Did you mean 'FirstName'?"` when user types `FristName`
+3. **Intelligent Suggestions** 🔴 MISSING
+   - [ ] Detect typos in field names and suggest corrections (**MISSING**)
+   - [ ] Show similar map keys when a key is not found (**MISSING**)
+   - [ ] Provide helpful hints for common mistakes (**MISSING**)
 
-4. **Function Call Error Details**
-   - Show expected function signature
-   - Display actual arguments provided
-   - List available functions when calling undefined function
-   - Example: `"Expected: 2 arguments (number, number), Got: 1 argument (string)"`
+4. **Function Call Error Details** 🔴 MISSING
+   - [ ] Show expected function signature (**MISSING**)
+   - [ ] Display actual arguments provided (**MISSING**)
+   - [ ] List available functions when calling undefined function (**MISSING**)
+
+**Prioritized Action Plan:**
+
+| Priority | Task | Description | Estimated Effort |
+| :--- | :--- | :--- | :--- |
+| **P0** | Implement `ErrorUtils` | Create utility for Levenshtein distance calculation and similarity matching. | 0.5 day |
+| **P0.5** | Enhance `TemplateParseException` | Add line/column fields to the exception class so callers can programmatically access error location details. | 0.5 day |
+| **P1** | Enhance Field Errors | Update `Executor.executeFieldPath` to show available fields and typo suggestions using `ClassMetadata`. | 1 day |
+| **P2** | Enhance Map Key Errors | Update `Executor.handleMissingMapKey` to list available keys and suggest corrections. | 0.5 day |
+| **P3** | Enhance Function Errors | Improve `Executor.executeFunction` to show argument mismatches and list defined functions. | 1 day |
+| **P4** | Testing & Polish | Add comprehensive tests for new error formats and ensure backward compatibility. | 1 day |
 
 **Implementation Approach:**
-- Extend TemplateParseException with line/column tracking
-- Enhance Executor error messages with field path context
-- Add similarity matching for typo detection (Levenshtein distance)
-- Create unified error message formatting utilities
-- Ensure backward compatibility with existing exception constructors
+- Use existing `ClassMetadata` cache to efficiently retrieve available fields/methods without performance penalty.
+- Implement Levenshtein distance algorithm in a new internal utility class.
+- Ensure error messages remain concise but informative (avoid overwhelming users with too much data).
+- Maintain backward compatibility with existing exception constructors.
 
 **Testing Strategy:**
-- Add tests for parse error location accuracy
-- Verify field path completeness in execution errors
-- Test suggestion quality for common typos
-- Ensure error messages are clear and actionable
+- Add tests for parse error location accuracy (verify existing logic).
+- Verify field path completeness in execution errors.
+- Test suggestion quality for common typos (e.g., `FristName` -> `FirstName`).
+- Ensure error messages are clear and actionable.
 
-**Estimated Effort**: 1-2 days
+**Estimated Effort**: 3-4 days total
 
 #### Stage 4: Testing & Documentation 🔲 PENDING
 
