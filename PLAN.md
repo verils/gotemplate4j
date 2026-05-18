@@ -52,8 +52,8 @@ v0.8.0 has been released with the following improvements:
 #### Goals
 
 - Enhance file loading APIs for better developer experience (classpath, directory, encoding support)
-- Complete integer range support implementation and testing
-- Improve error diagnostics for file operations
+- Complete integer range support implementation and testing (already implemented in v0.8.0)
+- Improve error diagnostics with detailed context information
 - Maintain Java 8 compatibility and stability
 - Prepare codebase for smooth transition to Java 11 in v0.10.0
 
@@ -65,7 +65,7 @@ v0.8.0 has been released with the following improvements:
 - Do not implement method invocation with arguments (requires extensive security design)
 - Do not start template pre-compilation (deferred to v1.0+)
 
-#### Stage 1: File Helper Improvements ✅ IN PROGRESS
+#### Stage 1: File Helper Improvements 🔄 IN PROGRESS
 
 Enhance file loading APIs for better developer experience:
 
@@ -103,7 +103,7 @@ template.parse(inputStream, "UTF-8");
 
 #### Stage 2: Integer Range Support ✅ COMPLETED
 
-Go-style integer range iteration is already implemented:
+Go-style integer range iteration is already implemented in v0.8.0:
 
 **Syntax Support:**
 ```gotemplate
@@ -129,13 +129,31 @@ Go-style integer range iteration is already implemented:
 
 **Remaining Work**: None - feature complete
 
-#### Stage 3: Testing and Documentation ✅ PENDING
+#### Stage 3: Enhanced Error Diagnostics 🔲 PENDING
 
-Complete testing and documentation for new file loading features:
+Improve error messages and provide better debugging information:
+
+**Better Error Context:**
+- Include line and column numbers in parse errors
+- Show full field path in evaluation errors (e.g., "can't evaluate field Address.City in type User")
+- Display available fields when accessing missing keys
+- Provide helpful suggestions for common mistakes
+
+**Implementation Details:**
+- Enhance existing error messages in Parser and Executor
+- Add source location tracking where not already present
+- Improve error message formatting and clarity
+- Maintain backward compatibility
+
+**Estimated Effort**: 1-2 days
+
+#### Stage 4: Testing & Documentation 🔲 PENDING
+
+Comprehensive testing and documentation for all new features:
 
 **Testing Requirements:**
 - File loading API tests (classpath, directory, encoding)
-- Edge case and error handling tests
+- Error diagnostics accuracy tests
 - Backward compatibility tests
 - Cross-platform file path tests
 
@@ -143,12 +161,13 @@ Complete testing and documentation for new file loading features:
 - Add new API usage examples for file loading
 - Document classpath resource loading best practices
 - Enhance User Guide with file loading patterns
+- Update FAQ with integer range syntax examples
 - Update API reference documentation
 
 **Performance Validation:**
 - Run JMH benchmarks
-- Ensure no performance regression
-- Validate new feature performance
+- Ensure no performance regression from new features
+- Validate file loading performance
 
 **Completion Criteria:**
 - All new features have complete test coverage
@@ -156,22 +175,10 @@ Complete testing and documentation for new file loading features:
 - All existing tests pass
 - JMH benchmarks show no degradation
 - Documentation fully updated
-- `./mvnw clean verify "-Dgpg.skip=true"` succeeds
+- `./mvnw clean verify "-Dgpg.skip=true"` succeeds on Java 8
 - No backward compatibility breaks
 
 **Estimated Effort**: 1-2 days
-
-#### v0.9.0 Completion Gate
-
-- 🔲 File helper improvements implemented and tested (classpath, directory, encoding)
-- ✅ Integer range support working correctly (already complete)
-- 🔲 Enhanced error diagnostics for file operations
-- 🔲 All tests pass with ≥90% coverage
-- 🔲 Performance benchmarks show no regression
-- 🔲 Documentation updated for all new features
-- 🔲 `./mvnw clean verify "-Dgpg.skip=true"` succeeds on Java 8
-- 🔲 No backward compatibility breaks
-- 🔲 Ready for Java 11 migration in v0.10.0
 
 ---
 
