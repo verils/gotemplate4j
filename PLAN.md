@@ -337,6 +337,101 @@ For questions or concerns about this migration, please open an issue on GitHub.
 This section tracks potential improvements and features that are not yet scheduled for specific releases.
 Items will be moved to active development stages based on user feedback, priority assessment, and resource availability.
 
+### Testing & Quality
+
+#### Test Case Reorganization 🟡 MEDIUM PRIORITY
+**Priority**: Medium (Improve maintainability and clarity)
+**Status**: Planning phase
+
+**Description**: Reorganize and restructure the test suite to improve maintainability, clarity, and coverage tracking.
+
+**Current Issues**:
+- Tests are scattered across multiple files with inconsistent naming patterns
+- Some test classes mix different concerns (e.g., `TemplateExecutionBasicTest`, `TemplateExecutionConditionalTest`, etc.)
+- Lack of clear categorization between unit tests, integration tests, and compatibility tests
+- Inconsistent test data setup patterns
+- Difficulty in identifying which Go template features are covered
+
+**Proposed Organization**:
+
+1. **By Component**:
+   ```
+   src/test/java/io/github/verils/gotemplate/
+   ├── lexer/           # Lexer-specific tests
+   ├── parser/          # Parser-specific tests  
+   ├── executor/        # Executor-specific tests
+   ├── ast/             # AST node tests
+   ├── functions/       # Built-in function tests
+   └── api/             # Public API tests
+   ```
+
+2. **By Feature**:
+   ```
+   src/test/java/io/github/verils/gotemplate/features/
+   ├── control-flow/    # if, range, with, block tests
+   ├── variables/       # Variable access and pipeline tests
+   ├── templates/       # Template definition and inclusion tests
+   ├── inheritance/     # Block override and inheritance tests
+   └── data-types/      # Different data type handling tests
+   ```
+
+3. **By Compatibility**:
+   ```
+   src/test/java/io/github/verils/gotemplate/compatibility/
+   ├── go-text-template/    # Go text/template compatibility tests
+   ├── java-deviations/     # Intentional Java-specific deviations
+   └── edge-cases/          # Edge cases and boundary conditions
+   ```
+
+**Naming Convention Standards**:
+- Unit tests: `{Component}Test.java` (e.g., `LexerTest.java`, `ParserTest.java`)
+- Feature tests: `{Feature}FeatureTest.java` (e.g., `RangeFeatureTest.java`, `IfFeatureTest.java`)
+- Integration tests: `{Scenario}IntegrationTest.java` (e.g., `EmailTemplateIntegrationTest.java`)
+- Compatibility tests: `{Standard}CompatibilityTest.java` (e.g., `GoTextTemplateCompatibilityTest.java`)
+
+**Implementation Plan**:
+
+| Phase | Task | Description | Estimated Effort |
+| :--- | :--- | :--- | :--- |
+| **Phase 1** | Audit existing tests | Catalog all current tests, identify overlaps and gaps | 1 day |
+| **Phase 2** | Design new structure | Define package structure and migration strategy | 0.5 day |
+| **Phase 3** | Create new packages | Set up new directory structure and base test classes | 0.5 day |
+| **Phase 4** | Migrate lexer tests | Move and reorganize lexer-related tests | 0.5 day |
+| **Phase 5** | Migrate parser tests | Move and reorganize parser-related tests | 1 day |
+| **Phase 6** | Migrate executor tests | Move and reorganize executor-related tests | 1 day |
+| **Phase 7** | Migrate feature tests | Reorganize feature-specific tests by category | 1.5 days |
+| **Phase 8** | Migrate compatibility tests | Organize Go compatibility and deviation tests | 1 day |
+| **Phase 9** | Update test utilities | Refactor `TemplateTestSupport` and helper classes | 0.5 day |
+| **Phase 10** | Verify and validate | Run all tests, ensure coverage maintained, fix issues | 1 day |
+
+**Benefits**:
+- Easier to locate tests for specific components or features
+- Better visibility into test coverage by category
+- Simplified maintenance when modifying specific components
+- Clearer separation of concerns (unit vs integration vs compatibility)
+- Improved onboarding experience for new contributors
+- Easier to identify missing test coverage areas
+
+**Risks & Mitigation**:
+- **Risk**: Breaking existing CI/CD pipelines during migration
+  - **Mitigation**: Perform migration in small, incremental steps with continuous verification
+- **Risk**: Losing test coverage during reorganization
+  - **Mitigation**: Maintain >90% coverage threshold throughout migration
+- **Risk**: Time investment without immediate feature benefits
+  - **Mitigation**: Schedule during low-priority periods, emphasize long-term maintainability gains
+
+**Success Criteria**:
+- All existing tests pass after reorganization
+- Code coverage remains ≥90%
+- Clear package structure with logical grouping
+- Consistent naming conventions applied throughout
+- Documentation updated to reflect new test organization
+- Migration completed without functionality changes
+
+**Estimated Total Effort**: 8-10 days (can be done incrementally)
+
+---
+
 ### API Enhancements
 
 #### Method Invocation with Arguments 🔴 SECURITY REVIEW REQUIRED

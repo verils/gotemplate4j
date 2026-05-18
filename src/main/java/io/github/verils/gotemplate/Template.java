@@ -1,5 +1,6 @@
 package io.github.verils.gotemplate;
 
+import io.github.verils.gotemplate.internal.ClassMetadata;
 import io.github.verils.gotemplate.internal.Executor;
 import io.github.verils.gotemplate.internal.IOUtils;
 import io.github.verils.gotemplate.internal.Parser;
@@ -77,10 +78,10 @@ public class Template {
     private MissingKeyPolicy missingKeyPolicy;
 
     private boolean mapKeySorting; // Whether to sort map keys during iteration
-    
+
     // Unified ClassMetadata cache: replaces beanInfoCache, annotationCache, and propertyDescriptorCache
     // This cache is instance-level, so it gets GC'd when the Template is GC'd (no memory leak)
-    private final Map<Class<?>, io.github.verils.gotemplate.internal.ClassMetadata> classMetadataCache = new ConcurrentHashMap<>();
+    private final Map<Class<?>, ClassMetadata> classMetadataCache = new ConcurrentHashMap<>();
 
     /**
      * Creates a new template with the specified name.
@@ -181,7 +182,7 @@ public class Template {
         if (name == null || name.isEmpty()) {
             throw new IllegalArgumentException("Template name cannot be null or empty");
         }
-        
+
         // Validate delimiters
         if (leftDelimiter != null && leftDelimiter.isEmpty()) {
             throw new IllegalArgumentException("Left delimiter cannot be empty");
@@ -189,7 +190,7 @@ public class Template {
         if (rightDelimiter != null && rightDelimiter.isEmpty()) {
             throw new IllegalArgumentException("Right delimiter cannot be empty");
         }
-        
+
         // Validate comment delimiters
         if (leftComment != null && leftComment.isEmpty()) {
             throw new IllegalArgumentException("Left comment delimiter cannot be empty");
@@ -197,7 +198,7 @@ public class Template {
         if (rightComment != null && rightComment.isEmpty()) {
             throw new IllegalArgumentException("Right comment delimiter cannot be empty");
         }
-        
+
         this.name = name;
         this.customFunctions = functions != null ? new LinkedHashMap<>(functions) : Collections.emptyMap();
         this.functions = Stream.concat(Functions.BUILTIN.entrySet().stream(), this.customFunctions.entrySet().stream())
@@ -275,7 +276,6 @@ public class Template {
     }
 
 
-
     /**
      * Configures whether map keys should be sorted during {@code range} iteration.
      * <p>
@@ -283,13 +283,13 @@ public class Template {
      * or {@code toString()} comparison (for other keys). This provides deterministic output
      * matching Go's default template behavior.
      * <p>
-     * Go template specification: "If the value is a map and the keys are of basic type with a 
+     * Go template specification: "If the value is a map and the keys are of basic type with a
      * defined order, the elements will be visited in sorted key order."
      *
      * @param mapKeySorting {@code true} to sort map keys (default), {@code false} to preserve insertion order
      * @return this template
-     * @since 0.7.0
      * @see <a href="https://pkg.go.dev/text/template#hdr-Actions">Go template range documentation</a>
+     * @since 0.7.0
      */
     public Template withMapKeySorting(boolean mapKeySorting) {
         this.mapKeySorting = mapKeySorting;
@@ -332,7 +332,6 @@ public class Template {
                     throw new IllegalArgumentException("unsupported option: " + option);
             }
         }
-
 
 
         return this;
@@ -399,7 +398,6 @@ public class Template {
     public MissingKeyPolicy missingKeyPolicy() {
         return missingKeyPolicy;
     }
-
 
 
     /**
@@ -680,7 +678,7 @@ public class Template {
         // Try multiple class loaders for better compatibility
         InputStream in = null;
         ClassLoader classLoader = null;
-        
+
         // First try: Thread context class loader
         try {
             classLoader = Thread.currentThread().getContextClassLoader();
@@ -690,7 +688,7 @@ public class Template {
         } catch (Exception e) {
             // Ignore and try next approach
         }
-        
+
         // Second try: This class's class loader
         if (in == null) {
             try {
@@ -702,7 +700,7 @@ public class Template {
                 // Ignore and try next approach
             }
         }
-        
+
         // Third try: System class loader
         if (in == null) {
             try {
@@ -721,10 +719,10 @@ public class Template {
                             "Searched in classpath using ClassLoader: %s\n" +
                             "Tip: Ensure the resource exists and the path is correct (case-sensitive).\n" +
                             "Note: Resource paths should not start with '/'.",
-                    resourcePath, 
+                    resourcePath,
                     classLoader != null ? classLoader.getClass().getName() : "null"));
         }
-        
+
         try {
             parse(in);
         } finally {
@@ -743,8 +741,8 @@ public class Template {
      *
      * @param pattern the glob pattern to match resources (e.g., "/templates/*.tmpl")
      * @return a new Template instance containing all parsed templates
-     * @throws TemplateParseException if any template contains syntax errors or parsing issues
-     * @throws IOException            if any resource cannot be found or read
+     * @throws TemplateParseException   if any template contains syntax errors or parsing issues
+     * @throws IOException              if any resource cannot be found or read
      * @throws IllegalArgumentException if pattern is null or empty
      * @since 0.9.0
      */
@@ -756,7 +754,7 @@ public class Template {
         // Extract base path and pattern for matching
         String basePath = pattern;
         String globPattern;
-        
+
         int lastSlash = pattern.lastIndexOf('/');
         if (lastSlash > 0) {
             String fileNamePattern = pattern.substring(lastSlash + 1);
@@ -774,10 +772,10 @@ public class Template {
         if (classLoader == null) {
             classLoader = Template.class.getClassLoader();
         }
-        
+
         // Create a temporary template to hold all parsed content
         Template template = new Template("classpath-resources");
-        
+
         // Attempt to get resources from classpath using the classloader
         java.net.URL baseUrl = classLoader.getResource(basePath.startsWith("/") ? basePath.substring(1) : basePath);
         if (baseUrl != null && baseUrl.getProtocol().equals("file")) {
@@ -788,7 +786,7 @@ public class Template {
                     java.nio.file.PathMatcher matcher = java.nio.file.FileSystems.getDefault().getPathMatcher("glob:" + globPattern);
                     return matcher.matches(java.nio.file.Paths.get(name));
                 });
-                
+
                 if (files != null) {
                     for (java.io.File file : files) {
                         if (file.isFile()) {
@@ -802,8 +800,8 @@ public class Template {
             // This is a simplified approach for JAR resources
             // We'll try to load resources based on common naming conventions
             java.util.Enumeration<java.net.URL> resources = classLoader.getResources(
-                pattern.startsWith("/") ? pattern.substring(1) : pattern);
-            
+                    pattern.startsWith("/") ? pattern.substring(1) : pattern);
+
             java.io.ByteArrayOutputStream buffer = new java.io.ByteArrayOutputStream();
             byte[] data = new byte[1024];
             while (resources.hasMoreElements()) {
@@ -819,7 +817,7 @@ public class Template {
                 }
             }
         }
-        
+
         return template;
     }
 
