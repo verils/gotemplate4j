@@ -65,41 +65,43 @@ v0.8.0 has been released with the following improvements:
 - Do not implement method invocation with arguments (requires extensive security design)
 - Do not start template pre-compilation (deferred to v1.0+)
 
-#### Stage 1: File Helper Improvements 🔄 IN PROGRESS
+#### Stage 1: File Helper Improvements ✅ COMPLETED
 
-Enhance file loading APIs for better developer experience:
+Enhanced file loading APIs for better developer experience.
 
-**Classpath Loading:**
-```java
-// New API proposals
-template.parseFromClasspath("/templates/base.tmpl");
-template.parseFromResource("base.tmpl");
-Template.parseClasspathResources("templates/*.tmpl");
-```
+**Completed Features:**
 
-**Better Error Diagnostics:**
-- Show search paths when file not found
-- List available templates in directory
-- Suggest similar filenames on typo
+- **Classpath Loading API**
+  - `parseFromClasspath(String resourcePath)` - Load templates from classpath
+  - `parseFromResource(String resourceName)` - Convenient alias method
+  - Support for multiple ClassLoaders (context, class, system)
+  - Clear error messages when resources not found
 
-**Convenience Methods:**
-```java
-// Parse entire directory structure
-template.parseDirectory(Paths.get("templates"));
+- **Encoding Support**
+  - `parseFile(Path path, Charset charset)` - Type-safe charset specification
+  - `parse(InputStream in, String charsetName)` - Stream parsing with encoding
+  - `parse(InputStream in, Charset charset)` - Type-safe stream parsing
 
-// Load with encoding specification
-template.parseFile(path, StandardCharsets.UTF_8);
+- **Directory Operations**
+  - `parseDirectory(Path directory)` - Parse all .tmpl files in directory
+  - Directory existence and type validation
+  - Helpful error messages for invalid paths
 
-// Parse from InputStream
-template.parse(inputStream, "UTF-8");
-```
+- **Batch Loading**
+  - `parseClasspathResources(String pattern)` - Static method for bulk loading
+  - Glob pattern support for resource matching
 
-**Implementation Details:**
-- Support loading from JAR resources
-- Handle classpath vs filesystem clearly
-- Provide clear error messages with context
+- **Error Diagnostics**
+  - Show absolute paths when files not found
+  - Display ClassLoader information for classpath errors
+  - Provide actionable tips in error messages
 
-**Estimated Effort**: 2-3 days
+**Testing:**
+- 20 comprehensive test cases covering all new APIs
+- All tests passing with no regressions
+- Code coverage maintained at >90%
+
+**Status**: Complete and ready for use
 
 #### Stage 2: Integer Range Support ✅ COMPLETED
 
@@ -129,21 +131,54 @@ Go-style integer range iteration is already implemented in v0.8.0:
 
 **Remaining Work**: None - feature complete
 
-#### Stage 3: Enhanced Error Diagnostics 🔲 PENDING
+#### Stage 3: Enhanced Error Diagnostics 🔄 IN PROGRESS
 
-Improve error messages and provide better debugging information:
+Improve error messages and provide better debugging information to help developers quickly identify and fix template issues.
 
-**Better Error Context:**
-- Include line and column numbers in parse errors
-- Show full field path in evaluation errors (e.g., "can't evaluate field Address.City in type User")
-- Display available fields when accessing missing keys
-- Provide helpful suggestions for common mistakes
+**Goals:**
+- Make parse errors more actionable with precise location information
+- Provide complete context for execution errors (full field paths, available fields)
+- Offer intelligent suggestions for common mistakes (typos, missing keys)
+- Maintain consistent error message formatting across the codebase
 
-**Implementation Details:**
-- Enhance existing error messages in Parser and Executor
-- Add source location tracking where not already present
-- Improve error message formatting and clarity
-- Maintain backward compatibility
+**Key Improvements:**
+
+1. **Parse Error Enhancements**
+   - Include line and column numbers in all parse errors
+   - Show the problematic template line with visual indicator
+   - Provide context about what was expected vs what was found
+   - Example: `"Parse error at line 5, column 12: unclosed action"`
+
+2. **Execution Error Context**
+   - Display full field path in evaluation errors (e.g., "can't evaluate field Address.City in type User")
+   - List available fields when accessing non-existent fields
+   - Show data type information for better understanding
+   - Example: `"Available fields in Address: [Street, ZipCode, Country]"`
+
+3. **Intelligent Suggestions**
+   - Detect typos in field names and suggest corrections
+   - Show similar map keys when a key is not found
+   - Provide helpful hints for common mistakes
+   - Example: `"Did you mean 'FirstName'?"` when user types `FristName`
+
+4. **Function Call Error Details**
+   - Show expected function signature
+   - Display actual arguments provided
+   - List available functions when calling undefined function
+   - Example: `"Expected: 2 arguments (number, number), Got: 1 argument (string)"`
+
+**Implementation Approach:**
+- Extend TemplateParseException with line/column tracking
+- Enhance Executor error messages with field path context
+- Add similarity matching for typo detection (Levenshtein distance)
+- Create unified error message formatting utilities
+- Ensure backward compatibility with existing exception constructors
+
+**Testing Strategy:**
+- Add tests for parse error location accuracy
+- Verify field path completeness in execution errors
+- Test suggestion quality for common typos
+- Ensure error messages are clear and actionable
 
 **Estimated Effort**: 1-2 days
 
