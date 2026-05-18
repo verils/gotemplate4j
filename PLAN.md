@@ -7,20 +7,25 @@
 
 ---
 
-## Direction
+## Plan Documentation and Rules
 
-gotemplate4j should remain a small, Java-compatible implementation of Go's `text/template` semantics for Java applications. v0.8.0 focuses on quality improvements, performance optimization, and addressing identified limitations.
+### Project Direction
+
+gotemplate4j should remain a small, Java-compatible implementation of Go's `text/template` semantics for Java applications.
 
 **Important Notice**: Starting from v0.10.0, gotemplate4j will require **Java 11 or higher**. This decision aligns with industry standards and enables the use of modern Java features for cleaner, more maintainable code. Java 8 support will end with v0.9.x.
 
-### Document Maintenance
+### Document Maintenance Rules
 
 - Keep this plan short enough to guide work; remove completed tasks instead of accumulating release history.
 - Items in "Future Backlog" should be reviewed periodically and either promoted to active development or removed.
+- Completed version releases should be moved to "Current Progress" section, not kept in detailed planning sections.
+
+---
 
 ## Current Progress
 
-### ✅ Completed (v0.8.0 - Released)
+### ✅ Completed Versions (v0.8.0 - Released)
 
 v0.8.0 has been released with the following improvements:
 
@@ -36,11 +41,13 @@ v0.8.0 has been released with the following improvements:
 
 ---
 
-## v0.9.0 Release Plan
+## Version Plans
 
-Positioning: v0.9.0 is the final Java 8 release, focusing on deprecation notices, compatibility testing, and preparing for Java 11 migration in v0.10.0.
+### In Development: v0.9.0 Release Plan
 
-### Goals
+**Positioning**: v0.9.0 is the final Java 8 release, focusing on deprecation notices, compatibility testing, and preparing for Java 11 migration in v0.10.0.
+
+#### Goals
 
 - Add Java 11 migration deprecation notices in documentation
 - Test compatibility with Java 11, 17, and 21
@@ -49,14 +56,14 @@ Positioning: v0.9.0 is the final Java 8 release, focusing on deprecation notices
 - Maintain Java 8 compatibility and stability
 - Prepare codebase for smooth transition to Java 11
 
-### Non-Goals
+#### Non-Goals
 
 - Do not implement new major features (focus on preparation)
 - Do not break Java 8 compatibility
 - Do not add runtime dependencies beyond vanilla Java
 - Do not start Java 11-specific code changes yet
 
-### Stage 1: Deprecation Notices and Documentation ✅ PENDING
+#### Stage 1: Deprecation Notices and Documentation ✅ PENDING
 
 Prepare users for Java 11 migration:
 
@@ -72,7 +79,7 @@ Prepare users for Java 11 migration:
 
 **Estimated Effort**: 1 day
 
-### Stage 2: Compatibility Testing ✅ PENDING
+#### Stage 2: Compatibility Testing ✅ PENDING
 
 Verify gotemplate4j works correctly on newer Java versions:
 
@@ -96,7 +103,7 @@ Verify gotemplate4j works correctly on newer Java versions:
 
 **Estimated Effort**: 2-3 days
 
-### Stage 3: User Feedback Collection ✅ PENDING
+#### Stage 3: User Feedback Collection ✅ PENDING
 
 Gather community input on Java 11 migration:
 
@@ -119,7 +126,7 @@ Gather community input on Java 11 migration:
 
 **Estimated Effort**: 1-2 days (ongoing during v0.9.0 development)
 
-### v0.9.0 Completion Gate
+#### v0.9.0 Completion Gate
 
 - ✅ Deprecation notices added to documentation
 - ✅ Compatibility tested on Java 8, 11, 17, and 21
@@ -133,12 +140,98 @@ Gather community input on Java 11 migration:
 
 ---
 
-## Future Backlog (Unscheduled)
+### Next Version: v0.10.0 - Java 11 Migration
+
+#### Overview
+
+Starting from version 0.10.0, gotemplate4j will require **Java 11 or higher**. This strategic decision enables:
+- Access to modern Java language features (var, records, pattern matching)
+- Better performance with G1 GC and JIT improvements
+- Alignment with industry standards (Java 8 reached end of public updates in 2019)
+- Simplified codebase maintenance
+
+#### Migration Timeline
+
+```
+v0.8.0 (Released) → Java 8, Quality improvements + Performance optimization
+v0.9.0 (Current)  → Java 8, Deprecation notices + Compatibility testing
+v0.10.0 (Next)    → Java 11+, Modern features + Code cleanup
+```
+
+#### What Changes in v0.10.0?
+
+**Breaking Changes:**
+- Minimum Java version: 8 → 11
+- No API changes planned (backward compatible at API level)
+- Runtime requirement only
+
+**Code Improvements:**
+- Use `var` for cleaner variable declarations
+- Leverage `List.of()`, `Map.of()` for immutable collections
+- Use modern String methods (`isBlank()`, `strip()`, `repeat()`)
+- Enhanced Optional API usage
+- Remove Java 8 compatibility workarounds
+
+**Performance Benefits:**
+- G1 Garbage Collector (default in Java 11)
+- Improved JIT compilation
+- Better memory management
+- Potential 10-20% performance improvement
+
+#### Migration Guide for Users
+
+**If you're currently using Java 8:**
+
+1. **Upgrade to Java 11 LTS** (recommended) or Java 17 LTS
+    - Download from [Oracle](https://www.oracle.com/java/technologies/downloads/) or [Adoptium](https://adoptium.net/)
+    - Most systems can run multiple Java versions side-by-side
+
+2. **Update your build configuration:**
+   ```xml
+   <!-- Maven pom.xml -->
+   <properties>
+       <maven.compiler.source>11</maven.compiler.source>
+       <maven.compiler.target>11</maven.compiler.target>
+   </properties>
+   ```
+
+3. **No code changes required** (unless you're extending internal classes)
+
+**Expected Impact:**
+- ✅ Most users: Zero code changes needed
+- ✅ Library consumers: Just update Java runtime
+- ⚠️ Android developers: May need to stay on v0.9.x (last Java 8 version)
+- ⚠️ Legacy systems: Plan Java upgrade alongside library upgrade
+
+#### Rationale
+
+**Why Java 11?**
+- Long-term support until September 2026
+- Mature ecosystem with widespread adoption
+- Significant improvements over Java 8
+- Industry standard for new projects
+
+**Why not Java 17?**
+- Java 11 provides sufficient modern features
+- Wider current adoption in enterprise environments
+- Can consider Java 17+ in future major releases (v1.0+)
+
+#### Support Policy
+
+- **v0.9.x**: Last version supporting Java 8 (security fixes only after v0.10.0 release)
+- **v0.10.0+**: Requires Java 11 or higher
+- **Critical security patches**: May backport to v0.9.x for limited time
+
+For questions or concerns about this migration, please open an issue on GitHub.
+
+---
+
+## Future Version Plans (Backlog)
 
 This section tracks potential improvements and features that are not yet scheduled for specific releases.
 Items will be moved to active development stages based on user feedback, priority assessment, and resource availability.
 
-### v0.9.0 Specific Tasks
+### Performance Optimization (Low Priority)
 
 #### Performance Optimization Fine-tuning 🟡 LOW PRIORITY
 **Status**: Data-driven decisions needed
@@ -352,131 +445,3 @@ Items will be moved to active development stages based on user feedback, priorit
 - Configuration complexity
 
 **Current Alternative**: Manual code reviews and IDE inspections
-
----
-
-### Performance Optimization (Future)
-
-#### Remaining Hot Path Optimizations
-**Status**: Most optimizations completed in v0.8.0, remaining items have low ROI
-
-**Completed in v0.8.0**:
-- ✅ BeanInfo Caching (+32.2% bean access)
-- ✅ Annotation Cache memory leak fix
-- ✅ PropertyDescriptor Indexing
-- ✅ ClassMetadata Unified Cache (+267% bean access)
-
-**Deferred to Future** (see v0.9.0 Specific Tasks above):
-- Optional Unwrapping Optimization (<5% expected gain, data-driven)
-- String Building Optimization (<5% gain, error paths only)
-- Executor Lifecycle Management (needs profiling data first)
-
----
-
-### Java 11 Migration Preparation
-
-**Current Status**: Active development in v0.9.0
-
-See dedicated section: [Future Roadmap: Java 11 Migration (v0.10.0)](#future-roadmap-java-11-migration-v0100)
-
-**Active Tasks for v0.9.0**:
-- ✅ Add deprecation notices in documentation (Stage 1)
-- ⏳ Test compatibility with Java 11, 17, and 21 (Stage 2 - pending)
-- ⏳ Provide migration guide draft (Stage 1 - pending)
-- ⏳ Collect user feedback on Java version requirements (Stage 3 - ongoing)
-
----
-
----
-
-## Future Roadmap: Java 11 Migration (v0.10.0)
-
-### Overview
-
-Starting from version 0.10.0, gotemplate4j will require **Java 11 or higher**. This strategic decision enables:
-- Access to modern Java language features (var, records, pattern matching)
-- Better performance with G1 GC and JIT improvements
-- Alignment with industry standards (Java 8 reached end of public updates in 2019)
-- Simplified codebase maintenance
-
-### Migration Timeline
-
-```
-v0.8.0 (Released) → Java 8, Quality improvements + Performance optimization
-v0.9.0 (Current)  → Java 8, Deprecation notices + Compatibility testing
-v0.10.0 (Next)    → Java 11+, Modern features + Code cleanup
-```
-
-### What Changes in v0.10.0?
-
-**Breaking Changes:**
-- Minimum Java version: 8 → 11
-- No API changes planned (backward compatible at API level)
-- Runtime requirement only
-
-**Code Improvements:**
-- Use `var` for cleaner variable declarations
-- Leverage `List.of()`, `Map.of()` for immutable collections
-- Use modern String methods (`isBlank()`, `strip()`, `repeat()`)
-- Enhanced Optional API usage
-- Remove Java 8 compatibility workarounds
-
-**Performance Benefits:**
-- G1 Garbage Collector (default in Java 11)
-- Improved JIT compilation
-- Better memory management
-- Potential 10-20% performance improvement
-
-### Preparation in v0.9.0
-
-In version 0.9.0, we will:
-- Add deprecation notices in documentation
-- Test compatibility with Java 11, 17, and 21
-- Provide migration guide draft
-- Collect user feedback
-
-### Migration Guide for Users
-
-**If you're currently using Java 8:**
-
-1. **Upgrade to Java 11 LTS** (recommended) or Java 17 LTS
-    - Download from [Oracle](https://www.oracle.com/java/technologies/downloads/) or [Adoptium](https://adoptium.net/)
-    - Most systems can run multiple Java versions side-by-side
-
-2. **Update your build configuration:**
-   ```xml
-   <!-- Maven pom.xml -->
-   <properties>
-       <maven.compiler.source>11</maven.compiler.source>
-       <maven.compiler.target>11</maven.compiler.target>
-   </properties>
-   ```
-
-3. **No code changes required** (unless you're extending internal classes)
-
-**Expected Impact:**
-- ✅ Most users: Zero code changes needed
-- ✅ Library consumers: Just update Java runtime
-- ⚠️ Android developers: May need to stay on v0.9.x (last Java 8 version)
-- ⚠️ Legacy systems: Plan Java upgrade alongside library upgrade
-
-### Rationale
-
-**Why Java 11?**
-- Long-term support until September 2026
-- Mature ecosystem with widespread adoption
-- Significant improvements over Java 8
-- Industry standard for new projects
-
-**Why not Java 17?**
-- Java 11 provides sufficient modern features
-- Wider current adoption in enterprise environments
-- Can consider Java 17+ in future major releases (v1.0+)
-
-### Support Policy
-
-- **v0.9.x**: Last version supporting Java 8 (security fixes only after v0.10.0 release)
-- **v0.10.0+**: Requires Java 11 or higher
-- **Critical security patches**: May backport to v0.9.x for limited time
-
-For questions or concerns about this migration, please open an issue on GitHub.
