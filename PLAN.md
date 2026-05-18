@@ -3,7 +3,7 @@
 **Last Updated**: 2026-05-18  
 **Current Version**: 0.9.0 (in development)  
 **Next Version**: 0.10.0 (Java 11 upgrade planned)  
-**Current Focus**: v0.9.0 - Java 8 final release with deprecation notices and compatibility testing
+**Current Focus**: v0.9.0 - Java 8 final release with practical enhancements and Go compatibility improvements
 
 ---
 
@@ -45,98 +45,133 @@ v0.8.0 has been released with the following improvements:
 
 ### In Development: v0.9.0 Release Plan
 
-**Positioning**: v0.9.0 is the final Java 8 release, focusing on deprecation notices, compatibility testing, and preparing for Java 11 migration in v0.10.0.
+**Positioning**: v0.9.0 is the final Java 8 release, focusing on practical developer experience improvements and Go `text/template` compatibility enhancements.
+
+**Important Scope Note**: gotemplate4j implements Go's `text/template` package only, NOT `html/template`. Features like contextual auto-escaping, XSS prevention, and HTML-specific security mechanisms are intentionally out of scope. Users needing HTML safety should use the existing `{{html .value}}` function or pre-process data in Java code.
 
 #### Goals
 
-- Add Java 11 migration deprecation notices in documentation
-- Test compatibility with Java 11, 17, and 21
-- Provide migration guide draft for users
-- Collect user feedback on Java version requirements
+- Enhance file loading APIs for better developer experience (classpath, directory, encoding support)
+- Complete integer range support implementation and testing
+- Improve error diagnostics for file operations
 - Maintain Java 8 compatibility and stability
-- Prepare codebase for smooth transition to Java 11
+- Prepare codebase for smooth transition to Java 11 in v0.10.0
 
 #### Non-Goals
 
-- Do not implement new major features (focus on preparation)
+- Do not implement Java 11-specific features (deferred to v0.10.0)
 - Do not break Java 8 compatibility
 - Do not add runtime dependencies beyond vanilla Java
-- Do not start Java 11-specific code changes yet
+- Do not implement method invocation with arguments (requires extensive security design)
+- Do not start template pre-compilation (deferred to v1.0+)
 
-#### Stage 1: Deprecation Notices and Documentation ✅ PENDING
+#### Stage 1: File Helper Improvements ✅ IN PROGRESS
 
-Prepare users for Java 11 migration:
+Enhance file loading APIs for better developer experience:
 
-**Documentation Updates:**
-- Add deprecation notices for Java 8 support ending with v0.9.x
-- Create Java 11 migration guide draft
-- Update README with version support timeline
-- Document expected breaking changes in v0.10.0
+**Classpath Loading:**
+```java
+// New API proposals
+template.parseFromClasspath("/templates/base.tmpl");
+template.parseFromResource("base.tmpl");
+Template.parseClasspathResources("templates/*.tmpl");
+```
 
-**Code Comments:**
-- Add @Deprecated annotations where appropriate (if any APIs will change)
-- Include migration hints in Javadoc comments
+**Better Error Diagnostics:**
+- Show search paths when file not found
+- List available templates in directory
+- Suggest similar filenames on typo
 
-**Estimated Effort**: 1 day
+**Convenience Methods:**
+```java
+// Parse entire directory structure
+template.parseDirectory(Paths.get("templates"));
 
-#### Stage 2: Compatibility Testing ✅ PENDING
+// Load with encoding specification
+template.parseFile(path, StandardCharsets.UTF_8);
 
-Verify gotemplate4j works correctly on newer Java versions:
+// Parse from InputStream
+template.parse(inputStream, "UTF-8");
+```
 
-**Testing Matrix:**
-- Test on Java 8 (baseline - current support)
-- Test on Java 11 LTS (target for v0.10.0)
-- Test on Java 17 LTS (widely adopted)
-- Test on Java 21 LTS (latest LTS)
-
-**Test Scenarios:**
-- Run full test suite on each Java version
-- Verify JMH benchmarks work correctly
-- Check for any version-specific behaviors
-- Validate reflection-based features work as expected
-- Test concurrent access patterns
-
-**Validation Criteria:**
-- All 778+ tests pass on all Java versions
-- Performance benchmarks show no significant regression
-- No version-specific bugs or incompatibilities
+**Implementation Details:**
+- Support loading from JAR resources
+- Handle classpath vs filesystem clearly
+- Provide clear error messages with context
 
 **Estimated Effort**: 2-3 days
 
-#### Stage 3: User Feedback Collection ✅ PENDING
+#### Stage 2: Integer Range Support ✅ COMPLETED
 
-Gather community input on Java 11 migration:
+Go-style integer range iteration is already implemented:
 
-**Feedback Channels:**
-- GitHub discussions or issues
-- Survey existing users about Java version usage
-- Identify any blockers for Java 11 adoption
-- Understand timeline constraints for enterprise users
+**Syntax Support:**
+```gotemplate
+{{range $i := 5}}
+  Index: {{$i}}  // 0, 1, 2, 3, 4
+{{end}}
 
-**Key Questions:**
-- Are users ready to migrate to Java 11?
-- What concerns exist about dropping Java 8 support?
-- Any specific features needed before migration?
-- Preferred timeline for v0.10.0 release?
+{{range $i, $j := 3}}
+  Pair: {{$i}}, {{$j}}  // (0,0), (1,1), (2,2)
+{{end}}
+```
 
-**Deliverables:**
-- Summary of user feedback
-- Risk assessment for Java 11 migration
-- Adjusted timeline if needed
+**Implementation Status:**
+- ✅ Parser: Recognizes integer range syntax
+- ✅ Executor: Generates integer sequences (Executor.java lines 154-167)
+- ✅ Tests: Comprehensive test coverage (IntegerRangeTest.java)
+- ✅ Documentation: User guide updated (control-flow.md)
 
-**Estimated Effort**: 1-2 days (ongoing during v0.9.0 development)
+**Compatibility:**
+- Matches Go `text/template` behavior
+- Supports both single-variable and two-variable forms
+- Handles edge cases (zero, negative numbers)
+
+**Remaining Work**: None - feature complete
+
+#### Stage 3: Testing and Documentation ✅ PENDING
+
+Complete testing and documentation for new file loading features:
+
+**Testing Requirements:**
+- File loading API tests (classpath, directory, encoding)
+- Edge case and error handling tests
+- Backward compatibility tests
+- Cross-platform file path tests
+
+**Documentation Updates:**
+- Add new API usage examples for file loading
+- Document classpath resource loading best practices
+- Enhance User Guide with file loading patterns
+- Update API reference documentation
+
+**Performance Validation:**
+- Run JMH benchmarks
+- Ensure no performance regression
+- Validate new feature performance
+
+**Completion Criteria:**
+- All new features have complete test coverage
+- Code coverage maintains ≥90%
+- All existing tests pass
+- JMH benchmarks show no degradation
+- Documentation fully updated
+- `./mvnw clean verify "-Dgpg.skip=true"` succeeds
+- No backward compatibility breaks
+
+**Estimated Effort**: 1-2 days
 
 #### v0.9.0 Completion Gate
 
-- ✅ Deprecation notices added to documentation
-- ✅ Compatibility tested on Java 8, 11, 17, and 21
-- ✅ Migration guide draft provided
-- ✅ User feedback collected and reviewed
-- ✅ All tests pass on all supported Java versions
-- ✅ Performance benchmarks show no regression
-- ✅ `./mvnw clean verify "-Dgpg.skip=true"` succeeds on Java 8
-- ✅ No backward compatibility breaks
-- ✅ Ready for Java 11 migration in v0.10.0
+- 🔲 File helper improvements implemented and tested (classpath, directory, encoding)
+- ✅ Integer range support working correctly (already complete)
+- 🔲 Enhanced error diagnostics for file operations
+- 🔲 All tests pass with ≥90% coverage
+- 🔲 Performance benchmarks show no regression
+- 🔲 Documentation updated for all new features
+- 🔲 `./mvnw clean verify "-Dgpg.skip=true"` succeeds on Java 8
+- 🔲 No backward compatibility breaks
+- 🔲 Ready for Java 11 migration in v0.10.0
 
 ---
 
@@ -231,24 +266,6 @@ For questions or concerns about this migration, please open an issue on GitHub.
 This section tracks potential improvements and features that are not yet scheduled for specific releases.
 Items will be moved to active development stages based on user feedback, priority assessment, and resource availability.
 
-### Performance Optimization (Low Priority)
-
-#### Performance Optimization Fine-tuning 🟡 LOW PRIORITY
-**Status**: Data-driven decisions needed
-
-**Deferred Optimizations** (low ROI after ClassMetadata):
-- **Optional Unwrapping Optimization**: Profile first, optimize only if bottleneck confirmed (<5% expected gain)
-    - Potential approaches: inline the check, remove from known non-Optional paths
-- **String Building Optimization**: Use StringBuilder in `buildFullPath()` for error messages (<5% gain)
-- **Executor Lifecycle Management**: Evaluate ThreadLocal or pooled Executor pattern
-    - Profile first: Is Executor creation a bottleneck?
-    - Must maintain thread safety and zero behavioral changes
-    - Alternative: ThreadLocal<Executor> per Template or object pool
-
-**Note**: These optimizations have low expected ROI after ClassMetadata unified cache (+267% bean access). Implement only if profiling shows measurable bottlenecks.
-
----
-
 ### API Enhancements
 
 #### Method Invocation with Arguments 🔴 SECURITY REVIEW REQUIRED
@@ -339,55 +356,6 @@ Items will be moved to active development stages based on user feedback, priorit
 - Would declarative inheritance simplify workflows?
 
 **Estimated Effort**: 3-5 days
-
----
-
-#### File Helper Improvements 🟡 MEDIUM PRIORITY
-**Priority**: Medium (Practical value, low risk)
-**Status**: Not started
-
-**Description**: Enhance file loading APIs for better developer experience.
-
-**Current APIs** (v0.6.0+):
-- ✅ `parseFile(Path)` - Load single file
-- ✅ `parseFiles(Path...)` - Load multiple files
-- ✅ `parseGlob(Path, String)` - Load files matching pattern
-
-**Potential Improvements**:
-1. **Classpath Loading**
-   ```java
-   // New API proposal
-   template.parseFromClasspath("/templates/base.tmpl");
-   template.parseFromResource("base.tmpl");
-   ```
-
-2. **Better Error Diagnostics**
-    - Show search paths when file not found
-    - List available templates in directory
-    - Suggest similar filenames on typo
-
-3. **Built-in Caching**
-    - Optional simple cache for development mode
-    - Auto-reload on file changes (watch mode)
-    - Cache invalidation strategies
-
-4. **Convenience Methods**
-   ```java
-   // Parse entire directory structure
-   template.parseDirectory(Paths.get("templates"));
-   
-   // Load with encoding specification
-   template.parseFile(path, StandardCharsets.UTF_8);
-   ```
-
-**Rationale**:
-- Most practical improvement with immediate user value
-- Low implementation risk (extends existing APIs)
-- Aligns with common usage patterns
-
-**Decision**: Likely candidate for next release after collecting user feedback
-
-**Estimated Effort**: 1-2 days
 
 ---
 
