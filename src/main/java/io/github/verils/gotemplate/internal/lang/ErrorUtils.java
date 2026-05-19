@@ -12,6 +12,17 @@ import java.util.*;
  */
 public final class ErrorUtils {
 
+    /**
+     * Default threshold for considering a match as a likely typo
+     */
+    @SuppressWarnings("unused")
+    private static final double DEFAULT_TYPO_THRESHOLD = 0.5;
+
+    /**
+     * Minimum similarity score to provide a suggestion
+     */
+    private static final double SUGGESTION_THRESHOLD = 0.5;
+
     private ErrorUtils() {
         // Prevent instantiation
     }
@@ -50,9 +61,9 @@ public final class ErrorUtils {
             for (int j = 1; j <= len2; j++) {
                 int cost = (s1.charAt(i - 1) == s2.charAt(j - 1)) ? 0 : 1;
                 dp[i][j] = Math.min(
-                    Math.min(dp[i - 1][j] + 1,      // deletion
-                             dp[i][j - 1] + 1),      // insertion
-                    dp[i - 1][j - 1] + cost          // substitution
+                        Math.min(dp[i - 1][j] + 1,      // deletion
+                                dp[i][j - 1] + 1),      // insertion
+                        dp[i - 1][j - 1] + cost          // substitution
                 );
             }
         }
@@ -90,11 +101,11 @@ public final class ErrorUtils {
     /**
      * Finds the most similar string from a collection of candidates.
      *
-     * @param target    the target string to match against
+     * @param target     the target string to match against
      * @param candidates collection of candidate strings
      * @return the most similar candidate, or null if candidates is empty
      */
-    public static String findClosestMatch(String target, Collection<String> candidates) {
+    public static String findTopMatch(String target, Collection<String> candidates) {
         if (target == null || candidates == null || candidates.isEmpty()) {
             return null;
         }
@@ -116,7 +127,7 @@ public final class ErrorUtils {
     /**
      * Finds the top N most similar strings from a collection of candidates.
      *
-     * @param target    the target string to match against
+     * @param target     the target string to match against
      * @param candidates collection of candidate strings
      * @param maxResults maximum number of results to return
      * @return list of most similar candidates, sorted by similarity (descending)
@@ -150,9 +161,9 @@ public final class ErrorUtils {
     /**
      * Checks if a string is likely a typo of any candidate based on similarity threshold.
      *
-     * @param target    the target string to check
+     * @param target     the target string to check
      * @param candidates collection of candidate strings
-     * @param threshold minimum similarity score to consider as a potential typo (0.0-1.0)
+     * @param threshold  minimum similarity score to consider as a potential typo (0.0-1.0)
      * @return true if there's at least one candidate with similarity &gt;= threshold
      */
     public static boolean isLikelyTypo(String target, Collection<String> candidates, double threshold) {
@@ -185,16 +196,16 @@ public final class ErrorUtils {
         // Try case-insensitive matching first for better typo detection
         for (String candidate : candidates) {
             if (candidate.equalsIgnoreCase(target)) {
-                return String.format(" Did you mean '%s'?", candidate);
+                return String.format("Did you mean '%s'?", candidate);
             }
         }
 
-        // Use a threshold of 0.5 to catch more typos (was 0.6)
-        String closest = findClosestMatch(target, candidates);
+        // Use similarity threshold to catch typos
+        String closest = findTopMatch(target, candidates);
         if (closest != null) {
             double score = similarityScore(target, closest);
-            if (score >= 0.5) {
-                return String.format(" Did you mean '%s'?", closest);
+            if (score >= SUGGESTION_THRESHOLD) {
+                return String.format("Did you mean '%s'?", closest);
             }
         }
 

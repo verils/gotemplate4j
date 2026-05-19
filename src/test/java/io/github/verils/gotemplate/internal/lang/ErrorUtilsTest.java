@@ -58,28 +58,28 @@ public class ErrorUtilsTest {
     }
 
     @Test
-    public void testFindClosestMatch() {
+    public void testFindTopMatch() {
         List<String> candidates = Arrays.asList("FirstName", "LastName", "Email", "Age");
         
         // Exact match
-        assertEquals("FirstName", ErrorUtils.findClosestMatch("FirstName", candidates));
+        assertEquals("FirstName", ErrorUtils.findTopMatch("FirstName", candidates));
         
         // Typo - should suggest FirstName
-        String closest = ErrorUtils.findClosestMatch("FristName", candidates);
+        String closest = ErrorUtils.findTopMatch("FristName", candidates);
         assertEquals("FirstName", closest);
         
         // Another typo
-        closest = ErrorUtils.findClosestMatch("Emial", candidates);
+        closest = ErrorUtils.findTopMatch("Emial", candidates);
         assertEquals("Email", closest);
         
         // No good match - will still return something (the best of bad options)
-        closest = ErrorUtils.findClosestMatch("XYZ", candidates);
+        closest = ErrorUtils.findTopMatch("XYZ", candidates);
         assertNotNull(closest); // Will return the least bad match
         
         // Edge cases
-        assertNull(ErrorUtils.findClosestMatch(null, candidates));
-        assertNull(ErrorUtils.findClosestMatch("test", null));
-        assertNull(ErrorUtils.findClosestMatch("test", Collections.emptyList()));
+        assertNull(ErrorUtils.findTopMatch(null, candidates));
+        assertNull(ErrorUtils.findTopMatch("test", null));
+        assertNull(ErrorUtils.findTopMatch("test", Collections.emptyList()));
     }
 
     @Test
@@ -129,7 +129,7 @@ public class ErrorUtilsTest {
         // Good match - should provide suggestion
         String suggestion = ErrorUtils.generateSuggestion("FristName", candidates);
         assertTrue(suggestion.contains("FirstName"));
-        assertTrue(suggestion.startsWith(" Did you mean"));
+        assertTrue(suggestion.startsWith("Did you mean"));
         
         // Another good match
         suggestion = ErrorUtils.generateSuggestion("Emial", candidates);
@@ -150,7 +150,7 @@ public class ErrorUtilsTest {
         List<String> candidates = Arrays.asList("FirstName", "lastName");
         
         // Case matters in Levenshtein distance
-        String closest = ErrorUtils.findClosestMatch("firstname", candidates);
+        String closest = ErrorUtils.findTopMatch("firstname", candidates);
         // Should find the closest based on character differences
         assertNotNull(closest);
     }
@@ -161,9 +161,9 @@ public class ErrorUtilsTest {
         List<String> fields = Arrays.asList("UserName", "EmailAddress", "PhoneNumber", "DateOfBirth");
         
         // Common typos
-        assertEquals("UserName", ErrorUtils.findClosestMatch("UserNmae", fields));
-        assertEquals("EmailAddress", ErrorUtils.findClosestMatch("EmialAddress", fields));
-        assertEquals("PhoneNumber", ErrorUtils.findClosestMatch("PhonNumber", fields));
+        assertEquals("UserName", ErrorUtils.findTopMatch("UserNmae", fields));
+        assertEquals("EmailAddress", ErrorUtils.findTopMatch("EmialAddress", fields));
+        assertEquals("PhoneNumber", ErrorUtils.findTopMatch("PhonNumber", fields));
         
         // Generate helpful error messages
         String typo = "UserNmae";
@@ -171,7 +171,7 @@ public class ErrorUtilsTest {
         assertTrue(suggestion.contains("UserName"));
         
         // Verify the suggestion format is user-friendly
-        assertTrue(suggestion.matches(" Did you mean '[^']+'\\?"));
+        assertTrue(suggestion.matches("Did you mean '[^']+'\\?"));
     }
 
     @Test
@@ -185,7 +185,7 @@ public class ErrorUtilsTest {
         
         // Should still be fast
         long start = System.currentTimeMillis();
-        String closest = ErrorUtils.findClosestMatch("Fiel1", candidates);
+        String closest = ErrorUtils.findTopMatch("Fiel1", candidates);
         long elapsed = System.currentTimeMillis() - start;
         
         assertEquals("Field1", closest);

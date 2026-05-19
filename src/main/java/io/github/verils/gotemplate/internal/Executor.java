@@ -815,7 +815,7 @@ public class Executor {
             // Check for typos and provide suggestions
             String suggestion = ErrorUtils.generateSuggestion(missingField, availableNames);
             if (!suggestion.isEmpty()) {
-                message.append(suggestion);
+                message.append(" ").append(suggestion);
             }
         }
 
