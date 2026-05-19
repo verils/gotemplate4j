@@ -1,6 +1,6 @@
 # gotemplate4j Development Plan
 
-**Last Updated**: 2026-05-18  
+**Last Updated**: 2026-05-20  
 **Current Version**: 0.9.0 (in development)  
 **Next Version**: 0.10.0 (Java 11 upgrade planned)  
 **Current Focus**: v0.9.0 - Java 8 final release with practical enhancements and Go compatibility improvements
@@ -179,6 +179,7 @@ Improve error messages and provide better debugging information to help develope
 | **P1** | Enhance Field Errors ✅ | Update `Executor.executeFieldPath` to show available fields and typo suggestions using `ClassMetadata`. | 1 day | ✅ DONE |
 | **P2** | Enhance Map Key Errors ✅ | Update `Executor.handleMissingMapKey` to list available keys and suggest corrections. | 0.5 day | ✅ DONE |
 | **P3** | Enhance Function Errors ✅ | Improve `Executor.executeFunction` to show argument mismatches and list defined functions. | 1 day | ✅ DONE |
+| **P3.5** | Unify Parser Exception Messages 🔲 | Standardize all TemplateParseException messages in Parser.java with consistent format and ensure all include line/column info. | 1 day | 🔲 PENDING |
 | **P4** | Testing & Polish | Add comprehensive tests for new error formats and ensure backward compatibility. | 1 day | 🔲 PENDING |
 
 **Completed Work (P1):**
@@ -207,6 +208,47 @@ Improve error messages and provide better debugging information to help develope
 - ✅ Provides clear error messages for both parse-time and runtime function errors
 - ✅ Created comprehensive test suite (5 test cases in `EnhancedFunctionErrorTest`)
 - ✅ All tests passing, maintaining high code coverage
+
+**Pending Work (P3.5): Parser Exception Message Unification**
+
+**Problem**: Current exception messages in Parser.java have inconsistent formats:
+- Mixed styles: some use quotes, some don't (`"unexpected '%s'"` vs `"missing token"`)
+- Redundant information: line/column repeated in message text when already in exception object
+- Inconsistent separators: colon, space, or no separator
+- Vague messages: "missing token" doesn't indicate what kind of token was expected
+
+**Proposed Solution**: Adopt unified format following Go template conventions:
+```
+<error-type>: <description> [in <context>]
+```
+
+**Format Rules**:
+1. Use standard prefixes: `unexpected`, `undefined`, `invalid`, `missing`
+2. Use colon `:` as primary separator between type and description
+3. Remove redundant line/column from message text (provided by exception object)
+4. Remove unnecessary quotes around values
+5. Keep messages concise but informative
+
+**Examples**:
+
+| Current Format | Proposed Format | Rationale |
+|---------------|----------------|-----------|
+| `"missing token"` | `"unexpected EOF"` | More specific |
+| `"unexpected '%s' in %s"` | `"unexpected %s in %s"` | Remove extra quotes |
+| `"undefined variable %s"` | `"undefined variable: %s"` | Consistent separator |
+| `"function 'unknow' is not defined"` | `"undefined function: unknow"` | Unified prefix |
+| `"illegal number syntax: %s, line: %d, column: %d"` | `"invalid number syntax: %s"` | Remove redundant location |
+| `"non executable command in pipeline stage %d"` | `"non-executable command in pipeline stage %d"` | Use hyphen |
+
+**Implementation Plan**:
+1. Audit all `throwUnexpectError()` and `throw new TemplateParseException()` calls in Parser.java
+2. Categorize messages by type (unexpected, undefined, invalid, missing, etc.)
+3. Apply unified format to each category
+4. Ensure all exceptions include line/column via token parameter
+5. Update tests to match new message formats
+6. Verify no regressions in error handling
+
+**Estimated Effort**: 1 day
 
 **Example Output:**
 ```
@@ -370,78 +412,226 @@ Items will be moved to active development stages based on user feedback, priorit
 
 ### Testing & Quality
 
-#### Test Case Reorganization 🟡 MEDIUM PRIORITY
+#### Test Suite Reorganization 🟡 MEDIUM PRIORITY
 **Priority**: Medium (Improve maintainability and clarity)
-**Status**: Planning phase
+**Status**: Planning phase - Ready for execution
 
-**Description**: Reorganize and restructure the test suite to improve maintainability, clarity, and coverage tracking.
+**Description**: Reorganize the test suite by component and feature to improve maintainability, discoverability, and coverage tracking. This is a refactoring task that restructures test files without changing functionality.
 
-**Current Issues**:
-- Tests are scattered across multiple files with inconsistent naming patterns
-- Some test classes mix different concerns (e.g., `TemplateExecutionBasicTest`, `TemplateExecutionConditionalTest`, etc.)
-- Lack of clear categorization between unit tests, integration tests, and compatibility tests
-- Inconsistent test data setup patterns
-- Difficulty in identifying which Go template features are covered
+**Current State Analysis** (as of 2026-05-20):
 
-**Proposed Organization**:
+The test suite currently contains **70 test files** with the following issues:
 
-1. **By Component**:
-   ```
-   src/test/java/io/github/verils/gotemplate/
-   ├── lexer/           # Lexer-specific tests
-   ├── parser/          # Parser-specific tests  
-   ├── executor/        # Executor-specific tests
-   ├── ast/             # AST node tests
-   ├── functions/       # Built-in function tests
-   └── api/             # Public API tests
-   ```
+1. **Flat Structure**: All tests in root package, making navigation difficult
+   - 46 test files in `io.github.verils.gotemplate` root
+   - 20 test files in `io.github.verils.gotemplate.internal`
+   - No sub-package organization by component or feature
 
-2. **By Feature**:
-   ```
-   src/test/java/io/github/verils/gotemplate/features/
-   ├── control-flow/    # if, range, with, block tests
-   ├── variables/       # Variable access and pipeline tests
-   ├── templates/       # Template definition and inclusion tests
-   ├── inheritance/     # Block override and inheritance tests
-   └── data-types/      # Different data type handling tests
-   ```
+2. **Inconsistent Naming Patterns**:
+   - Component-based: `LexerErrorTest`, `ParserCanonicalTest`, `ExecutorTest`
+   - Feature-based: `BreakContinueTest`, `IntegerRangeTest`, `TemplateInheritanceTest`
+   - Mixed concerns: `TemplateExecutionBasicTest`, `TemplateExecutionConditionalTest`, etc. (6 files)
+   - Error diagnostics: `EnhancedFieldErrorTest`, `EnhancedFunctionErrorTest`, `EnhancedMapKeyErrorTest`
 
-3. **By Compatibility**:
-   ```
-   src/test/java/io/github/verils/gotemplate/compatibility/
-   ├── go-text-template/    # Go text/template compatibility tests
-   ├── java-deviations/     # Intentional Java-specific deviations
-   └── edge-cases/          # Edge cases and boundary conditions
-   ```
+3. **Scattered Related Tests**:
+   - Template execution tests split across 6 files (`TemplateExecution*Test.java`)
+   - Function tests split across 6 files (`Functions*Test.java`)
+   - Parser tests already well-organized in `internal` package
+   - Lexer tests already well-organized in `internal` package
+
+4. **Helper Classes Mixed with Tests**:
+   - `TemplateTestSupport.java` - base test class
+   - `Recipient.java` - test data model
+   - Located alongside test files instead of dedicated test utilities package
+
+**Target Organization Structure**:
+
+```
+src/test/java/io/github/verils/gotemplate/
+├── api/                          # Public API tests
+│   ├── TemplateApiTest.java
+│   ├── TemplateCloningTest.java
+│   ├── TemplateIntrospectionTest.java
+│   └── TemplateFileHelperTest.java
+│
+├── features/                     # Feature-based tests (Go template semantics)
+│   ├── ControlFlowFeatureTest.java          # if, else, end
+│   ├── RangeFeatureTest.java                # range loops
+│   ├── WithFeatureTest.java                 # with blocks
+│   ├── BlockFeatureTest.java                # block definitions
+│   ├── BreakContinueFeatureTest.java        # break/continue
+│   ├── TemplateInclusionFeatureTest.java    # template/block inclusion
+│   ├── TemplateInheritanceFeatureTest.java  # define/extends
+│   ├── VariablePipelineFeatureTest.java     # variables and pipelines
+│   └── TruthinessFeatureTest.java           # boolean evaluation
+│
+├── functions/                    # Built-in function tests
+│   ├── CollectionFunctionsTest.java         # index, len, etc.
+│   ├── ComparisonFunctionsTest.java         # eq, ne, lt, gt, etc.
+│   ├── LogicalFunctionsTest.java            # and, or, not
+│   ├── FormattingFunctionsTest.java         # printf, sprintf
+│   ├── EscapingFunctionsTest.java           # html, js, urlquery
+│   ├── IntrospectionFunctionsTest.java      # kindOf, typeOf
+│   └── CallFunctionTest.java                # call
+│
+├── errorhandling/                # Error handling and diagnostics
+│   ├── ParseErrorTest.java                  # TemplateParseException
+│   ├── ExecutionErrorTest.java              # TemplateExecutionException
+│   ├── EnhancedFieldErrorTest.java          # Field access errors
+│   ├── EnhancedMapKeyErrorTest.java         # Map key errors
+│   ├── EnhancedFunctionErrorTest.java       # Function errors
+│   └── MissingKeyPolicyTest.java            # Missing key policies
+│
+├── datahandling/                 # Data type handling
+│   ├── NullSafetyTest.java                  # Null value handling
+│   ├── OptionalSupportTest.java             # Optional support
+│   ├── EnumHandlingTest.java                # Enum support
+│   ├── PublicFieldTest.java                 # Public field access
+│   ├── GoStyleFieldNameTest.java            # Go-style field names
+│   ├── TemplateFieldAnnotationTest.java     # @TemplateField
+│   └── MapKeySortingTest.java               # Map iteration order
+│
+├── compatibility/                # Go compatibility and deviations
+│   ├── GoCompatibilityAuditTest.java        # Compatibility audit
+│   ├── GoCompatibilityFixtureTest.java      # Fixture tests
+│   ├── JavaDeviationFixtureTest.java        # Java-specific deviations
+│   └── RootVariableCompatibilityTest.java   # $ variable compatibility
+│
+├── advanced/                     # Advanced features
+│   ├── CustomDelimiterTest.java             # Custom delimiters
+│   ├── NestedTemplateContextTest.java       # Nested contexts
+│   ├── IntegerRangeTest.java                # Integer range syntax
+│   ├── RangeIndexTest.java                  # Range with index
+│   ├── PipeNodeVariableTest.java            # Pipe node variables
+│   └── TemplateInputValidationTest.java     # Input validation
+│
+├── internal/                     # Internal component tests (keep existing structure)
+│   ├── lexer/                                 # Lexer tests
+│   │   ├── LexerLiteralTest.java
+│   │   ├── LexerTextAndActionTest.java
+│   │   ├── LexerVariablePipelineTest.java
+│   │   ├── LexerTrimDelimiterTest.java
+│   │   ├── LexerPositionTest.java
+│   │   ├── LexerErrorTest.java
+│   │   └── LexerTestSupport.java
+│   │
+│   ├── parser/                                # Parser tests
+│   │   ├── ParserCanonicalTest.java
+│   │   ├── ParserBranchScopeTest.java
+│   │   ├── ParserTemplateDefinitionTest.java
+│   │   ├── ParserPipelineCommandTest.java
+│   │   ├── ParserNumberTest.java
+│   │   ├── ParserErrorContextTest.java
+│   │   ├── ParserLegacyErrorTest.java
+│   │   └── ParserTestSupport.java
+│   │
+│   ├── executor/                              # Executor tests
+│   │   └── ExecutorTest.java
+│   │
+│   ├── ast/                                   # AST node tests
+│   │   └── ASTNodeTest.java
+│   │
+│   └── lang/                                  # Language utility tests
+│       ├── CharUtilsTest.java
+│       ├── ComplexTest.java
+│       ├── StringUtilsTest.java
+│       ├── ErrorUtilsTest.java
+│       └── StringEscapeUtilsTest.java
+│
+└── util/                         # Test utilities
+    ├── TemplateTestSupport.java               # Base test class
+    ├── Recipient.java                         # Test data model
+    └── TemplateJmhBenchmark.java              # Performance benchmarks
+```
 
 **Naming Convention Standards**:
-- Unit tests: `{Component}Test.java` (e.g., `LexerTest.java`, `ParserTest.java`)
-- Feature tests: `{Feature}FeatureTest.java` (e.g., `RangeFeatureTest.java`, `IfFeatureTest.java`)
-- Integration tests: `{Scenario}IntegrationTest.java` (e.g., `EmailTemplateIntegrationTest.java`)
-- Compatibility tests: `{Standard}CompatibilityTest.java` (e.g., `GoTextTemplateCompatibilityTest.java`)
 
-**Implementation Plan**:
+1. **Component Tests** (internal implementation):
+   - Pattern: `{Component}Test.java`
+   - Examples: `LexerTest.java`, `ParserTest.java`, `ExecutorTest.java`
+   - Location: `internal/{component}/`
 
-| Phase | Task | Description | Estimated Effort |
-| :--- | :--- | :--- | :--- |
-| **Phase 1** | Audit existing tests | Catalog all current tests, identify overlaps and gaps | 1 day |
-| **Phase 2** | Design new structure | Define package structure and migration strategy | 0.5 day |
-| **Phase 3** | Create new packages | Set up new directory structure and base test classes | 0.5 day |
-| **Phase 4** | Migrate lexer tests | Move and reorganize lexer-related tests | 0.5 day |
-| **Phase 5** | Migrate parser tests | Move and reorganize parser-related tests | 1 day |
-| **Phase 6** | Migrate executor tests | Move and reorganize executor-related tests | 1 day |
-| **Phase 7** | Migrate feature tests | Reorganize feature-specific tests by category | 1.5 days |
-| **Phase 8** | Migrate compatibility tests | Organize Go compatibility and deviation tests | 1 day |
-| **Phase 9** | Update test utilities | Refactor `TemplateTestSupport` and helper classes | 0.5 day |
-| **Phase 10** | Verify and validate | Run all tests, ensure coverage maintained, fix issues | 1 day |
+2. **Feature Tests** (Go template features):
+   - Pattern: `{Feature}FeatureTest.java`
+   - Examples: `RangeFeatureTest.java`, `IfFeatureTest.java`, `BlockFeatureTest.java`
+   - Location: `features/`
+
+3. **Function Tests** (built-in functions):
+   - Pattern: `{Category}FunctionsTest.java`
+   - Examples: `CollectionFunctionsTest.java`, `ComparisonFunctionsTest.java`
+   - Location: `functions/`
+
+4. **API Tests** (public API surface):
+   - Pattern: `{Component}ApiTest.java` or `{Scenario}Test.java`
+   - Examples: `TemplateApiTest.java`, `TemplateFileHelperTest.java`
+   - Location: `api/`
+
+5. **Error Handling Tests**:
+   - Pattern: `{ErrorType}ErrorTest.java` or `{Scenario}ErrorTest.java`
+   - Examples: `ParseErrorTest.java`, `EnhancedFieldErrorTest.java`
+   - Location: `errorhandling/`
+
+6. **Compatibility Tests**:
+   - Pattern: `{Standard}CompatibilityTest.java` or `{Scenario}Test.java`
+   - Examples: `GoCompatibilityAuditTest.java`, `JavaDeviationFixtureTest.java`
+   - Location: `compatibility/`
+
+7. **Test Utilities**:
+   - Pattern: `{Name}TestSupport.java` or `{Name}Fixture.java`
+   - Examples: `TemplateTestSupport.java`, `ParserTestSupport.java`
+   - Location: `util/` or alongside component tests
+
+**Migration Strategy**:
+
+The migration will be performed in phases to minimize risk and allow continuous verification:
+
+| Phase | Task | Files Affected | Effort | Verification |
+| :--- | :--- | :--- | :--- | :--- |
+| **Phase 1** | Audit & Inventory | All 70 test files | 0.5 day | Document current state |
+| **Phase 2** | Create Package Structure | New directories | 0.5 day | Verify directory creation |
+| **Phase 3** | Move Internal Tests | `internal/*` (20 files) | 0.5 day | Run tests, verify no regressions |
+| **Phase 4** | Consolidate TemplateExecution Tests | 6 → 1 file | 1 day | Merge tests, run all |
+| **Phase 5** | Consolidate Functions Tests | 6 → 6 categorized files | 1 day | Reorganize by category |
+| **Phase 6** | Organize Feature Tests | ~15 files | 1.5 days | Group by Go template feature |
+| **Phase 7** | Organize Error Handling Tests | ~8 files | 0.5 day | Group by error type |
+| **Phase 8** | Organize Data Handling Tests | ~7 files | 0.5 day | Group by data type |
+| **Phase 9** | Organize Compatibility Tests | ~4 files | 0.5 day | Group by compatibility aspect |
+| **Phase 10** | Move Test Utilities | 3 files | 0.5 day | Update imports |
+| **Phase 11** | Final Verification | All tests | 1 day | Full test suite + coverage check |
+
+**Total Estimated Effort**: 8-9 days (can be done incrementally over 2-3 weeks)
 
 **Benefits**:
-- Easier to locate tests for specific components or features
-- Better visibility into test coverage by category
-- Simplified maintenance when modifying specific components
-- Clearer separation of concerns (unit vs integration vs compatibility)
-- Improved onboarding experience for new contributors
-- Easier to identify missing test coverage areas
+
+1. **Improved Discoverability**:
+   - Easy to find tests for specific components or features
+   - Clear separation between unit, feature, and integration tests
+   - Logical grouping reduces cognitive load
+
+2. **Better Coverage Tracking**:
+   - JaCoCo reports show coverage by package
+   - Easier to identify untested areas
+   - Can track coverage trends by component
+
+3. **Simplified Maintenance**:
+   - Related tests co-located
+   - Easier to update tests when modifying components
+   - Reduced merge conflicts in large teams
+
+4. **Clearer Separation of Concerns**:
+   - Internal implementation tests isolated from public API tests
+   - Feature tests independent of implementation details
+   - Compatibility tests clearly marked
+
+5. **Improved Onboarding**:
+   - New contributors can quickly understand test structure
+   - Easier to add tests for new features
+   - Better documentation through organization
+
+6. **CI/CD Optimization**:
+   - Can run subset of tests by package
+   - Faster feedback for specific changes
+   - Parallel test execution by package
 
 **Risks & Mitigation**:
 - **Risk**: Breaking existing CI/CD pipelines during migration

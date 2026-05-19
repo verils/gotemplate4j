@@ -1,5 +1,7 @@
 package io.github.verils.gotemplate;
 
+import io.github.verils.gotemplate.internal.Token;
+
 /**
  * Exception thrown when a template contains syntax errors or cannot be parsed.
  * <p>
