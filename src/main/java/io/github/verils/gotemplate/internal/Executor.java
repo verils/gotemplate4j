@@ -422,7 +422,7 @@ public class Executor {
             if (currentData instanceof Map) {
                 Map<?, ?> map = (Map<?, ?>) currentData;
                 if (!map.containsKey(identifier)) {
-                    currentData = handleMissingMapKey(identifier);
+                    currentData = handleMissingMapKey(identifier, map);
                     continue;
                 }
                 currentData = unwrapOptional(map.get(identifier));
@@ -630,7 +630,7 @@ public class Executor {
         if (collection instanceof Map) {
             Map<?, ?> map = (Map<?, ?>) collection;
             if (!map.containsKey(key)) {
-                return handleMissingMapKey(String.valueOf(key));
+                return handleMissingMapKey(String.valueOf(key), map);
             }
             return unwrapOptional(map.get(key));
         }
@@ -646,11 +646,51 @@ public class Executor {
         }
     }
 
-    private Object handleMissingMapKey(String key) throws TemplateExecutionException {
+    private Object handleMissingMapKey(String key, Map<?, ?> map) throws TemplateExecutionException {
         if (missingKeyPolicy == MissingKeyPolicy.ERROR) {
-            throw new TemplateExecutionException(String.format("missing map key '%s'", key));
+            String errorMessage = buildMapKeyNotFoundError(key, map);
+            throw new TemplateExecutionException(errorMessage);
         }
         return null;
+    }
+
+    /**
+     * Builds an enhanced error message when a map key is not found.
+     * <p>
+     * The error message includes:
+     * <ul>
+     *   <li>The missing key name</li>
+     *   <li>A list of available keys in the map</li>
+     *   <li>A suggestion if the key name appears to be a typo</li>
+     * </ul>
+     *
+     * @param missingKey The key that was not found
+     * @param map        The map being accessed
+     * @return A detailed error message
+     */
+    private String buildMapKeyNotFoundError(String missingKey, Map<?, ?> map) {
+        StringBuilder message = new StringBuilder();
+        message.append(String.format("missing map key '%s'", missingKey));
+
+        // Collect all available keys as strings
+        Set<String> availableKeys = new TreeSet<>();
+        for (Object keyObj : map.keySet()) {
+            if (keyObj != null) {
+                availableKeys.add(String.valueOf(keyObj));
+            }
+        }
+
+        if (!availableKeys.isEmpty()) {
+            message.append(". Available keys: ").append(availableKeys);
+
+            // Generate typo suggestion
+            String suggestion = ErrorUtils.generateSuggestion(missingKey, availableKeys);
+            if (!suggestion.isEmpty()) {
+                message.append(" ").append(suggestion);
+            }
+        }
+
+        return message.toString();
     }
 
     private Object executeShortCircuitFunction(String identifier, List<Node> cmdArgNodes, Object data, BeanInfo beanInfo,
