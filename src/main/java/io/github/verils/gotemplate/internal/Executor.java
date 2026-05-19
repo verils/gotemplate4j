@@ -596,11 +596,15 @@ public class Executor {
             try {
                 return function.invoke(functionArgs);
             } catch (RuntimeException e) {
-                throw new TemplateExecutionException(String.format("function '%s' failed", identifier), e);
+                // Enhanced error message with function signature and argument details
+                String errorMsg = buildFunctionExecutionError(identifier, functionArgs, e);
+                throw new TemplateExecutionException(errorMsg, e);
             }
         }
 
-        throw new TemplateExecutionException(String.format("%s is not a defined function", identifier));
+        // Enhanced error message for undefined functions with suggestions
+        String errorMsg = buildUndefinedFunctionError(identifier);
+        throw new TemplateExecutionException(errorMsg);
     }
 
     private Object executeIndex(List<Node> functionArgNodes, Object data, BeanInfo beanInfo,
@@ -947,6 +951,85 @@ public class Executor {
 
     private void printText(Writer writer, String text) throws IOException {
         writer.write(text);
+    }
+
+    /**
+     * Builds an enhanced error message when a function is not defined.
+     * <p>
+     * The error message includes:
+     * <ul>
+     *   <li>The undefined function name</li>
+     *   <li>A list of available functions</li>
+     *   <li>A suggestion if the function name appears to be a typo</li>
+     * </ul>
+     *
+     * @param functionName The undefined function name
+     * @return A detailed error message
+     */
+    private String buildUndefinedFunctionError(String functionName) {
+        StringBuilder message = new StringBuilder();
+        message.append(String.format("function '%s' is not defined", functionName));
+
+        // Collect all available function names
+        Set<String> availableFunctions = new TreeSet<>(functions.keySet());
+
+        if (!availableFunctions.isEmpty()) {
+            // Limit the number of functions shown to avoid overwhelming messages
+            List<String> topMatches = ErrorUtils.findTopMatches(functionName, availableFunctions, 5);
+            
+            if (!topMatches.isEmpty()) {
+                message.append(". Available functions: ");
+                // Show top matches first, then indicate there are more
+                if (topMatches.size() < availableFunctions.size()) {
+                    message.append(topMatches);
+                    message.append(String.format(" (and %d more)", availableFunctions.size() - topMatches.size()));
+                } else {
+                    message.append(topMatches);
+                }
+
+                // Generate typo suggestion
+                String suggestion = ErrorUtils.generateSuggestion(functionName, availableFunctions);
+                if (!suggestion.isEmpty()) {
+                    message.append(" ").append(suggestion);
+                }
+            }
+        }
+
+        return message.toString();
+    }
+
+    /**
+     * Builds an enhanced error message when a function execution fails.
+     * <p>
+     * The error message includes:
+     * <ul>
+     *   <li>The function name</li>
+     *   <li>The number of arguments provided</li>
+     *   <li>The original error message</li>
+     * </ul>
+     *
+     * @param functionName The function name
+     * @param args         The arguments passed to the function
+     * @param cause        The original exception
+     * @return A detailed error message
+     */
+    private String buildFunctionExecutionError(String functionName, Object[] args, RuntimeException cause) {
+        StringBuilder message = new StringBuilder();
+        message.append(String.format("function '%s' failed", functionName));
+
+        // Add argument count information
+        message.append(String.format(" with %d argument(s)", args.length));
+
+        // Include the original error message if it's informative
+        String causeMessage = cause.getMessage();
+        if (causeMessage != null && !causeMessage.isEmpty()) {
+            // Only include if it provides additional context
+            if (!causeMessage.contains(functionName)) {
+                message.append(": ").append(causeMessage);
+            }
+        }
+
+        return message.toString();
     }
 
     private static class BreakException extends RuntimeException {

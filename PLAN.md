@@ -178,7 +178,7 @@ Improve error messages and provide better debugging information to help develope
 | **P0.5** | Enhance `TemplateParseException` ✅ | Add line/column fields to the exception class so callers can programmatically access error location details. | 0.5 day | ✅ DONE |
 | **P1** | Enhance Field Errors ✅ | Update `Executor.executeFieldPath` to show available fields and typo suggestions using `ClassMetadata`. | 1 day | ✅ DONE |
 | **P2** | Enhance Map Key Errors ✅ | Update `Executor.handleMissingMapKey` to list available keys and suggest corrections. | 0.5 day | ✅ DONE |
-| **P3** | Enhance Function Errors | Improve `Executor.executeFunction` to show argument mismatches and list defined functions. | 1 day | ⏳ NEXT |
+| **P3** | Enhance Function Errors ✅ | Improve `Executor.executeFunction` to show argument mismatches and list defined functions. | 1 day | ✅ DONE |
 | **P4** | Testing & Polish | Add comprehensive tests for new error formats and ensure backward compatibility. | 1 day | 🔲 PENDING |
 
 **Completed Work (P1):**
@@ -198,6 +198,16 @@ Improve error messages and provide better debugging information to help develope
 - ✅ Created comprehensive test suite (11 test cases in `EnhancedMapKeyErrorTest`)
 - ✅ All 818 tests passing, code coverage maintained at 91% instructions / 89% branches
 
+**Completed Work (P3):**
+- ✅ Enhanced `Executor.executeFunction` to display argument count on function execution errors
+- ✅ Enhanced `Parser.parseCommand` to show available functions when undefined function is encountered
+- ✅ Integrated `ErrorUtils` for function name typo suggestions in both parse and execution phases
+- ✅ Shows top 5 most similar function names to help users identify typos
+- ✅ Lists all available functions (built-in + custom) with count indication
+- ✅ Provides clear error messages for both parse-time and runtime function errors
+- ✅ Created comprehensive test suite (5 test cases in `EnhancedFunctionErrorTest`)
+- ✅ All tests passing, maintaining high code coverage
+
 **Example Output:**
 ```
 Field Error:
@@ -207,6 +217,14 @@ After:  can't evaluate field User.FristName. Available fields: [age, firstName, 
 Map Key Error:
 Before: missing map key 'FristName'
 After:  missing map key 'FristName'. Available keys: [Age, FirstName, LastName]. Did you mean 'FirstName'?
+
+Function Error (Parse Time):
+Before: function leng not defined
+After:  function 'leng' is not defined. Available functions: [default, deepEqual, index, kindOf, len, ...] Did you mean 'len'?
+
+Function Error (Execution Time):
+Before: function 'customFunc' failed
+After:  function 'customFunc' failed with 1 argument(s): customFunc requires exactly 2 arguments
 ```
 
 **Implementation Approach:**
@@ -222,7 +240,7 @@ After:  missing map key 'FristName'. Available keys: [Age, FirstName, LastName].
 - Ensure error messages are clear and actionable.
 
 **Estimated Effort**: 3-4 days total  
-**Progress**: ~75% complete (P0, P0.5, P1, P2 done; P3 pending)
+**Progress**: ~90% complete (P0, P0.5, P1, P2, P3 done; P4 pending)
 
 #### Stage 4: Testing & Documentation 🔲 PENDING
 

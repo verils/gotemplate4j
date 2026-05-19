@@ -586,7 +586,9 @@ public class Parser {
                 case IDENTIFIER:
                     String name = token.value();
                     if (!hasFunction(name)) {
-                        throwUnexpectError(String.format("function %s not defined", token.value()));
+                        // Enhanced error message with suggestions for undefined functions
+                        String errorMsg = buildUndefinedFunctionParseError(name);
+                        throwUnexpectError(errorMsg);
                     }
                     node = new IdentifierNode(token.value());
                     break;
@@ -1022,5 +1024,50 @@ public class Parser {
         public void incrementToken() {
             tokenIndex++;
         }
+    }
+
+    /**
+     * Builds an enhanced error message when a function is not defined during parsing.
+     * <p>
+     * The error message includes:
+     * <ul>
+     *   <li>The undefined function name</li>
+     *   <li>A list of available functions</li>
+     *   <li>A suggestion if the function name appears to be a typo</li>
+     * </ul>
+     *
+     * @param functionName The undefined function name
+     * @return A detailed error message
+     */
+    private String buildUndefinedFunctionParseError(String functionName) {
+        StringBuilder message = new StringBuilder();
+        message.append(String.format("function '%s' is not defined", functionName));
+
+        // Collect all available function names
+        java.util.Set<String> availableFunctions = new java.util.TreeSet<>(functions.keySet());
+
+        if (!availableFunctions.isEmpty()) {
+            // Limit the number of functions shown to avoid overwhelming messages
+            java.util.List<String> topMatches = io.github.verils.gotemplate.internal.lang.ErrorUtils.findTopMatches(functionName, availableFunctions, 5);
+            
+            if (!topMatches.isEmpty()) {
+                message.append(". Available functions: ");
+                // Show top matches first, then indicate there are more
+                if (topMatches.size() < availableFunctions.size()) {
+                    message.append(topMatches);
+                    message.append(String.format(" (and %d more)", availableFunctions.size() - topMatches.size()));
+                } else {
+                    message.append(topMatches);
+                }
+
+                // Generate typo suggestion
+                String suggestion = io.github.verils.gotemplate.internal.lang.ErrorUtils.generateSuggestion(functionName, availableFunctions);
+                if (!suggestion.isEmpty()) {
+                    message.append(" ").append(suggestion);
+                }
+            }
+        }
+
+        return message.toString();
     }
 }
