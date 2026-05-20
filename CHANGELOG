@@ -1,3 +1,112 @@
+v0.9.0 (2026-05-20)
+
+========
+
+**Enhanced Developer Experience Release** - This version focuses on improving developer productivity with enhanced file loading APIs, integer range support for Go-style iteration, and intelligent error diagnostics with typo suggestions.
+
+### ✨ New Features
+
+- **Enhanced File Loading APIs**: Added comprehensive file loading methods for flexible template management
+  - `parseFromClasspath(String)`: Load templates from classpath resources
+  - `parseFromResource(String)`: Alternative classpath loading method
+  - `parseFile(Path, Charset)`: Load single file with encoding support
+  - `parseDirectory(Path)`: Load all .tmpl files from directory
+  - `parseClasspathResources(String)`: Batch load with pattern matching
+  - All methods use UTF-8 encoding by default with optional charset specification
+  - Test coverage: 18 comprehensive test cases in `TemplateFileHelperTest`
+  
+  Example:
+  ```java
+  // Load from classpath
+  Template tmpl = Template.parseFromClasspath("templates/email.tmpl");
+  
+  // Load from directory
+  Map<String, Template> templates = Template.parseDirectory(Paths.get("templates"));
+  
+  // Load with specific encoding
+  Template tmpl = Template.parseFile(Paths.get("template.tmpl"), StandardCharsets.UTF_8);
+  ```
+
+- **Integer Range Support**: Added Go-style integer range iteration
+  - `{{range $i := 5}}` iterates from 0 to 4 (Go-compatible behavior)
+  - Supports both literal integers and data-driven values
+  - Handles zero and negative numbers correctly (no iteration)
+  - Works with single variable form: `{{range $i := .Count}}`
+  - Fully compatible with Go's `text/template` specification
+  - Test coverage: 8 comprehensive test cases in `IntegerRangeTest`
+
+---
+
+### 📈 Improvements
+
+#### Enhanced Error Diagnostics (Major)
+
+- **Intelligent Field Name Suggestions**: Improved field access error messages
+  - Shows available fields when accessing non-existent fields
+  - Provides "Did you mean?" suggestions using Levenshtein distance algorithm
+  - Filters out Object class methods (hashCode, toString, etc.) from suggestions
+  - Case-insensitive exact match check before fuzzy matching
+  - Example: `can't evaluate field User.FristName. Available fields: [age, firstName, getAge]. Did you mean 'firstName'?`
+  - Test coverage: 6 test cases in `EnhancedFieldErrorTest`
+
+- **Smart Map Key Error Messages**: Enhanced map key access errors
+  - Lists available keys when key is not found
+  - Suggests corrections for typos in map keys
+  - Works with both field path access and `index` function
+  - Handles various key types (String, Integer, etc.)
+  - Example: `missing map key 'FristName'. Available keys: [Age, FirstName, LastName]. Did you mean 'FirstName'?`
+  - Test coverage: 11 test cases in `EnhancedMapKeyErrorTest`
+
+- **Comprehensive Function Error Diagnostics**: Better function call error reporting
+  - Parse-time: Shows available functions when undefined function is encountered
+  - Runtime: Displays actual argument count on function execution failures
+  - Integrated typo suggestions for function names
+  - Lists all available built-in and custom functions
+  - Example (Parse): `undefined function: leng. Available functions: [and, call, len, ...]. Did you mean 'len'?`
+  - Example (Runtime): `function 'divide' failed with 1 argument(s): Requires exactly 2 arguments`
+  - Test coverage: 5 test cases in `EnhancedFunctionErrorTest`
+
+- **Unified Parser Exception Format**: Standardized all parser exception messages
+  - Consistent format: `<error-type>: <description> [in <context>]`
+  - Removed unnecessary quotes from error messages
+  - Eliminated redundant line/column information (provided by exception object)
+  - Standardized prefixes: `unexpected`, `undefined`, `invalid`, `missing`
+  - Improved terminology clarity (e.g., `unexpected dot after term`)
+  - All 823 tests updated to match new message formats
+
+#### Infrastructure Enhancements
+
+- **ErrorUtils Utility Class**: Created internal utility for error diagnostics
+  - Implemented Levenshtein distance algorithm for similarity calculation
+  - Provides similarity scoring and matching functions
+  - Generates intelligent suggestions for typos
+  - Comprehensive test coverage (9 test cases in `ErrorUtilsTest`)
+
+- **Enhanced TemplateParseException**: Added programmatic error location access
+  - Added line and column fields to exception class
+  - Callers can programmatically access error location details
+  - Maintains backward compatibility with existing constructors
+
+---
+
+### 🧪 Testing
+
+- **All 823 tests pass on Java 8** (added 74+ new tests across all stages)
+- **Code coverage: ~91% instruction, ~89% branch** (exceeds 90%/85% thresholds)
+- **No backward compatibility breaks**
+- **JMH benchmarks show no performance regression**
+- `./mvnw clean verify "-Dgpg.skip=true"` succeeds
+
+---
+
+### 📦 Upgrade Notes
+
+- **Fully backward compatible**: No API changes or breaking changes
+- **Enhanced error messages are automatic**: All improvements are internal, no configuration needed
+- **File loading APIs are additive**: Existing template parsing methods unchanged
+- **Last Java 8 supported version**: Starting from v0.10.0, Java 11+ will be required
+- **Recommended for all users**: Especially beneficial during development with better error messages
+
 v0.8.0 (2026-05-17)
 
 ========

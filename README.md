@@ -31,7 +31,7 @@ Add the dependency to your `pom.xml`:
 <dependency>
     <groupId>io.github.verils</groupId>
     <artifactId>gotemplate4j</artifactId>
-    <version>0.8.0</version>
+    <version>0.9.0</version>
 </dependency>
 ```
 
@@ -41,7 +41,7 @@ Add the dependency to your `build.gradle`:
 
 ```groovy
 dependencies {
-    implementation 'io.github.verils:gotemplate4j:0.8.0'
+    implementation 'io.github.verils:gotemplate4j:0.9.0'
 }
 ```
 
@@ -49,7 +49,7 @@ For Gradle Kotlin DSL (`build.gradle.kts`):
 
 ```kotlin
 dependencies {
-    implementation("io.github.verils:gotemplate4j:0.8.0")
+    implementation("io.github.verils:gotemplate4j:0.9.0")
 }
 ```
 

@@ -16,7 +16,7 @@ Add the following dependency to your `pom.xml`:
 <dependency>
     <groupId>io.github.verils</groupId>
     <artifactId>gotemplate4j</artifactId>
-    <version>0.8.0</version>
+    <version>0.9.0</version>
 </dependency>
 ```
 
@@ -26,7 +26,7 @@ Add the following to your `build.gradle`:
 
 ```groovy
 dependencies {
-    implementation 'io.github.verils:gotemplate4j:0.8.0'
+    implementation 'io.github.verils:gotemplate4j:0.9.0'
 }
 ```
 
@@ -34,7 +34,7 @@ For Gradle Kotlin DSL (`build.gradle.kts`):
 
 ```kotlin
 dependencies {
-    implementation("io.github.verils:gotemplate4j:0.8.0")
+    implementation("io.github.verils:gotemplate4j:0.9.0")
 }
 ```
 
@@ -45,9 +45,9 @@ dependencies {
 
 ### Download Links
 
-- **JAR**: `gotemplate4j-0.8.0.jar`
-- **Sources**: `gotemplate4j-0.8.0-sources.jar`
-- **Javadoc**: `gotemplate4j-0.8.0-javadoc.jar`
+- **JAR**: `gotemplate4j-0.9.0.jar`
+- **Sources**: `gotemplate4j-0.9.0-sources.jar`
+- **Javadoc**: `gotemplate4j-0.9.0-javadoc.jar`
 
 ## Verify Installation
 

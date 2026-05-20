@@ -31,7 +31,7 @@
 <dependency>
     <groupId>io.github.verils</groupId>
     <artifactId>gotemplate4j</artifactId>
-    <version>0.8.0</version>
+    <version>0.9.0</version>
 </dependency>
 ```
 
@@ -41,7 +41,7 @@
 
 ```groovy
 dependencies {
-    implementation 'io.github.verils:gotemplate4j:0.8.0'
+    implementation 'io.github.verils:gotemplate4j:0.9.0'
 }
 ```
 
@@ -49,7 +49,7 @@ dependencies {
 
 ```kotlin
 dependencies {
-    implementation("io.github.verils:gotemplate4j:0.8.0")
+    implementation("io.github.verils:gotemplate4j:0.9.0")
 }
 ```
 

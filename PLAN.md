@@ -1,9 +1,9 @@
 # gotemplate4j Development Plan
 
 **Last Updated**: 2026-05-20  
-**Current Version**: 0.9.0 (in development)  
+**Current Version**: 0.9.0 (Released)  
 **Next Version**: 0.10.0 (Java 11 upgrade planned)  
-**Current Focus**: v0.9.0 - Final stage: Testing & Documentation before release
+**Current Focus**: v0.10.0 - Java 11 migration and modernization
 
 ---
 
@@ -25,9 +25,41 @@ gotemplate4j should remain a small, Java-compatible implementation of Go's `text
 
 ## Current Progress
 
-### ✅ Completed Versions (v0.8.0 - Released)
+### ✅ Completed Versions (v0.9.0 - Released)
 
-v0.8.0 has been released with the following improvements:
+v0.9.0 has been released with the following improvements:
+
+- **Enhanced File Loading APIs**: Comprehensive file loading methods for flexible template management
+  - `parseFromClasspath(String)`: Load templates from classpath resources
+  - `parseFile(Path, Charset)`: Load single file with encoding support
+  - `parseDirectory(Path)`: Load all .tmpl files from directory
+  - `parseClasspathResources(String)`: Batch load with pattern matching
+  - Test coverage: 18 comprehensive test cases in `TemplateFileHelperTest`
+
+- **Integer Range Support**: Go-style integer range iteration
+  - `{{range $i := 5}}` iterates from 0 to 4 (Go-compatible behavior)
+  - Supports both literal integers and data-driven values
+  - Handles zero and negative numbers correctly
+  - Test coverage: 8 comprehensive test cases in `IntegerRangeTest`
+
+- **Enhanced Error Diagnostics**: Intelligent error messages with typo suggestions
+  - Field name suggestions using Levenshtein distance algorithm
+  - Map key error messages with available keys listing
+  - Function error diagnostics at parse-time and runtime
+  - Unified parser exception format
+  - Test coverage: 22+ test cases across EnhancedFieldErrorTest, EnhancedMapKeyErrorTest, EnhancedFunctionErrorTest
+
+- **ErrorUtils Infrastructure**: Internal utility for error diagnostics
+  - Levenshtein distance algorithm implementation
+  - Similarity scoring and matching functions
+  - Intelligent typo suggestion generation
+
+- **Test Coverage**: Maintained high quality (~91% instruction, ~89% branch)
+- **Performance**: No regressions from v0.8.0 benchmarks
+
+---
+
+### 📦 Previous Release (v0.8.0)
 
 - **@TemplateField Annotation Support**: Explicit field/method name control with annotation-based mapping
 - **Improved Error Messages**: Enhanced field-chain error reporting with full path context
@@ -43,7 +75,40 @@ v0.8.0 has been released with the following improvements:
 
 ## Version Plans
 
-### In Development: v0.9.0 Release Plan
+### ✅ Completed: v0.9.0 Release
+
+**Release Date**: 2026-05-20
+
+**Positioning**: v0.9.0 is the final Java 8 release, focusing on practical developer experience improvements and Go `text/template` compatibility enhancements.
+
+**Important Scope Note**: gotemplate4j implements Go's `text/template` package only, NOT `html/template`. Features like contextual auto-escaping, XSS prevention, and HTML-specific security mechanisms are intentionally out of scope. Users needing HTML safety should use the existing `{{html .value}}` function or pre-process data in Java code.
+
+#### Completed Goals
+
+- ✅ Enhanced file loading APIs for better developer experience (classpath, directory, encoding support)
+- ✅ Complete integer range support implementation and testing
+- ✅ Improved error diagnostics with detailed context information
+- ✅ Maintained Java 8 compatibility and stability
+- ✅ Prepared codebase for smooth transition to Java 11 in v0.10.0
+
+#### All Stages Completed
+
+- ✅ **Stage 1**: File Helper Improvements - Complete
+- ✅ **Stage 2**: Integer Range Support - Complete
+- ✅ **Stage 3**: Enhanced Error Diagnostics - Complete
+- ✅ **Stage 4**: Testing & Documentation - Complete
+
+#### Release Summary
+
+- **Total Tests**: 823 tests passing
+- **Code Coverage**: ~91% instruction, ~89% branch
+- **Performance**: No regressions from v0.8.0
+- **Backward Compatibility**: Fully maintained
+- **Build Verification**: `./mvnw clean verify "-Dgpg.skip=true"` succeeds
+
+---
+
+### 📋 Upcoming: v0.10.0 Release Plan
 
 **Positioning**: v0.9.0 is the final Java 8 release, focusing on practical developer experience improvements and Go `text/template` compatibility enhancements.
 
