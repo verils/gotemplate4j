@@ -114,6 +114,18 @@ You can also capture index and value:
 {{end}}
 ```
 
+**Integer Range Iteration (v0.9.0+)**:
+
+You can iterate over a sequence of numbers using integer ranges:
+
+```gotemplate
+{{range $i := 5}}
+  Index: {{$i}}  <!-- Outputs: 0, 1, 2, 3, 4 -->
+{{end}}
+```
+
+This is useful for generating repeated content or creating numbered lists.
+
 ### With Action
 
 The `with` action changes the dot context:

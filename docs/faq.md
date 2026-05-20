@@ -616,6 +616,105 @@ Or look for community Spring integration libraries.
 
 ---
 
+## v0.9.0 New Features
+
+### What's new in gotemplate4j v0.9.0?
+
+Version 0.9.0 introduces three major enhancements:
+
+1. **Enhanced File Loading APIs** - Load templates from classpath, directories, or with specific encoding
+2. **Integer Range Support** - Go-style `{{range $i := 5}}` syntax for iterating over number sequences
+3. **Enhanced Error Diagnostics** - Intelligent error messages with typo suggestions and available options listing
+
+See the [CHANGELOG](../CHANGELOG) for complete details.
+
+### How do I load templates from classpath?
+
+Use the new static method:
+
+```java
+Template template = Template.parseFromClasspath("/templates/email.tmpl");
+```
+
+This is especially useful in web applications and JAR deployments where templates are bundled inside the application.
+
+### How do I load all templates from a directory?
+
+Use `parseDirectory()` to load all `.tmpl` files at once:
+
+```java
+Map<String, Template> templates = Template.parseDirectory(Paths.get("templates"));
+
+// Access by filename (without extension)
+Template header = templates.get("header");
+```
+
+### Can I specify file encoding when loading templates?
+
+Yes! Use `parseFile()` with a Charset parameter:
+
+```java
+Template template = Template.parseFile(
+    Paths.get("template.tmpl"), 
+    StandardCharsets.UTF_8
+);
+```
+
+This ensures correct handling of non-ASCII characters in your templates.
+
+### How does integer range iteration work?
+
+You can now iterate over a sequence of numbers:
+
+```gotemplate
+{{range $i := 5}}
+  Index: {{$i}}
+{{end}}
+```
+
+Output:
+```
+Index: 0
+Index: 1
+Index: 2
+Index: 3
+Index: 4
+```
+
+This matches Go's `text/template` behavior and is useful for generating repeated content.
+
+### What are enhanced error diagnostics?
+
+Error messages now include helpful information:
+
+**Before v0.9.0:**
+```
+can't evaluate field FristName
+```
+
+**After v0.9.0:**
+```
+can't evaluate field User.FristName. Available fields: [age, firstName, lastName]. Did you mean 'firstName'?
+```
+
+The enhanced diagnostics provide:
+- Full field path context
+- List of available fields/keys/functions
+- Typo suggestions using fuzzy matching
+- Argument count information for function errors
+
+See [Error Handling Guide](user-guide/error-handling.md#enhanced-error-diagnostics-v090) for details.
+
+### Is v0.9.0 backward compatible?
+
+Yes! v0.9.0 is fully backward compatible with v0.8.x. All existing templates and code will continue to work without changes.
+
+### What Java version does v0.9.0 require?
+
+v0.9.0 requires **Java 8 or higher**. This is the last version to support Java 8. Starting from v0.10.0, Java 11+ will be required.
+
+---
+
 ## Still Have Questions?
 
 - 📖 Browse the [User Guide](user-guide/) for detailed documentation
@@ -625,4 +724,4 @@ Or look for community Spring integration libraries.
 
 ---
 
-*Last updated: 2026-05-10 for gotemplate4j v0.6.0*
+*Last updated: 2026-05-20 for gotemplate4j v0.9.0*

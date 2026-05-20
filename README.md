@@ -10,6 +10,8 @@ A Go template engine implementation for Java that evaluates Go templates and gen
 
 > ⚠️ **Core Purpose**: This project is **NOT** a replacement for Go's native `text/template` and does **NOT** aim to surpass it in performance or features. It exists solely to help **Java developers who must work with Go templates** meet basic operational needs when dealing with Go-based systems or migrating from Go to Java.
 
+> 🆕 **Latest Release (v0.9.0)**: Enhanced file loading APIs, integer range support, and intelligent error diagnostics with typo suggestions.
+
 ## Quick Start
 
 ### Requirements
@@ -69,6 +71,26 @@ StringWriter writer = new StringWriter();
 template.execute(writer, user);
 System.out.print(writer.toString());  // "Hello Bob!"
 ```
+
+### Enhanced File Loading (v0.9.0+)
+
+Load templates from classpath, directories, or with specific encoding:
+
+```java
+// Load from classpath
+Template tmpl = Template.parseFromClasspath("templates/email.tmpl");
+
+// Load from directory (all .tmpl files)
+Map<String, Template> templates = Template.parseDirectory(Paths.get("templates"));
+
+// Load with specific encoding
+Template tmpl = Template.parseFile(Paths.get("template.tmpl"), StandardCharsets.UTF_8);
+
+// Batch load from classpath with pattern
+List<Template> templates = Template.parseClasspathResources("templates/*.tmpl");
+```
+
+For more examples, see [Basic Examples](./docs/examples/basic-examples.md).
 
 ## Documentation
 

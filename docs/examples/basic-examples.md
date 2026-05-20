@@ -702,3 +702,106 @@ String result = w.toString();
 ---
 
 All examples in this document have been tested and verified to work correctly with gotemplate4j.
+
+---
+
+## File Loading Examples (v0.9.0+)
+
+New static methods for loading templates from various sources.
+
+### Load from Classpath
+
+```java
+import io.github.verils.gotemplate.Template;
+import java.io.StringWriter;
+import java.util.HashMap;
+import java.util.Map;
+
+public class ClasspathExample {
+    public static void main(String[] args) throws Exception {
+        // Load template from classpath
+        Template template = Template.parseFromClasspath("/templates/email.tmpl");
+        
+        Map<String, Object> data = new HashMap<>();
+        data.put("subject", "Welcome!");
+        data.put("body", "Thank you for joining.");
+        
+        StringWriter writer = new StringWriter();
+        template.execute(writer, data);
+        
+        System.out.println(writer.toString());
+    }
+}
+```
+
+### Load from Directory
+
+```java
+import io.github.verils.gotemplate.Template;
+import java.nio.file.Paths;
+import java.util.Map;
+
+public class DirectoryExample {
+    public static void main(String[] args) throws Exception {
+        // Load all .tmpl files from directory
+        Map<String, Template> templates = Template.parseDirectory(Paths.get("templates"));
+        
+        // Access individual templates by name (filename without extension)
+        Template header = templates.get("header");
+        Template footer = templates.get("footer");
+        Template body = templates.get("body");
+        
+        // Use them...
+    }
+}
+```
+
+### Load with Specific Encoding
+
+```java
+import io.github.verils.gotemplate.Template;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Paths;
+import java.io.StringWriter;
+
+public class EncodingExample {
+    public static void main(String[] args) throws Exception {
+        // Load with UTF-8 encoding
+        Template template = Template.parseFile(
+            Paths.get("templates/chinese.tmpl"), 
+            StandardCharsets.UTF_8
+        );
+        
+        StringWriter writer = new StringWriter();
+        template.execute(writer, data);
+        
+        System.out.println(writer.toString());
+    }
+}
+```
+
+### Batch Load from Classpath
+
+```java
+import io.github.verils.gotemplate.Template;
+import java.util.List;
+
+public class BatchClasspathExample {
+    public static void main(String[] args) throws Exception {
+        // Load all templates matching pattern
+        List<Template> templates = Template.parseClasspathResources("/templates/*.tmpl");
+        
+        // Process each template
+        for (Template tmpl : templates) {
+            System.out.println("Loaded: " + tmpl.name());
+        }
+    }
+}
+```
+
+### Key Benefits
+
+- **Classpath loading**: Works in JAR files and web applications
+- **Directory loading**: Convenient for loading multiple templates at once
+- **Encoding support**: Handle non-UTF-8 files correctly
+- **Pattern matching**: Flexible resource selection

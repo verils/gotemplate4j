@@ -282,6 +282,7 @@ Note: Map iteration order is not guaranteed unless you enable map key sorting.
 
 Iterate from 0 to n-1:
 
+**Single Variable Form**:
 ```gotemplate
 {{range $i := 5}}
   Iteration {{$i}}
@@ -296,6 +297,25 @@ Iteration 2
 Iteration 3
 Iteration 4
 ```
+
+**Two Variable Form** (v0.9.0+):
+
+You can also use two variables where both index and value are the same:
+
+```gotemplate
+{{range $index, $value := 3}}
+  Index: {{$index}}, Value: {{$value}}
+{{end}}
+```
+
+Output:
+```
+Index: 0, Value: 0
+Index: 1, Value: 1
+Index: 2, Value: 2
+```
+
+This matches Go's `text/template` behavior for integer ranges.
 
 ### Empty Collection
 

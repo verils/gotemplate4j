@@ -12,6 +12,8 @@ gotemplate4j has a well-defined exception hierarchy:
 
 Understanding these exceptions helps you handle errors gracefully.
 
+> 🆕 **v0.9.0 Enhancement**: Intelligent error diagnostics with typo suggestions, field path context, and available options listing.
+
 ## Exception Hierarchy
 
 ```
@@ -469,6 +471,130 @@ public class TemplateRenderer {
     }
 }
 ```
+
+## Enhanced Error Diagnostics (v0.9.0+)
+
+gotemplate4j v0.9.0 introduces intelligent error diagnostics that help you quickly identify and fix template issues.
+
+### Field Access Errors with Suggestions
+
+When accessing a non-existent field, the error message now includes:
+- Full field path context (e.g., `User.Address.City`)
+- List of available fields at that level
+- Typo suggestions using fuzzy matching (Levenshtein distance)
+
+**Example**:
+```java
+// Template: {{.FristName}}
+// Data: User object with fields [firstName, lastName, age]
+
+// Before v0.9.0:
+can't evaluate field FristName
+
+// After v0.9.0:
+can't evaluate field User.FristName. Available fields: [age, firstName, getAge, getFirstName, getName, lastName]. Did you mean 'firstName'?
+```
+
+The suggestion algorithm calculates the edit distance between the misspelled name and available options, suggesting the closest match.
+
+### Map Key Errors
+
+Similar enhancements for map key access:
+
+```java
+// Template: {{index .Data "FristName"}}
+// Data: Map with keys ["FirstName", "LastName", "Age"]
+
+// Before v0.9.0:
+missing map key 'FristName'
+
+// After v0.9.0:
+missing map key 'FristName'. Available keys: [Age, FirstName, LastName]. Did you mean 'FirstName'?
+```
+
+### Function Errors
+
+Both parse-time and runtime function errors now provide comprehensive information:
+
+#### Parse-Time Errors
+
+When referencing an undefined function:
+
+```java
+// Template: {{leng .Name}}
+
+// Before v0.9.0:
+function leng not defined
+
+// After v0.9.0:
+undefined function: leng. Available functions: [and, call, deepEqual, default, eq, ge, gt, html, index, js, kindOf, len, lt, ne, not, or, printf, sprintf, typeOf, urlquery]. Did you mean 'len'?
+```
+
+The error message lists all available built-in functions and suggests the closest match.
+
+#### Runtime Errors
+
+When a function call fails at runtime:
+
+```java
+// Custom function expecting 2 arguments
+template.addFunction("divide", args -> {
+    if (args.length != 2) {
+        throw new IllegalArgumentException("Requires exactly 2 arguments");
+    }
+    // ...
+});
+
+// Template: {{divide 10}}
+
+// Before v0.9.0:
+function 'divide' failed
+
+// After v0.9.0:
+function 'divide' failed with 1 argument(s): Requires exactly 2 arguments
+```
+
+The error message includes the actual argument count to help debug signature mismatches.
+
+### Unified Parser Exception Format
+
+All parser exceptions now follow a consistent format:
+```
+<error-type>: <description> [in <context>]
+```
+
+**Examples**:
+- `undefined function: functionName`
+- `invalid number syntax: 0xGG`
+- `unexpected dot after term true`
+- `non-executable command in pipeline stage 2`
+- `missing value: command`
+
+This consistency makes error messages easier to parse programmatically and understand at a glance.
+
+### Using Enhanced Diagnostics
+
+The enhanced diagnostics work automatically - no configuration needed. Simply upgrade to v0.9.0+ and you'll get better error messages immediately.
+
+**Tips for leveraging enhanced diagnostics**:
+
+1. **Read the full error message**: It contains actionable information
+2. **Check the suggestions**: The "Did you mean?" hint is often correct
+3. **Review available options**: The list shows what's actually accessible
+4. **Use ERROR policy in development**: Catch issues early with detailed messages
+
+```java
+Template template = new Template("demo")
+    .withMissingKeyPolicy(MissingKeyPolicy.ERROR);  // Get detailed errors
+
+try {
+    template.parse(templateText);
+} catch (TemplateParseException e) {
+    System.err.println(e.getMessage());  // Read the enhanced message
+}
+```
+
+---
 
 ## Debugging Tips
 

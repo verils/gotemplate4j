@@ -10,6 +10,8 @@
 
 > ⚠️ **核心定位**：本项目**不是**为了替代 Go 原生的 `text/template`，也**不追求**在性能或功能上超越它。它的存在仅仅是为了帮助**必须处理 Go 模板的 Java 开发者**在与 Go 系统协作或从 Go 迁移到 Java 时满足基本的工作需求。
 
+> 🆕 **最新版本 (v0.9.0)**：增强的文件加载 API、整数范围支持，以及带拼写建议的智能错误诊断。
+
 ## 快速开始
 
 ### 环境要求
@@ -69,6 +71,26 @@ StringWriter writer = new StringWriter();
 template.execute(writer, user);
 System.out.print(writer.toString());  // "Hello Bob!"
 ```
+
+### 增强的文件加载 (v0.9.0+)
+
+从 classpath、目录或指定编码加载模板：
+
+```java
+// 从 classpath 加载
+Template tmpl = Template.parseFromClasspath("templates/email.tmpl");
+
+// 从目录加载（所有 .tmpl 文件）
+Map<String, Template> templates = Template.parseDirectory(Paths.get("templates"));
+
+// 使用指定编码加载
+Template tmpl = Template.parseFile(Paths.get("template.tmpl"), StandardCharsets.UTF_8);
+
+// 批量从 classpath 加载（支持模式匹配）
+List<Template> templates = Template.parseClasspathResources("templates/*.tmpl");
+```
+
+更多示例，请参阅 [基础示例](./docs/examples/basic-examples.md)。
 
 ## 文档
 
