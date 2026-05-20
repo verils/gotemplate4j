@@ -85,6 +85,7 @@
 - Maintain existing test patterns and structure. For detailed test placement rules, see [CONTRIBUTING.md](./CONTRIBUTING.md#where-to-put-tests)
 - **All existing tests and new tests must succeed** - no test failures are acceptable
 - **Code coverage must not be lower than 90%** - template engines require exceptional test coverage due to complex parsing logic, security implications, and numerous edge cases
+- **Do not create new unit tests unnecessarily** - prioritize modifying existing unit tests to cover new functionality when possible
 
 ### Code Coverage Verification
 The project uses JaCoCo for code coverage analysis with automatic enforcement:
