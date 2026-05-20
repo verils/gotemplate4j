@@ -354,7 +354,7 @@ class ParserErrorContextTest {
             fail("Should throw TemplateParseException for non-executable command");
         } catch (TemplateParseException e) {
             assertNotNull(e.getMessage());
-            assertTrue(e.getMessage().contains("non executable command"));
+            assertTrue(e.getMessage().contains("non-executable command"));
         }
     }
 
@@ -367,7 +367,7 @@ class ParserErrorContextTest {
             fail("Should throw TemplateParseException for dot node as first argument");
         } catch (TemplateParseException e) {
             assertNotNull(e.getMessage());
-            assertTrue(e.getMessage().contains("non executable command"));
+            assertTrue(e.getMessage().contains("non-executable command"));
         }
     }
 
@@ -380,7 +380,7 @@ class ParserErrorContextTest {
             fail("Should throw TemplateParseException for nil node as first argument");
         } catch (TemplateParseException e) {
             assertNotNull(e.getMessage());
-            assertTrue(e.getMessage().contains("non executable command"));
+            assertTrue(e.getMessage().contains("non-executable command"));
         }
     }
 
@@ -393,7 +393,7 @@ class ParserErrorContextTest {
             fail("Should throw TemplateParseException for number node as first argument");
         } catch (TemplateParseException e) {
             assertNotNull(e.getMessage());
-            assertTrue(e.getMessage().contains("non executable command"));
+            assertTrue(e.getMessage().contains("non-executable command"));
         }
     }
 
@@ -406,7 +406,7 @@ class ParserErrorContextTest {
             fail("Should throw TemplateParseException for string node as first argument");
         } catch (TemplateParseException e) {
             assertNotNull(e.getMessage());
-            assertTrue(e.getMessage().contains("non executable command"));
+            assertTrue(e.getMessage().contains("non-executable command"));
         }
     }
 
@@ -419,7 +419,7 @@ class ParserErrorContextTest {
             fail("Should throw TemplateParseException for undefined function");
         } catch (TemplateParseException e) {
             assertNotNull(e.getMessage());
-            assertTrue(e.getMessage().contains("function") && e.getMessage().contains("not defined"));
+            assertTrue(e.getMessage().contains("undefined function"));
         }
     }
 
@@ -538,7 +538,7 @@ class ParserErrorContextTest {
             fail("Should throw TemplateParseException for unexpected dot after bool term");
         } catch (TemplateParseException e) {
             assertNotNull(e.getMessage());
-            assertTrue(e.getMessage().contains("unexpected . after term"));
+            assertTrue(e.getMessage().contains("unexpected dot after term"));
         }
     }
 
@@ -551,7 +551,7 @@ class ParserErrorContextTest {
             fail("Should throw TemplateParseException for unexpected dot after string term");
         } catch (TemplateParseException e) {
             assertNotNull(e.getMessage());
-            assertTrue(e.getMessage().contains("unexpected . after term"));
+            assertTrue(e.getMessage().contains("unexpected dot after term"));
         }
     }
 
@@ -566,8 +566,8 @@ class ParserErrorContextTest {
         } catch (TemplateParseException e) {
             assertNotNull(e.getMessage());
             // If it does throw, check for the expected message
-            if (e.getMessage().contains("unexpected . after term")) {
-                assertTrue(e.getMessage().contains("unexpected . after term"));
+            if (e.getMessage().contains("unexpected dot after term")) {
+                assertTrue(e.getMessage().contains("unexpected dot after term"));
             }
         }
     }
@@ -581,7 +581,7 @@ class ParserErrorContextTest {
             fail("Should throw TemplateParseException for unexpected dot after nil term");
         } catch (TemplateParseException e) {
             assertNotNull(e.getMessage());
-            assertTrue(e.getMessage().contains("unexpected . after term"));
+            assertTrue(e.getMessage().contains("unexpected dot after term"));
         }
     }
 
@@ -594,7 +594,7 @@ class ParserErrorContextTest {
             fail("Should throw TemplateParseException for unexpected dot after dot term");
         } catch (TemplateParseException e) {
             assertNotNull(e.getMessage());
-            assertTrue(e.getMessage().contains("unexpected . after term"));
+            assertTrue(e.getMessage().contains("unexpected dot after term"));
         }
     }
 

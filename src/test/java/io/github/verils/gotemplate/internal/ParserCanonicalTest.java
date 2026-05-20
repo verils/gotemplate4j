@@ -38,7 +38,7 @@ class ParserCanonicalTest {
         try {
             parser.parse("empty action", "{{}}");
         } catch (TemplateParseException e) {
-            assertEquals("missing value for command", e.getMessage());
+            assertEquals("missing value: command", e.getMessage());
         }
     }
 

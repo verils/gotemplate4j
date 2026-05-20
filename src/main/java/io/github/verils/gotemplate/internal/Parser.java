@@ -70,10 +70,10 @@ public class Parser {
         // Can not have ELSE and END node as the last in root list node
         Node lastNode = listNode.getLast();
         if (lastNode instanceof ElseNode) {
-            throw new TemplateParseException("unexpected " + listNode);
+            throw new TemplateParseException("unexpected node: " + listNode);
         }
         if (lastNode instanceof EndNode) {
-            throw new TemplateParseException("unexpected " + listNode);
+            throw new TemplateParseException("unexpected node: " + listNode);
         }
 
         ListNode root = (ListNode) state.getNode(name);
@@ -201,7 +201,7 @@ public class Parser {
         }
 
         if (token.type() != TokenType.STRING && token.type() != TokenType.RAW_STRING) {
-            throwUnexpectErrorWithContext(String.format("unexpected '%s' in %s", token.value(), context), token, state);
+            throwUnexpectErrorWithContext(String.format("unexpected %s in %s", token.value(), context), token, state);
         }
 
         String blockTemplateName = StringUtils.unquote(token.value());
@@ -224,7 +224,7 @@ public class Parser {
 
         Node lastNode = blockListNode.getLast();
         if (lastNode instanceof ElseNode) {
-            throwUnexpectErrorWithContext(String.format("unexpected '%s' in block clause", lastNode), null, state);
+            throwUnexpectErrorWithContext(String.format("unexpected %s in block clause", lastNode), null, state);
         }
         if (lastNode instanceof EndNode) {
             blockListNode.removeLast();
@@ -245,8 +245,8 @@ public class Parser {
         }
 
         if (token.type() != TokenType.STRING && token.type() != TokenType.RAW_STRING) {
-            throwUnexpectError(String.format("unexpected '%s' in %s", token.value(), context), token);
-            throw new TemplateParseException(String.format("unexpected '%s' in %s", token.value(), context), token.line(), token.column());
+            throwUnexpectError(String.format("unexpected %s in %s", token.value(), context), token);
+            throw new TemplateParseException(String.format("unexpected %s in %s", token.value(), context), token.line(), token.column());
         }
 
         String definitionTemplateName = StringUtils.unquote(token.value());
@@ -257,7 +257,7 @@ public class Parser {
         }
 
         if (token.type() != TokenType.RIGHT_DELIM) {
-            throw new TemplateParseException(String.format("unexpected '%s' in %s", token.value(), context), token.line(), token.column());
+            throw new TemplateParseException(String.format("unexpected %s in %s", token.value(), context), token.line(), token.column());
         }
 
         ListNode definitionListNode = new ListNode();
@@ -273,7 +273,7 @@ public class Parser {
         if (lastNode instanceof EndNode) {
             definitionListNode.removeLast();
         } else {
-            throwUnexpectError(String.format("unexpected '%s' in %s", lastNode, context), lookNextItem(lexer, state));
+            throwUnexpectError(String.format("unexpected %s in %s", lastNode, context), lookNextItem(lexer, state));
             return;
         }
 
@@ -371,7 +371,7 @@ public class Parser {
         }
 
         if (token.type() != TokenType.STRING && token.type() != TokenType.RAW_STRING) {
-            throw new TemplateParseException(String.format("unexpected '%s' in %s", token.value(), context), token.line(), token.column());
+            throw new TemplateParseException(String.format("unexpected %s in %s", token.value(), context), token.line(), token.column());
         }
 
         String templateName = StringUtils.unquote(token.value());
@@ -460,7 +460,7 @@ public class Parser {
         if (lastNode instanceof EndNode) {
             listNode.removeLast();
         } else {
-            throwUnexpectErrorWithContext("expected end, found " + lastNode, null, state);
+            throwUnexpectErrorWithContext("unexpected node: expected end, found " + lastNode, null, state);
         }
 
         state.variables.subList(variableCount, state.variables.size()).clear();
@@ -485,20 +485,20 @@ public class Parser {
             if (token.type() == end) {
                 List<CommandNode> commands = pipeNode.getCommands();
                 if (commands.isEmpty()) {
-                    throwUnexpectError("missing value for " + pipeNode.getContext(), lookNextItem(lexer, state));
+                    throwUnexpectError("missing value: " + pipeNode.getContext(), lookNextItem(lexer, state));
                 }
                 for (int i = 1; i < commands.size(); i++) {
                     Node firstArgument = commands.get(i).getFirstArgument();
                     if (firstArgument instanceof BoolNode) {
-                        throwUnexpectError(String.format("non executable command in pipeline stage %d", i + 1), lookNextItem(lexer, state));
+                        throwUnexpectError(String.format("non-executable command in pipeline stage %d", i + 1), lookNextItem(lexer, state));
                     } else if (firstArgument instanceof DotNode) {
-                        throwUnexpectError(String.format("non executable command in pipeline stage %d", i + 1), lookNextItem(lexer, state));
+                        throwUnexpectError(String.format("non-executable command in pipeline stage %d", i + 1), lookNextItem(lexer, state));
                     } else if (firstArgument instanceof NilNode) {
-                        throwUnexpectError(String.format("non executable command in pipeline stage %d", i + 1), lookNextItem(lexer, state));
+                        throwUnexpectError(String.format("non-executable command in pipeline stage %d", i + 1), lookNextItem(lexer, state));
                     } else if (firstArgument instanceof NumberNode) {
-                        throwUnexpectError(String.format("non executable command in pipeline stage %d", i + 1), lookNextItem(lexer, state));
+                        throwUnexpectError(String.format("non-executable command in pipeline stage %d", i + 1), lookNextItem(lexer, state));
                     } else if (firstArgument instanceof StringNode) {
-                        throwUnexpectError(String.format("non executable command in pipeline stage %d", i + 1), lookNextItem(lexer, state));
+                        throwUnexpectError(String.format("non-executable command in pipeline stage %d", i + 1), lookNextItem(lexer, state));
                     }
                 }
                 break;
@@ -643,15 +643,15 @@ public class Parser {
                     } else if (node instanceof VariableNode) {
                         node = new VariableNode(chainNode.toString());
                     } else if (node instanceof BoolNode) {
-                        throw new TemplateParseException(String.format("unexpected . after term %s", node), token.line(), token.column());
+                        throw new TemplateParseException(String.format("unexpected dot after term %s", node), token.line(), token.column());
                     } else if (node instanceof StringNode) {
-                        throw new TemplateParseException(String.format("unexpected . after term %s", node), token.line(), token.column());
+                        throw new TemplateParseException(String.format("unexpected dot after term %s", node), token.line(), token.column());
                     } else if (node instanceof NumberNode) {
-                        throw new TemplateParseException(String.format("unexpected . after term %s", node), token.line(), token.column());
+                        throw new TemplateParseException(String.format("unexpected dot after term %s", node), token.line(), token.column());
                     } else if (node instanceof NilNode) {
-                        throw new TemplateParseException(String.format("unexpected . after term %s", node), token.line(), token.column());
+                        throw new TemplateParseException(String.format("unexpected dot after term %s", node), token.line(), token.column());
                     } else if (node instanceof DotNode) {
-                        throw new TemplateParseException(String.format("unexpected . after term %s", node), token.line(), token.column());
+                        throw new TemplateParseException(String.format("unexpected dot after term %s", node), token.line(), token.column());
                     } else {
                         node = chainNode;
                     }
@@ -768,8 +768,7 @@ public class Parser {
         }
 
         if (!numberNode.isInt() && !numberNode.isFloat() && !numberNode.isComplex()) {
-            throw new TemplateParseException(String.format("illegal number syntax: %s, line: %d, column: %d",
-                    text, token.line(), token.column()));
+            throw new TemplateParseException(String.format("invalid number syntax: %s", text), token.line(), token.column());
         }
     }
 
@@ -1041,7 +1040,7 @@ public class Parser {
      */
     private String buildUndefinedFunctionParseError(String functionName) {
         StringBuilder message = new StringBuilder();
-        message.append(String.format("function '%s' is not defined", functionName));
+        message.append(String.format("undefined function: %s", functionName));
 
         // Collect all available function names
         java.util.Set<String> availableFunctions = new java.util.TreeSet<>(functions.keySet());
