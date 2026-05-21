@@ -132,6 +132,145 @@ For questions or concerns about this migration, please open an issue on GitHub.
 
 ---
 
+### 🐛 Critical Bugs Discovered (2026-05-21)
+
+During development of `ComprehensiveTemplateTest`, the following engine-level bugs were discovered. These are confirmed to exist in v0.9.0 and should be addressed in v0.10.0.
+
+#### BUG-1: Lexer `{{-` at position 0 causes StringIndexOutOfBoundsException 🔴 CRITICAL
+**Priority**: Highest
+**Status**: Confirmed, not fixed
+
+**Description**: When a left-trim marker `{{-` appears at template position 0 (or at the start of any text segment where `start == 0`), the backward whitespace scan in `Lexer.parseText()` at line 144 accesses `input.charAt(-1)`, causing `StringIndexOutOfBoundsException`.
+
+**Root Cause**: `Lexer.java:143` — the for-loop condition `eotPos >= start` does not guard against `eotPos - 1` going negative when `start == 0` and the preceding content is all whitespace.
+
+**Reproduction**:
+```java
+Template t = new Template("test");
+t.parse("{{- \"hello\" -}}"); // BOOM: StringIndexOutOfBoundsException
+```
+
+**Expected Behavior**: `{{-` at position 0 should trim nothing (no preceding whitespace exists) and parse normally.
+
+**Fix**: Change the loop condition from `eotPos >= start` to `eotPos > start`.
+
+**Affected File**: `src/main/java/io/github/verils/gotemplate/internal/Lexer.java:143`
+
+---
+
+#### BUG-2: `index` function does not support `List` / `Collection` types 🔴 CRITICAL
+**Priority**: Highest
+**Status**: Confirmed, not fixed
+
+**Description**: The built-in `index` function only supports `Map`, arrays (via `Class.isArray()`), and `String`. Java `List` and `Collection` types (e.g., `ArrayList`, `Arrays$ArrayList`) throw `IllegalArgumentException: index: invalid type`.
+
+**Root Cause**: `Functions.java:220-243` — the `index` function checks for `Map`, then `isArray()`, then `String`, but has no `instanceof Collection` / `instanceof List` branch. `Arrays.asList()` returns `java.util.Arrays$ArrayList` which is not an array class.
+
+**Reproduction**:
+```java
+Map<String, Object> data = new HashMap<>();
+data.put("items", Arrays.asList("a", "b", "c"));
+render("{{index .items 1}}", data); // ERROR: invalid type Arrays$ArrayList
+```
+
+**Expected Behavior**: `index` should accept any `List` or `Collection` and return `list.get(index)`.
+
+**Fix**: Add a `collection instanceof List` branch before the fallback error.
+
+**Affected File**: `src/main/java/io/github/verils/gotemplate/Functions.java:220-243`
+
+**Workaround**: Use arrays (`new String[]{"a","b"}`) instead of `Arrays.asList()`.
+
+---
+
+#### BUG-3: `=` variable reassignment has no effect 🔴 CRITICAL
+**Priority**: Highest
+**Status**: Confirmed, not fixed
+
+**Description**: Variable reassignment using `{{$var = newValue}}` is silently ignored. Only `{{$var := value}}` (declaration) works. This is a significant deviation from Go `text/template` where `=` reassignment is standard.
+
+**Reproduction**:
+```java
+Template t = new Template("test");
+t.parse("{{$x := 1}}{{$x = 5}}{{$x}}");
+// Expected output: "5"
+// Actual output: "1"
+```
+
+**Expected Behavior**: `{{$x = 5}}` should update `$x` to 5, and subsequent `{{$x}}` should render "5".
+
+**Note**: The `PipeNodeVariableTest` test suite only tests `:=` (declaration), never `=` (reassignment). The feature is documented as supported but has no test coverage.
+
+**Affected File**: `src/main/java/io/github/verils/gotemplate/internal/Executor.java` (variable handling in `executePipe` / `writeAction`)
+
+---
+
+#### BUG-4: Parenthesized pipeline chaining `(pipeline).field` not supported 🟡 HIGH
+**Priority**: High
+**Status**: Confirmed, not fixed
+
+**Description**: Cannot chain field access on a parenthesized pipeline result. `{{(index .items 0).name}}` fails with "can't evaluate command (index .items 0).name". This is a minor deviation from Go `text/template` where parenthesized field chaining is valid.
+
+**Reproduction**:
+```java
+render("{{(index .items 0).name}}", data);
+// ERROR: can't evaluate command (index .items 0).name
+```
+
+**Expected Behavior**: `{{(index .items 0).name}}` should first evaluate `index .items 0`, then access `.name` on the result.
+
+**Workaround**: Use `{{with index .items 0}}{{.name}}{{end}}`.
+
+**Affected File**: `src/main/java/io/github/verils/gotemplate/internal/Executor.java` (command evaluation)
+
+---
+
+#### BUG-5: Raw string literals (`\`...\``) incorrectly process escape sequences 🟡 HIGH
+**Priority**: High
+**Status**: Confirmed, not fixed
+
+**Description**: Backtick-quoted raw string literals should treat backslashes as literal characters (per Go `text/template` spec). However, escape sequences like `\b` are being interpreted (e.g., `\b` becomes ASCII backspace 0x08 instead of literal `\` + `b`).
+
+**Reproduction**:
+```java
+Template t = new Template("test");
+t.parse("{{`raw\\backticks`}}");
+// Expected output: raw\backticks
+// Actual output: raw<0x08>ackticks (\b interpreted as backspace)
+```
+
+**Expected Behavior**: All characters between backticks should be treated literally; no escape processing should occur.
+
+**Affected File**: `src/main/java/io/github/verils/gotemplate/internal/Lexer.java` (raw string tokenization)
+
+---
+
+#### BUG-6: `{{break}}` and `{{continue}}` do not work in integer `range` 🟡 HIGH
+**Priority**: High
+**Status**: Confirmed, not fixed
+
+**Description**: `{{break}}` and `{{continue}}` function correctly inside `{{range}}` over collections (arrays/lists), but are silently ignored inside `{{range $i := N}}` integer ranges.
+
+**Reproduction**:
+```java
+Template t = new Template("test");
+t.parse("{{range $i := 5}}{{if eq $i 2}}{{break}}{{end}}{{$i}}{{end}}");
+// Expected output: "01"
+// Actual output: "01234" (break ignored)
+```
+
+**Expected Behavior**: `{{break}}` and `{{continue}}` should work identically in both collection-range and integer-range contexts.
+
+**Affected File**: `src/main/java/io/github/verils/gotemplate/internal/Executor.java` (range handling)
+
+---
+
+### 📋 Pending Analysis
+
+- [ ] **Analyze which version introduced each bug and target fix version** — For each BUG-1 through BUG-6 above, determine the earliest version where the bug can be reproduced, and decide whether the fix should land in v0.10.0 or be backported to v0.9.x. (TODO — do not execute immediately)
+
+---
+
 ## Future Version Plans (Backlog)
 
 This section tracks potential improvements and features that are not yet scheduled for specific releases.
