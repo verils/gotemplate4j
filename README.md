@@ -10,7 +10,7 @@ A Go template engine implementation for Java that evaluates Go templates and gen
 
 > ⚠️ **Core Purpose**: This project is **NOT** a replacement for Go's native `text/template` and does **NOT** aim to surpass it in performance or features. It exists solely to help **Java developers who must work with Go templates** meet basic operational needs when dealing with Go-based systems or migrating from Go to Java.
 
-> 🆕 **Latest Release (v0.9.0)**: Enhanced file loading APIs, integer range support, and intelligent error diagnostics with typo suggestions.
+> 🆕 **Latest Release (v0.9.1)**: Critical template engine fixes, expanded syntax coverage, and improved test organization.
 
 ## Quick Start
 
@@ -31,7 +31,7 @@ Add the dependency to your `pom.xml`:
 <dependency>
     <groupId>io.github.verils</groupId>
     <artifactId>gotemplate4j</artifactId>
-    <version>0.9.0</version>
+    <version>0.9.1</version>
 </dependency>
 ```
 
@@ -41,7 +41,7 @@ Add the dependency to your `build.gradle`:
 
 ```groovy
 dependencies {
-    implementation 'io.github.verils:gotemplate4j:0.9.0'
+    implementation 'io.github.verils:gotemplate4j:0.9.1'
 }
 ```
 
@@ -49,7 +49,7 @@ For Gradle Kotlin DSL (`build.gradle.kts`):
 
 ```kotlin
 dependencies {
-    implementation("io.github.verils:gotemplate4j:0.9.0")
+    implementation("io.github.verils:gotemplate4j:0.9.1")
 }
 ```
 

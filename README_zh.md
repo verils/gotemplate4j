@@ -10,7 +10,7 @@
 
 > ⚠️ **核心定位**：本项目**不是**为了替代 Go 原生的 `text/template`，也**不追求**在性能或功能上超越它。它的存在仅仅是为了帮助**必须处理 Go 模板的 Java 开发者**在与 Go 系统协作或从 Go 迁移到 Java 时满足基本的工作需求。
 
-> 🆕 **最新版本 (v0.9.0)**：增强的文件加载 API、整数范围支持，以及带拼写建议的智能错误诊断。
+> 🆕 **最新版本 (v0.9.1)**：关键模板引擎修复、扩展的语法覆盖，以及改进的测试组织。
 
 ## 快速开始
 
@@ -31,7 +31,7 @@
 <dependency>
     <groupId>io.github.verils</groupId>
     <artifactId>gotemplate4j</artifactId>
-    <version>0.9.0</version>
+    <version>0.9.1</version>
 </dependency>
 ```
 
@@ -41,7 +41,7 @@
 
 ```groovy
 dependencies {
-    implementation 'io.github.verils:gotemplate4j:0.9.0'
+    implementation 'io.github.verils:gotemplate4j:0.9.1'
 }
 ```
 
@@ -49,7 +49,7 @@ dependencies {
 
 ```kotlin
 dependencies {
-    implementation("io.github.verils:gotemplate4j:0.9.0")
+    implementation("io.github.verils:gotemplate4j:0.9.1")
 }
 ```
 

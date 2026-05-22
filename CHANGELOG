@@ -1,3 +1,42 @@
+v0.9.1 (2026-05-23)
+
+========
+
+**Critical Bug Fix and Test Coverage Release** - This patch release fixes high-impact template engine issues found during comprehensive testing, expands syntax coverage, and improves project test maintenance guidance.
+
+### 🐛 Bug Fixes
+
+- **Fixed lexer trim marker crash**: Left-trim markers such as `{{-` at the start of a template no longer trigger `StringIndexOutOfBoundsException`.
+- **Fixed collection indexing**: The built-in `index` function now supports Java `List` and `Collection` values in addition to maps, arrays, and strings.
+- **Fixed parenthesized pipeline chaining**: Expressions such as `(pipeline).field` now work in execution paths covered by comprehensive template tests.
+- **Fixed raw string literal handling**: Raw string literals preserve escape sequences instead of processing them as interpreted strings.
+- **Fixed integer range loop controls**: `{{break}}` and `{{continue}}` now work correctly inside integer `range` loops.
+- **Verified variable reassignment behavior**: Added coverage for `{{$var = value}}` reassignment compatibility.
+
+---
+
+### 🧪 Testing
+
+- Added comprehensive template syntax and execution coverage for high-risk Go `text/template` compatibility behavior.
+- Reorganized lexer tests and removed obsolete lexer test structure.
+- Improved coverage around critical parser, executor, function, and range edge cases.
+
+---
+
+### 📚 Documentation
+
+- Added bug tracking documentation for critical issues discovered after v0.9.0.
+- Updated development planning notes for the v0.9.1 bug-fix release.
+- Organized the unit testing agent skill into the standard skill package structure.
+
+---
+
+### 📦 Upgrade Notes
+
+- Fully backward compatible with v0.9.0.
+- Recommended for all v0.9.0 users because it fixes critical runtime and compatibility defects.
+- Java 8 remains supported in the v0.9.x line. Starting from v0.10.0, Java 11+ will be required.
+
 v0.9.0 (2026-05-20)
 
 ========

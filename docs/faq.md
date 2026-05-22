@@ -45,7 +45,7 @@ Yes, gotemplate4j is stable and well-tested with 90%+ code coverage. However, it
 
 ### What is the current version and release cycle?
 
-Current version is **0.9.0**. The project follows semantic versioning. Check the [CHANGELOG](../CHANGELOG) for release history.
+Current version is **0.9.1**. The project follows semantic versioning. Check the [CHANGELOG](../CHANGELOG) for release history.
 
 ---
 
@@ -616,6 +616,22 @@ Or look for community Spring integration libraries.
 
 ---
 
+## v0.9.1 Patch Release
+
+### What's new in gotemplate4j v0.9.1?
+
+Version 0.9.1 is a bug-fix release for the v0.9.x Java 8 line. It fixes critical template engine issues, expands syntax coverage, and improves test organization.
+
+### Is v0.9.1 backward compatible?
+
+Yes. v0.9.1 is fully backward compatible with v0.9.0 and v0.8.x. Existing templates and code should continue to work without changes.
+
+### What Java version does v0.9.1 require?
+
+v0.9.1 requires **Java 8 or higher**. The v0.9.x line is the last line to support Java 8. Starting from v0.10.0, Java 11+ will be required.
+
+---
+
 ## v0.9.0 New Features
 
 ### What's new in gotemplate4j v0.9.0?
@@ -709,9 +725,9 @@ See [Error Handling Guide](user-guide/error-handling.md#enhanced-error-diagnosti
 
 Yes! v0.9.0 is fully backward compatible with v0.8.x. All existing templates and code will continue to work without changes.
 
-### What Java version does v0.9.0 require?
+### What Java version does v0.9.x require?
 
-v0.9.0 requires **Java 8 or higher**. This is the last version to support Java 8. Starting from v0.10.0, Java 11+ will be required.
+v0.9.x requires **Java 8 or higher**. This is the last release line to support Java 8. Starting from v0.10.0, Java 11+ will be required.
 
 ---
 
@@ -724,4 +740,4 @@ v0.9.0 requires **Java 8 or higher**. This is the last version to support Java 8
 
 ---
 
-*Last updated: 2026-05-20 for gotemplate4j v0.9.0*
+*Last updated: 2026-05-23 for gotemplate4j v0.9.1*

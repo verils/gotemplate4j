@@ -1,7 +1,7 @@
 # gotemplate4j Development Plan
 
-**Last Updated**: 2026-05-21  
-**Current Version**: 0.9.0 (Released)  
+**Last Updated**: 2026-05-23  
+**Current Version**: 0.9.1 (Released)  
 **Next Version**: 0.10.0 (Java 11 upgrade planned)  
 **Current Focus**: v0.10.0 - Java 11 migration and modernization
 
@@ -27,7 +27,7 @@ gotemplate4j should remain a small, Java-compatible implementation of Go's `text
 
 ### 📋 Upcoming: v0.10.0 Release Plan
 
-**Positioning**: v0.9.0 is the final Java 8 release, focusing on practical developer experience improvements and Go `text/template` compatibility enhancements.
+**Positioning**: v0.9.x is the final Java 8 release line, focusing on practical developer experience improvements, compatibility fixes, and Go `text/template` compatibility enhancements.
 
 **Important Scope Note**: gotemplate4j implements Go's `text/template` package only, NOT `html/template`. Features like contextual auto-escaping, XSS prevention, and HTML-specific security mechanisms are intentionally out of scope. Users needing HTML safety should use the existing `{{html .value}}` function or pre-process data in Java code.
 
@@ -60,7 +60,7 @@ Starting from version 0.10.0, gotemplate4j will require **Java 11 or higher**. T
 
 ```
 v0.8.0 (Released) → Java 8, Quality improvements + Performance optimization
-v0.9.0 (Current)  → Java 8, Deprecation notices + Compatibility testing
+v0.9.1 (Current)  → Java 8, bug fixes + Compatibility testing
 v0.10.0 (Next)    → Java 11+, Modern features + Code cleanup
 ```
 
