@@ -495,6 +495,201 @@ class LexerTest {
     }
 
     @Test
+    void testTrimMarkerAtBeginning() {
+        Token[] actualTokens = lexDefault("{{- x}}");
+        Token[] expectedTokens = {
+                makeToken(TokenType.LEFT_DELIM, "{{", 0, 1, 0),
+                makeToken(TokenType.IDENTIFIER, "x", 4, 1, 0),
+                makeToken(TokenType.RIGHT_DELIM, "}}", 5, 1, 0),
+                makeToken(TokenType.EOF, "", 7, 1, 0),
+        };
+        assertTokens(expectedTokens, actualTokens);
+    }
+
+    @Test
+    void testTrimMarkerWithLeadingSpaces() {
+        Token[] actualTokens = lexDefault("  {{- x}}");
+        Token[] expectedTokens = {
+                makeToken(TokenType.LEFT_DELIM, "{{", 2, 1, 0),
+                makeToken(TokenType.IDENTIFIER, "x", 6, 1, 0),
+                makeToken(TokenType.RIGHT_DELIM, "}}", 7, 1, 0),
+                makeToken(TokenType.EOF, "", 9, 1, 0),
+        };
+        assertTokens(expectedTokens, actualTokens);
+    }
+
+    @Test
+    void testTrimMarkerWithLeadingTab() {
+        Token[] actualTokens = lexDefault("\t{{- x}}");
+        Token[] expectedTokens = {
+                makeToken(TokenType.LEFT_DELIM, "{{", 1, 1, 0),
+                makeToken(TokenType.IDENTIFIER, "x", 5, 1, 0),
+                makeToken(TokenType.RIGHT_DELIM, "}}", 6, 1, 0),
+                makeToken(TokenType.EOF, "", 8, 1, 0),
+        };
+        assertTokens(expectedTokens, actualTokens);
+    }
+
+    @Test
+    void testTrimMarkerWithLeadingNewline() {
+        Token[] actualTokens = lexDefault("\n{{- x}}");
+        Token[] expectedTokens = {
+                makeToken(TokenType.LEFT_DELIM, "{{", 1, 2, 0),
+                makeToken(TokenType.IDENTIFIER, "x", 5, 2, 0),
+                makeToken(TokenType.RIGHT_DELIM, "}}", 6, 2, 0),
+                makeToken(TokenType.EOF, "", 8, 2, 0),
+        };
+        assertTokens(expectedTokens, actualTokens);
+    }
+
+    @Test
+    void testTrimMarkerWithLeadingReturn() {
+        Token[] actualTokens = lexDefault("\r{{- x}}");
+        Token[] expectedTokens = {
+                makeToken(TokenType.LEFT_DELIM, "{{", 1, 1, 0),
+                makeToken(TokenType.IDENTIFIER, "x", 5, 1, 0),
+                makeToken(TokenType.RIGHT_DELIM, "}}", 6, 1, 0),
+                makeToken(TokenType.EOF, "", 8, 1, 0),
+        };
+        assertTokens(expectedTokens, actualTokens);
+    }
+
+    @Test
+    void testTrimMarkerWithLeadingMixedWhitespace() {
+        Token[] actualTokens = lexDefault(" \t\r\n{{- x}}");
+        Token[] expectedTokens = {
+                makeToken(TokenType.LEFT_DELIM, "{{", 4, 2, 0),
+                makeToken(TokenType.IDENTIFIER, "x", 8, 2, 0),
+                makeToken(TokenType.RIGHT_DELIM, "}}", 9, 2, 0),
+                makeToken(TokenType.EOF, "", 11, 2, 0),
+        };
+        assertTokens(expectedTokens, actualTokens);
+    }
+
+    @Test
+    void testTrimMarkerWithManyLeadingSpaces() {
+        Token[] actualTokens = lexDefault("      {{- x}}");
+        Token[] expectedTokens = {
+                makeToken(TokenType.LEFT_DELIM, "{{", 6, 1, 0),
+                makeToken(TokenType.IDENTIFIER, "x", 10, 1, 0),
+                makeToken(TokenType.RIGHT_DELIM, "}}", 11, 1, 0),
+                makeToken(TokenType.EOF, "", 13, 1, 0),
+        };
+        assertTokens(expectedTokens, actualTokens);
+    }
+
+    @Test
+    void testTrimMarkerEmptyAction() {
+        Token[] actualTokens = lexDefault("{{- }}");
+        Token[] expectedTokens = {
+                makeToken(TokenType.LEFT_DELIM, "{{", 0, 1, 0),
+                makeToken(TokenType.RIGHT_DELIM, "}}", 4, 1, 0),
+                makeToken(TokenType.EOF, "", 6, 1, 0),
+        };
+        assertTokens(expectedTokens, actualTokens);
+    }
+
+    @Test
+    void testTrimMarkerWithLeadingSpacesEmptyAction() {
+        Token[] actualTokens = lexDefault("  {{- }}");
+        Token[] expectedTokens = {
+                makeToken(TokenType.LEFT_DELIM, "{{", 2, 1, 0),
+                makeToken(TokenType.RIGHT_DELIM, "}}", 6, 1, 0),
+                makeToken(TokenType.EOF, "", 8, 1, 0),
+        };
+        assertTokens(expectedTokens, actualTokens);
+    }
+
+    @Test
+    void testTrimCommentAtBeginning() {
+        Token[] actualTokens = lexDefault("{{- /* comment */ -}}");
+        Token[] expectedTokens = {
+                makeToken(TokenType.COMMENT, "/* comment */", 4, 1, 0),
+                makeToken(TokenType.EOF, "", 21, 1, 0),
+        };
+        assertTokens(expectedTokens, actualTokens);
+    }
+
+    @Test
+    void testTrimCommentWithLeadingWhitespace() {
+        Token[] actualTokens = lexDefault(" \t\n{{- /* comment */ -}}");
+        Token[] expectedTokens = {
+                makeToken(TokenType.COMMENT, "/* comment */", 7, 2, 0),
+                makeToken(TokenType.EOF, "", 24, 2, 0),
+        };
+        assertTokens(expectedTokens, actualTokens);
+    }
+
+    @Test
+    void testTrimMarkerWithTextBefore() {
+        Token[] actualTokens = lexDefault("hello {{- x}}");
+        Token[] expectedTokens = {
+                makeToken(TokenType.TEXT, "hello", 0, 1, 0),
+                makeToken(TokenType.LEFT_DELIM, "{{", 6, 1, 0),
+                makeToken(TokenType.IDENTIFIER, "x", 10, 1, 0),
+                makeToken(TokenType.RIGHT_DELIM, "}}", 11, 1, 0),
+                makeToken(TokenType.EOF, "", 13, 1, 0),
+        };
+        assertTokens(expectedTokens, actualTokens);
+    }
+
+    @Test
+    void testTrimMarkerWithSingleCharBefore() {
+        Token[] actualTokens = lexDefault("a {{- x}}");
+        Token[] expectedTokens = {
+                makeToken(TokenType.TEXT, "a", 0, 1, 0),
+                makeToken(TokenType.LEFT_DELIM, "{{", 2, 1, 0),
+                makeToken(TokenType.IDENTIFIER, "x", 6, 1, 0),
+                makeToken(TokenType.RIGHT_DELIM, "}}", 7, 1, 0),
+                makeToken(TokenType.EOF, "", 9, 1, 0),
+        };
+        assertTokens(expectedTokens, actualTokens);
+    }
+
+    @Test
+    void testTrimMarkerWithTextNewlineBefore() {
+        Token[] actualTokens = lexDefault("hello\n{{- x}}");
+        Token[] expectedTokens = {
+                makeToken(TokenType.TEXT, "hello", 0, 1, 0),
+                makeToken(TokenType.LEFT_DELIM, "{{", 6, 2, 0),
+                makeToken(TokenType.IDENTIFIER, "x", 10, 2, 0),
+                makeToken(TokenType.RIGHT_DELIM, "}}", 11, 2, 0),
+                makeToken(TokenType.EOF, "", 13, 2, 0),
+        };
+        assertTokens(expectedTokens, actualTokens);
+    }
+
+    @Test
+    void testTrimMarkerAfterSomeTokens() {
+        Token[] actualTokens = lexDefault("0123{{hello}}  {{- x}}");
+        Token[] expectedTokens = {
+                makeToken(TokenType.TEXT, "0123", 0, 1, 0),
+                makeToken(TokenType.LEFT_DELIM, "{{", 4, 1, 0),
+                makeToken(TokenType.IDENTIFIER, "hello", 6, 1, 0),
+                makeToken(TokenType.RIGHT_DELIM, "}}", 11, 1, 0),
+                makeToken(TokenType.LEFT_DELIM, "{{", 15, 1, 0),
+                makeToken(TokenType.IDENTIFIER, "x", 19, 1, 0),
+                makeToken(TokenType.RIGHT_DELIM, "}}", 20, 1, 0),
+                makeToken(TokenType.EOF, "", 22, 1, 0),
+        };
+        assertTokens(expectedTokens, actualTokens);
+    }
+
+    @Test
+    void testTrimMarkerWithBothTrim() {
+        Token[] actualTokens = lexDefault("hello {{- x -}} world");
+        Token[] expectedTokens = {
+                makeToken(TokenType.TEXT, "hello", 0, 1, 0),
+                makeToken(TokenType.LEFT_DELIM, "{{", 6, 1, 0),
+                makeToken(TokenType.IDENTIFIER, "x", 10, 1, 0),
+                makeToken(TokenType.RIGHT_DELIM, "}}", 13, 1, 0),
+                makeToken(TokenType.TEXT, "world", 16, 1, 0),
+                makeToken(TokenType.EOF, "", 21, 1, 0),
+        };
+        assertTokens(expectedTokens, actualTokens);
+    }
+
+    @Test
     void testInvalidChar() {
         Token[] actualTokens = lexDefault("#{{\1}}");
 
