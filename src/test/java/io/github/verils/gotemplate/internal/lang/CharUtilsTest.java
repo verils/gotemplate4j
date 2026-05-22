@@ -42,7 +42,7 @@ class CharUtilsTest {
         assertTrue(CharUtils.isAscii('@'));
         assertTrue(CharUtils.isAscii('~'));
         assertFalse(CharUtils.isAscii('é')); // é
-        assertFalse(CharUtils.isAscii('中')); // 中
+        assertFalse(CharUtils.isAscii('中')); // Chinese character
     }
 
     @Test

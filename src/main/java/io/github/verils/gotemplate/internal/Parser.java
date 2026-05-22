@@ -694,9 +694,9 @@ public class Parser {
     }
 
     /**
-     * 获取下一个元素，但不移动查找标记
+     * Gets the next item without moving the lookup marker.
      *
-     * @return 下一个元素。第一次执行返回第一个元素，超出最后一个元素后返回null
+     * @return the next item. The first call returns the first item, and calls past the last item return null.
      */
     private Token lookNextItem(Lexer lexer, State state) {
         if (state.tokenIndex < lexer.getTokens().size()) {
@@ -865,9 +865,9 @@ public class Parser {
     }
 
     /**
-     * 获取下一个非空白元素，但不移动查找标记
+     * Gets the next non-space item without moving the lookup marker.
      *
-     * @return 下一个元素。第一次执行返回第一个元素，超出最后一个元素后返回null
+     * @return the next item. The first call returns the first item, and calls past the last item return null.
      */
     private Token lookNextNonSpaceToken(Lexer lexer, State state) {
         int count = 0;
@@ -885,9 +885,9 @@ public class Parser {
     }
 
     /**
-     * 获取上一个非空白元素
+     * Gets the previous non-space item.
      *
-     * @return 上一个元素。第一次执行返回null，超出最后一个元素后执行返回最后的元素
+     * @return the previous item. The first call returns null, and calls past the last item return the last item.
      */
     @SuppressWarnings("UnusedReturnValue")
     private Token moveToPrevNonSpaceItem(Lexer lexer, State state) {
@@ -903,9 +903,9 @@ public class Parser {
     }
 
     /**
-     * 获取下一个非空白元素，并将查找标记后移到这个元素后，直到最后一个元素
+     * Gets the next non-space item and moves the lookup marker after it, up to the last item.
      *
-     * @return 下一个元素。第一次执行返回第一个元素，超出最后一个元素后返回null
+     * @return the next item. The first call returns the first item, and calls past the last item return null.
      */
     private Token moveToNextNonSpaceToken(Lexer lexer, State state) {
         while (true) {
