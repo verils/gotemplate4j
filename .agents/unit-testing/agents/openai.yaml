@@ -1,0 +1,7 @@
+interface:
+  display_name: "Unit Testing"
+  short_description: "gotemplate4j test workflow and standards"
+  default_prompt: "Use $unit-testing to add, modify, review, or refactor gotemplate4j tests."
+
+policy:
+  allow_implicit_invocation: true
