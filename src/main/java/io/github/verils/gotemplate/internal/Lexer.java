@@ -134,13 +134,13 @@ public class Lexer {
 
             return null;
         } else {
-            goUntil(ch -> pos == leftDelimPos);
+            goUntil(__ -> pos == leftDelimPos);
 
             int eotPos = leftDelimPos;
 
             boolean posAtLeftDelimWithTrimMarker = isPosAtLeftDelimWithTrimMarker();
             if (posAtLeftDelimWithTrimMarker) {
-                for (; eotPos >= start; eotPos--) {
+                for (; eotPos > start; eotPos--) {
                     char ch = input.charAt(eotPos - 1);
                     if (!CharUtils.isSpace(ch)) {
                         break;
