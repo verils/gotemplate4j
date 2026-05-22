@@ -139,6 +139,8 @@ During development of `ComprehensiveTemplateTest`, the following engine-level bu
 #### BUG-1: Lexer `{{-` at position 0 causes StringIndexOutOfBoundsException 🔴 CRITICAL
 **Priority**: Highest
 **Status**: Confirmed, not fixed
+**First Affected Version**: v0.3.2 (introduced in `c2e6385`, "Fix Lexer issues - Fix trim marker processing")
+**Recommended Fix Version**: v0.3.3 (crash-level regression, should have been fixed in the next patch)
 
 **Description**: When a left-trim marker `{{-` appears at template position 0 (or at the start of any text segment where `start == 0`), the backward whitespace scan in `Lexer.parseText()` at line 144 accesses `input.charAt(-1)`, causing `StringIndexOutOfBoundsException`.
 
@@ -161,6 +163,8 @@ t.parse("{{- \"hello\" -}}"); // BOOM: StringIndexOutOfBoundsException
 #### BUG-2: `index` function does not support `List` / `Collection` types 🔴 CRITICAL
 **Priority**: Highest
 **Status**: Confirmed, not fixed
+**First Affected Version**: v0.4.0 (introduced in `63f5893`, initial `index` function implementation — design omission, not a regression)
+**Recommended Fix Version**: v0.4.1 (critical functional gap, should have been fixed in the next patch)
 
 **Description**: The built-in `index` function only supports `Map`, arrays (via `Class.isArray()`), and `String`. Java `List` and `Collection` types (e.g., `ArrayList`, `Arrays$ArrayList`) throw `IllegalArgumentException: index: invalid type`.
 
@@ -186,6 +190,8 @@ render("{{index .items 1}}", data); // ERROR: invalid type Arrays$ArrayList
 #### BUG-3: `=` variable reassignment has no effect 🔴 CRITICAL
 **Priority**: Highest
 **Status**: Confirmed, not fixed
+**First Affected Version**: v0.4.0 (introduced in `3360dfb`, initial variable assignment implementation — `=` path never implemented, only `:=`)
+**Recommended Fix Version**: v0.4.1 (critical Go compatibility gap, should have been fixed in the next patch)
 
 **Description**: Variable reassignment using `{{$var = newValue}}` is silently ignored. Only `{{$var := value}}` (declaration) works. This is a significant deviation from Go `text/template` where `=` reassignment is standard.
 
@@ -208,6 +214,8 @@ t.parse("{{$x := 1}}{{$x = 5}}{{$x}}");
 #### BUG-4: Parenthesized pipeline chaining `(pipeline).field` not supported 🟡 HIGH
 **Priority**: High
 **Status**: Confirmed, not fixed
+**First Affected Version**: v0.1.0 (introduced in `31ed6bd`, initial parenthesized pipeline parsing — Executor never supported field chaining on parenthesized results)
+**Recommended Fix Version**: v0.1.1
 
 **Description**: Cannot chain field access on a parenthesized pipeline result. `{{(index .items 0).name}}` fails with "can't evaluate command (index .items 0).name". This is a minor deviation from Go `text/template` where parenthesized field chaining is valid.
 
@@ -228,6 +236,8 @@ render("{{(index .items 0).name}}", data);
 #### BUG-5: Raw string literals (`\`...\``) incorrectly process escape sequences 🟡 HIGH
 **Priority**: High
 **Status**: Confirmed, not fixed
+**First Affected Version**: v0.1.0 (raw string parsing added in `bb2dfda`, `StringEscapeUtils.unescape()` applied unconditionally in `printValue()` since `ec1395d` — both pre-v0.1.0)
+**Recommended Fix Version**: v0.1.1
 
 **Description**: Backtick-quoted raw string literals should treat backslashes as literal characters (per Go `text/template` spec). However, escape sequences like `\b` are being interpreted (e.g., `\b` becomes ASCII backspace 0x08 instead of literal `\` + `b`).
 
@@ -248,6 +258,8 @@ t.parse("{{`raw\\backticks`}}");
 #### BUG-6: `{{break}}` and `{{continue}}` do not work in integer `range` 🟡 HIGH
 **Priority**: High
 **Status**: Confirmed, not fixed
+**First Affected Version**: v0.7.0 (`break`/`continue` added in v0.5.0 via `957c1c0`, integer `range` added in v0.7.0 via `decd282` — break/continue handling never extended to integer range path)
+**Recommended Fix Version**: v0.7.1
 
 **Description**: `{{break}}` and `{{continue}}` function correctly inside `{{range}}` over collections (arrays/lists), but are silently ignored inside `{{range $i := N}}` integer ranges.
 
@@ -267,7 +279,16 @@ t.parse("{{range $i := 5}}{{if eq $i 2}}{{break}}{{end}}{{$i}}{{end}}");
 
 ### 📋 Pending Analysis
 
-- [ ] **Analyze which version introduced each bug and target fix version** — For each BUG-1 through BUG-6 above, determine the earliest version where the bug can be reproduced, and decide whether the fix should land in v0.10.0 or be backported to v0.9.x. (TODO — do not execute immediately)
+- [x] **Analyze which version introduced each bug and target fix version** (completed 2026-05-22) — See individual bug entries above for per-bug trace results. Summary:
+
+| Bug | Severity | First Affected | Root Cause | Fix Target |
+|:----|:---------|:---------------|:-----------|:-----------|
+| BUG-1 | 🔴 CRITICAL | v0.3.2 | `eotPos >= start` loop replaced safe `ltrimLength()` in `c2e6385` | v0.3.3 |
+| BUG-2 | 🔴 CRITICAL | v0.4.0 | `index()` never had `instanceof List/Collection` branch (design omission) | v0.4.1 |
+| BUG-3 | 🔴 CRITICAL | v0.4.0 | Variable assignment `=` path never implemented, only `:=` | v0.4.1 |
+| BUG-4 | 🟡 HIGH | v0.1.0 | Parenthesized pipeline parsing existed from start, Executor never supported chaining | v0.1.1 |
+| BUG-5 | 🟡 HIGH | v0.1.0 | `StringEscapeUtils.unescape()` applied unconditionally to all strings including raw | v0.1.1 |
+| BUG-6 | 🟡 HIGH | v0.7.0 | Break/continue (v0.5.0) never extended to integer range path (v0.7.0) | v0.7.1 |
 
 ---
 
