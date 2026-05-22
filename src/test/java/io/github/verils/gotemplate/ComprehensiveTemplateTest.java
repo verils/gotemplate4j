@@ -141,6 +141,8 @@ public class ComprehensiveTemplateTest {
             // -- integer range --
             "[Integer Range]\n" +
             "  Digits:{{range $i := 5}} {{$i}}{{end}}\n" +
+            "  Break:{{range $i := 5}}{{if eq $i 2}}{{break}}{{end}} {{$i}}{{end}}\n" +
+            "  Continue:{{range $i := 5}}{{if eq $i 2}}{{continue}}{{end}} {{$i}}{{end}}\n" +
             "\n" +
             // -- break + continue in collection range --
             "[Break / Continue]\n" +
@@ -155,6 +157,7 @@ public class ComprehensiveTemplateTest {
             "[Variable + Custom Func]\n" +
             "  {{$a := multiply 10.0 5.0}}{{$b := add 100 25}}{{$n := len .name}}" +
             "  Multiply: {{$a}}, Add: {{$b}}, NameLen: {{$n}}\n" +
+            "  {{$state := \"draft\"}}{{$state = \"final\"}}State: {{$state}}\n" +
             "\n" +
             // -- pipeline --
             "[Pipeline]\n" +
@@ -169,6 +172,7 @@ public class ComprehensiveTemplateTest {
             "[Builtin Functions]\n" +
             "  len(items):       {{len .items}}\n" +
             "  index(items,0):   {{with index .items 0}}{{.name}}{{end}}\n" +
+            "  index(tags,1):    {{index (index .items 0).tags 1}}\n" +
             "  slice(hello,1,4): {{slice \"hello\" 1 4}}\n" +
             "  printf:           0x{{printf \"%x\" 255}}\n" +
             "  html tag:         {{\"<tag>\" | html}}\n" +
@@ -201,6 +205,11 @@ public class ComprehensiveTemplateTest {
             "[deepEqual]\n" +
             "  deepEqual(42,42):     {{deepEqual 42 42}}\n" +
             "  deepEqual(\"a\",\"b\"):   {{deepEqual \"a\" \"b\"}}\n" +
+            "\n" +
+            // -- root variable and empty range else --
+            "[Root + Empty Range]\n" +
+            "  root in range: {{range .items}}{{$.orderId}}:{{.name}};{{end}}\n" +
+            "  empty list:    {{range .emptyItems}}item{{else}}empty{{end}}\n" +
             "\n" +
             // -- nil, boolean, number literals --
             "[Literals]\n" +
@@ -310,6 +319,8 @@ public class ComprehensiveTemplateTest {
 
         // integer range (0..4)
         assertTrue(out.contains("Digits: 0 1 2 3 4"), "integer range");
+        assertTrue(out.contains("Break: 0 1"), "break in integer range");
+        assertTrue(out.contains("Continue: 0 1 3 4"), "continue in integer range");
 
         // break + continue in collection range
         // Break: Widget-  (stops at "Gadget")
@@ -321,6 +332,7 @@ public class ComprehensiveTemplateTest {
         assertTrue(out.contains("Multiply: 50.0"), "var with custom multiply func");
         assertTrue(out.contains("Add: 125"), "var with custom add func");
         assertTrue(out.contains("NameLen: 13"), "var with builtin len func");
+        assertTrue(out.contains("State: final"), "variable reassignment");
 
         // pipeline
         assertTrue(out.contains("Shout: ALICE JOHNSON"), "pipeline toUpper");
@@ -332,6 +344,7 @@ public class ComprehensiveTemplateTest {
         // len, index, slice, printf
         assertTrue(out.contains("len(items):       2"), "len");
         assertTrue(out.contains("index(items,0):   Widget"), "index");
+        assertTrue(out.contains("index(tags,1):    gadget"), "index over list field");
         assertTrue(out.contains("slice(hello,1,4): ell"), "slice");
         assertTrue(out.contains("printf:           0xff"), "printf");
 
@@ -364,6 +377,10 @@ public class ComprehensiveTemplateTest {
         // deepEqual
         assertTrue(out.contains("deepEqual(42,42):     true"), "deepEqual true");
         assertTrue(out.contains("deepEqual(\"a\",\"b\"):   false"), "deepEqual false");
+
+        // root variable inside range and empty range else
+        assertTrue(out.contains("root in range: ORD-2024-001:Widget;ORD-2024-001:Gadget;"), "root variable in range");
+        assertTrue(out.contains("empty list:    empty"), "empty range else");
 
         // nil, boolean literals
         assertTrue(out.contains("nil:    <no value>"), "nil literal");
@@ -421,6 +438,7 @@ public class ComprehensiveTemplateTest {
         data.put("phone", "555-0100");
         data.put("loyaltyPoints", 500);
         data.put("items", new Item[]{item1, item2});
+        data.put("emptyItems", Collections.emptyList());
         data.put("metadata", metadata);
         data.put("echoFn", (Function) args -> "CALLED:" + args[0]);
 
