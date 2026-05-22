@@ -25,9 +25,10 @@ public class ComprehensiveTemplateTest {
 
     // region --- Data Model ------------------------------------------------------------
 
+    @SuppressWarnings("unused")
     public enum OrderStatus { PENDING, CONFIRMED, SHIPPED, DELIVERED }
 
-    @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
+    @SuppressWarnings({"OptionalUsedAsFieldOrParameterType", "unused"})
     public static class Address {
         private String street;
         private String city;
@@ -53,6 +54,7 @@ public class ComprehensiveTemplateTest {
         public void setZipCode(String v) { zipCode = Optional.ofNullable(v); }
     }
 
+    @SuppressWarnings("unused")
     public static class Item {
         private String name;
         private int quantity;
@@ -161,6 +163,7 @@ public class ComprehensiveTemplateTest {
             // -- parenthesized pipeline --
             "[Parenthesized Pipeline]\n" +
             "  Len: {{(len .name)}}\n" +
+            "  First item: {{(index .items 0).name}}\n" +
             "\n" +
             // -- builtin functions: len, index, slice, printf --
             "[Builtin Functions]\n" +
@@ -172,7 +175,7 @@ public class ComprehensiveTemplateTest {
             "  js newline:       {{\"hello\\nworld\" | js}}\n" +
             "  urlquery:         {{\"hello world\" | urlquery}}\n" +
             // -- raw string literal (backtick) --
-            "  raw string:       {{`literal text`}}\n" +
+            "  raw string:       {{`raw\\backticks`}}\n" +
             "\n" +
             // -- logical functions --
             "[Logical Functions]\n" +
@@ -324,6 +327,7 @@ public class ComprehensiveTemplateTest {
 
         // parenthesized pipeline — "Alice Johnson" has 13 chars
         assertTrue(out.contains("Len: 13"), "parenthesized pipeline");
+        assertTrue(out.contains("First item: Widget"), "parenthesized pipeline field chain");
 
         // len, index, slice, printf
         assertTrue(out.contains("len(items):       2"), "len");
@@ -337,7 +341,7 @@ public class ComprehensiveTemplateTest {
         assertTrue(out.contains("urlquery:         hello+world"), "urlquery escape");
 
         // raw string literal (backtick-quoted, no escape processing)
-        assertTrue(out.contains("raw string:       literal text"), "raw string literal");
+        assertTrue(out.contains("raw string:       raw\\backticks"), "raw string literal");
 
         // logical functions
         assertTrue(out.contains("and(T,T):   true"), "logical and");
@@ -402,7 +406,7 @@ public class ComprehensiveTemplateTest {
         Address addr = new Address("123 Main St", "Springfield", "US", "12345");
 
         Item item1 = new Item("Widget", 2, 10.0, true, Arrays.asList("electronics", "gadget"));
-        Item item2 = new Item("Gadget", 1, 50.0, false, Collections.<String>emptyList());
+        Item item2 = new Item("Gadget", 1, 50.0, false, Collections.emptyList());
 
         Map<String, String> metadata = new LinkedHashMap<>();
         metadata.put("source", "web");

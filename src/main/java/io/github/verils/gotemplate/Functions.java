@@ -5,6 +5,7 @@ import java.lang.reflect.Array;
 import java.net.URLEncoder;
 import java.util.Collection;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 public class Functions {
@@ -231,6 +232,31 @@ public class Functions {
                 return null;
             }
 
+            if (collection instanceof List) {
+                List<?> list = (List<?>) collection;
+                int index = toInt(args[1]);
+                if (index >= 0 && index < list.size()) {
+                    return list.get(index);
+                }
+                return null;
+            }
+
+            if (collection instanceof Collection) {
+                Collection<?> values = (Collection<?>) collection;
+                int index = toInt(args[1]);
+                if (index < 0 || index >= values.size()) {
+                    return null;
+                }
+                int current = 0;
+                for (Object value : values) {
+                    if (current == index) {
+                        return value;
+                    }
+                    current++;
+                }
+                return null;
+            }
+
             if (collection instanceof String) {
                 String str = (String) collection;
                 int index = toInt(args[1]);
@@ -379,6 +405,9 @@ public class Functions {
         }
         if (a == null || b == null) {
             return false;
+        }
+        if (a instanceof Number && b instanceof Number) {
+            return Double.compare(((Number) a).doubleValue(), ((Number) b).doubleValue()) == 0;
         }
         return a.equals(b);
     }

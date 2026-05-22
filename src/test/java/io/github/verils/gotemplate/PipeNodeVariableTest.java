@@ -133,6 +133,18 @@ class PipeNodeVariableTest {
     }
 
     @Test
+    void testVariableReassignmentWithAssignOperator() throws Exception {
+        String template = "{{$x := 1}}{{$x = 5}}{{$x}}";
+        Template tmpl = new Template("test");
+        tmpl.parse(template);
+
+        StringWriter writer = new StringWriter();
+        tmpl.execute(writer, null);
+
+        assertEquals("5", writer.toString());
+    }
+
+    @Test
     void testVariableInAction() throws Exception {
         // Variable declaration without printing
         String template = "{{$x := .Value}}Result: {{$x}}";

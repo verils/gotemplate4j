@@ -58,6 +58,7 @@ class FunctionsCollectionTest {
 
         assertEquals("value", render("{{index .Map \"key\"}}", data("Map", map)));
         assertEquals("b", render("{{index .Items 1}}", data("Items", new String[]{"a", "b", "c"})));
+        assertEquals("b", render("{{index .Items 1}}", data("Items", Arrays.asList("a", "b", "c"))));
         assertEquals("h", render("{{index .Text 0}}", data("Text", "hello")));
     }
 
@@ -86,6 +87,7 @@ class FunctionsCollectionTest {
         return Stream.of(
                 arguments("{{index .Collection \"key\"}}", data("Collection", null), "<no value>"),
                 arguments("{{index .Items 10}}", data("Items", new String[]{"a", "b", "c"}), "<no value>"),
+                arguments("{{index .Items 10}}", data("Items", Arrays.asList("a", "b", "c")), "<no value>"),
                 arguments("{{index .Text 100}}", data("Text", "hi"), "")
         );
     }

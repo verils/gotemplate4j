@@ -89,28 +89,27 @@ public class IntegerRangeTest {
         assertEquals("no items", writer.toString());
     }
 
-    // TODO: Fix break/continue in range - these require parser-level context tracking
-    // @Test
-    // public void testRangeOverIntegerWithBreak() throws IOException, TemplateException {
-    //     Template template = new Template("test");
-    //     template.parse("{{range $i := 10}}{{if eq $i 3}}{{break}}{{end}}{{$i}} {{end}}");
-    //
-    //     StringWriter writer = new StringWriter();
-    //     template.execute(writer, null);
-    //
-    //     assertEquals("0 1 2 ", writer.toString());
-    // }
-    //
-    // @Test
-    // public void testRangeOverIntegerWithContinue() throws IOException, TemplateException {
-    //     Template template = new Template("test");
-    //     template.parse("{{range $i := 5}}{{if eq $i 2}}{{continue}}{{end}}{{$i}} {{end}}");
-    //
-    //     StringWriter writer = new StringWriter();
-    //     template.execute(writer, null);
-    //
-    //     assertEquals("0 1 3 4 ", writer.toString());
-    // }
+    @Test
+    public void testRangeOverIntegerWithBreak() throws IOException, TemplateException {
+        Template template = new Template("test");
+        template.parse("{{range $i := 10}}{{if eq $i 3}}{{break}}{{end}}{{$i}} {{end}}");
+
+        StringWriter writer = new StringWriter();
+        template.execute(writer, null);
+
+        assertEquals("0 1 2 ", writer.toString());
+    }
+
+    @Test
+    public void testRangeOverIntegerWithContinue() throws IOException, TemplateException {
+        Template template = new Template("test");
+        template.parse("{{range $i := 5}}{{if eq $i 2}}{{continue}}{{end}}{{$i}} {{end}}");
+
+        StringWriter writer = new StringWriter();
+        template.execute(writer, null);
+
+        assertEquals("0 1 3 4 ", writer.toString());
+    }
 
     @Test
     public void testRangeOverLongValue() throws IOException, TemplateException {

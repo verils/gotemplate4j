@@ -3,7 +3,6 @@ package io.github.verils.gotemplate.internal;
 import io.github.verils.gotemplate.*;
 import io.github.verils.gotemplate.internal.ast.*;
 import io.github.verils.gotemplate.internal.lang.ErrorUtils;
-import io.github.verils.gotemplate.internal.lang.StringEscapeUtils;
 
 import java.beans.BeanInfo;
 import java.beans.PropertyDescriptor;
@@ -371,6 +370,9 @@ public class Executor {
         if (firstArgument instanceof VariableNode) {
             return executeVariable((VariableNode) firstArgument, variables);
         }
+        if (firstArgument instanceof ChainNode) {
+            return executeChain((ChainNode) firstArgument, data, beanInfo, variables);
+        }
         if (firstArgument instanceof PipeNode) {
             // Support pipeline expressions as commands: {{template "name" (.X | printf "%s")}}
             return executePipe((PipeNode) firstArgument, data, beanInfo, variables);
@@ -556,6 +558,12 @@ public class Executor {
             return value;
         }
         return executeFieldPath(identifiers, 1, value);
+    }
+
+    private Object executeChain(ChainNode chainNode, Object data, BeanInfo beanInfo, Map<String, Object> variables)
+            throws TemplateExecutionException {
+        Object value = executeArgument(chainNode.getNode(), data, beanInfo, variables);
+        return executeFieldPath(chainNode.getFields().toArray(new String[0]), 0, value);
     }
 
     private Object executeFunction(IdentifierNode identifierNode, List<Node> cmdArgNodes, Object data, BeanInfo beanInfo,
@@ -771,6 +779,10 @@ public class Executor {
             return executeVariable((VariableNode) argument, variables);
         }
 
+        if (argument instanceof ChainNode) {
+            return executeChain((ChainNode) argument, data, beanInfo, variables);
+        }
+
         if (argument instanceof PipeNode) {
             PipeNode pipeNode = (PipeNode) argument;
             return executePipe(pipeNode, data, beanInfo, variables);
@@ -937,8 +949,7 @@ public class Executor {
             // Go template behavior: display "<no value>" for null
             printText(writer, NO_VALUE);
         } else if (value instanceof String) {
-            String unescaped = StringEscapeUtils.unescape((String) value);
-            printText(writer, unescaped);
+            printText(writer, (String) value);
         } else if (value instanceof Number) {
             printText(writer, String.valueOf(value));
         } else if (value instanceof Boolean) {

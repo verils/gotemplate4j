@@ -12,13 +12,21 @@ public class ChainNode implements Node {
         this.node = node;
     }
 
+    public Node getNode() {
+        return node;
+    }
+
+    public List<String> getFields() {
+        return fields;
+    }
+
     public void append(String value) {
         if (!value.startsWith(".")) {
             throw new IllegalArgumentException("not in field");
         }
 
         value = value.substring(1);
-        if ("".equals(value)) {
+        if (value.isEmpty()) {
             throw new IllegalArgumentException("empty field");
         }
 

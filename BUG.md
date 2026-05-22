@@ -1,6 +1,6 @@
 # Bug Records
 
-**Last Updated**: 2026-05-21
+**Last Updated**: 2026-05-22
 
 ## Critical Bugs Discovered (2026-05-21)
 
@@ -8,7 +8,7 @@ During development of `ComprehensiveTemplateTest`, the following engine-level bu
 
 ### BUG-1: Lexer `{{-` at position 0 causes StringIndexOutOfBoundsException 🔴 CRITICAL
 **Priority**: Highest
-**Status**: Confirmed, not fixed
+**Status**: Fixed and covered by lexer trim marker tests
 **First Affected Version**: v0.3.2 (introduced in `c2e6385`, "Fix Lexer issues - Fix trim marker processing")
 **Recommended Fix Version**: v0.3.3 (crash-level regression, should have been fixed in the next patch)
 
@@ -28,11 +28,13 @@ t.parse("{{- \"hello\" -}}"); // BOOM: StringIndexOutOfBoundsException
 
 **Affected File**: `src/main/java/io/github/verils/gotemplate/internal/Lexer.java:143`
 
+**Resolution**: Verified fixed by the `eotPos > start` guard and covered by `LexerTrimDelimiterTest`.
+
 ---
 
 ### BUG-2: `index` function does not support `List` / `Collection` types 🔴 CRITICAL
 **Priority**: Highest
-**Status**: Confirmed, not fixed
+**Status**: Fixed and covered by collection function tests
 **First Affected Version**: v0.4.0 (introduced in `63f5893`, initial `index` function implementation — design omission, not a regression)
 **Recommended Fix Version**: v0.4.1 (critical functional gap, should have been fixed in the next patch)
 
@@ -49,17 +51,17 @@ render("{{index .items 1}}", data); // ERROR: invalid type Arrays$ArrayList
 
 **Expected Behavior**: `index` should accept any `List` or `Collection` and return `list.get(index)`.
 
-**Fix**: Add a `collection instanceof List` branch before the fallback error.
+**Fix**: Add `collection instanceof List` and generic `collection instanceof Collection` branches before the fallback error.
 
 **Affected File**: `src/main/java/io/github/verils/gotemplate/Functions.java:220-243`
 
-**Workaround**: Use arrays (`new String[]{"a","b"}`) instead of `Arrays.asList()`.
+**Resolution**: `Functions.index()` now supports `List` and other `Collection` implementations. `FunctionsCollectionTest` covers list indexing and out-of-range list indexing.
 
 ---
 
 ### BUG-3: `=` variable reassignment has no effect 🔴 CRITICAL
 **Priority**: Highest
-**Status**: Confirmed, not fixed
+**Status**: Verified working and covered by variable tests
 **First Affected Version**: v0.4.0 (introduced in `3360dfb`, initial variable assignment implementation — `=` path never implemented, only `:=`)
 **Recommended Fix Version**: v0.4.1 (critical Go compatibility gap, should have been fixed in the next patch)
 
@@ -79,11 +81,13 @@ t.parse("{{$x := 1}}{{$x = 5}}{{$x}}");
 
 **Affected File**: `src/main/java/io/github/verils/gotemplate/internal/Executor.java` (variable handling in `executePipe` / `writeAction`)
 
+**Resolution**: Current parser/executor behavior already supports `=` through the same variable assignment path as `:=`. `PipeNodeVariableTest` now covers `{{$x = 5}}`.
+
 ---
 
 ### BUG-4: Parenthesized pipeline chaining `(pipeline).field` not supported 🟡 HIGH
 **Priority**: High
-**Status**: Confirmed, not fixed
+**Status**: Fixed and covered by comprehensive execution tests
 **First Affected Version**: v0.1.0 (introduced in `31ed6bd`, initial parenthesized pipeline parsing — Executor never supported field chaining on parenthesized results)
 **Recommended Fix Version**: v0.1.1
 
@@ -101,11 +105,13 @@ render("{{(index .items 0).name}}", data);
 
 **Affected File**: `src/main/java/io/github/verils/gotemplate/internal/Executor.java` (command evaluation)
 
+**Resolution**: `ChainNode` now exposes its base node and fields, and `Executor` evaluates the base expression before applying the field chain. `ComprehensiveTemplateTest` covers `{{(index .items 0).name}}`.
+
 ---
 
 ### BUG-5: Raw string literals (`\`...\``) incorrectly process escape sequences 🟡 HIGH
 **Priority**: High
-**Status**: Confirmed, not fixed
+**Status**: Fixed and covered by comprehensive execution tests
 **First Affected Version**: v0.1.0 (raw string parsing added in `bb2dfda`, `StringEscapeUtils.unescape()` applied unconditionally in `printValue()` since `ec1395d` — both pre-v0.1.0)
 **Recommended Fix Version**: v0.1.1
 
@@ -121,29 +127,35 @@ t.parse("{{`raw\\backticks`}}");
 
 **Expected Behavior**: All characters between backticks should be treated literally; no escape processing should occur.
 
-**Affected File**: `src/main/java/io/github/verils/gotemplate/internal/Lexer.java` (raw string tokenization)
+**Affected File**: `src/main/java/io/github/verils/gotemplate/internal/ast/StringNode.java` and `src/main/java/io/github/verils/gotemplate/internal/Executor.java`
+
+**Resolution**: `StringNode` now unescapes only non-raw string literals. `Executor.printValue()` no longer unescapes every runtime `String`. `ComprehensiveTemplateTest` covers raw string output containing `\b`.
 
 ---
 
 ### BUG-6: `{{break}}` and `{{continue}}` do not work in integer `range` 🟡 HIGH
 **Priority**: High
-**Status**: Confirmed, not fixed
+**Status**: Fixed and covered by integer range tests
 **First Affected Version**: v0.7.0 (`break`/`continue` added in v0.5.0 via `957c1c0`, integer `range` added in v0.7.0 via `decd282` — break/continue handling never extended to integer range path)
 **Recommended Fix Version**: v0.7.1
 
-**Description**: `{{break}}` and `{{continue}}` function correctly inside `{{range}}` over collections (arrays/lists), but are silently ignored inside `{{range $i := N}}` integer ranges.
+**Description**: `{{break}}` and `{{continue}}` appeared to be ignored inside `{{range $i := N}}` integer ranges when guarded by comparisons such as `{{if eq $i 2}}`.
 
 **Reproduction**:
 ```java
 Template t = new Template("test");
 t.parse("{{range $i := 5}}{{if eq $i 2}}{{break}}{{end}}{{$i}}{{end}}");
 // Expected output: "01"
-// Actual output: "01234" (break ignored)
+// Previous output: "01234" (condition never matched)
 ```
 
 **Expected Behavior**: `{{break}}` and `{{continue}}` should work identically in both collection-range and integer-range contexts.
 
-**Affected File**: `src/main/java/io/github/verils/gotemplate/internal/Executor.java` (range handling)
+**Root Cause**: Integer range values were Java `Integer` values while numeric template literals evaluate to `Long`; `eq` used `Object.equals`, so `Integer.valueOf(2)` was not equal to `Long.valueOf(2)`.
+
+**Affected File**: `src/main/java/io/github/verils/gotemplate/Functions.java` (numeric equality)
+
+**Resolution**: Numeric equality now compares numeric values across Java number types. `IntegerRangeTest` covers `break` and `continue` in integer ranges.
 
 ---
 
@@ -153,9 +165,9 @@ t.parse("{{range $i := 5}}{{if eq $i 2}}{{break}}{{end}}{{$i}}{{end}}");
 
 | Bug | Severity | First Affected | Root Cause | Fix Target |
 |:----|:---------|:---------------|:-----------|:-----------|
-| BUG-1 | 🔴 CRITICAL | v0.3.2 | `eotPos >= start` loop replaced safe `ltrimLength()` in `c2e6385` | v0.3.3 |
-| BUG-2 | 🔴 CRITICAL | v0.4.0 | `index()` never had `instanceof List/Collection` branch (design omission) | v0.4.1 |
-| BUG-3 | 🔴 CRITICAL | v0.4.0 | Variable assignment `=` path never implemented, only `:=` | v0.4.1 |
-| BUG-4 | 🟡 HIGH | v0.1.0 | Parenthesized pipeline parsing existed from start, Executor never supported chaining | v0.1.1 |
-| BUG-5 | 🟡 HIGH | v0.1.0 | `StringEscapeUtils.unescape()` applied unconditionally to all strings including raw | v0.1.1 |
-| BUG-6 | 🟡 HIGH | v0.7.0 | Break/continue (v0.5.0) never extended to integer range path (v0.7.0) | v0.7.1 |
+| BUG-1 | 🔴 CRITICAL | v0.3.2 | `eotPos >= start` loop replaced safe `ltrimLength()` in `c2e6385` | Fixed |
+| BUG-2 | 🔴 CRITICAL | v0.4.0 | `index()` never had `instanceof List/Collection` branch (design omission) | Fixed |
+| BUG-3 | 🔴 CRITICAL | v0.4.0 | Missing coverage for `=` assignment path | Covered |
+| BUG-4 | 🟡 HIGH | v0.1.0 | Parenthesized pipeline parsing existed from start, Executor never supported chaining | Fixed |
+| BUG-5 | 🟡 HIGH | v0.1.0 | `StringEscapeUtils.unescape()` applied unconditionally to all strings including raw | Fixed |
+| BUG-6 | 🟡 HIGH | v0.7.0 | Numeric equality did not compare across Java number wrapper types | Fixed |
