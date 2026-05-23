@@ -3,7 +3,7 @@
 **Last Updated**: 2026-05-23  
 **Current Version**: 0.9.1 (Released)  
 **Next Version**: 0.10.0 (Java 11 upgrade planned)  
-**Current Focus**: v0.10.0 - Java 11 migration and modernization
+**Current Focus**: v0.10.0 - Java 11 migration, modernization, and compatibility polish
 
 ---
 
@@ -27,15 +27,18 @@ gotemplate4j should remain a small, Java-compatible implementation of Go's `text
 
 ### 📋 Upcoming: v0.10.0 Release Plan
 
-**Positioning**: v0.9.x is the final Java 8 release line, focusing on practical developer experience improvements, compatibility fixes, and Go `text/template` compatibility enhancements.
+**Positioning**: v0.10.0 is the Java 11 baseline release. It should keep API compatibility where practical while using the runtime upgrade to clean up Java 8-era code and finish a focused set of Go `text/template` compatibility improvements.
 
 **Important Scope Note**: gotemplate4j implements Go's `text/template` package only, NOT `html/template`. Features like contextual auto-escaping, XSS prevention, and HTML-specific security mechanisms are intentionally out of scope. Users needing HTML safety should use the existing `{{html .value}}` function or pre-process data in Java code.
 
 #### Goals
 
 - Migrate to Java 11 minimum requirement
-- Modernize codebase with Java 11 features
-- Improve performance with modern JVM optimizations
+- Modernize codebase with low-risk Java 11 APIs and remove Java 8 compatibility workarounds
+- Preserve public API compatibility unless a breaking change is required by the Java 11 baseline
+- Improve Go `text/template` compatibility in small, well-tested areas
+- Improve developer diagnostics for parse and execution failures
+- Keep documentation synchronized across README.md and README_zh.md
 
 #### Non-Goals
 
@@ -43,16 +46,49 @@ gotemplate4j should remain a small, Java-compatible implementation of Go's `text
 - Do not add runtime dependencies beyond vanilla Java
 - Do not implement method invocation with arguments (requires extensive security design)
 - Do not start template pre-compilation (deferred to v1.0+)
+- Do not migrate to Java 17+ in this release
+- Do not perform a broad parser, executor, or AST rewrite unless required for a scoped compatibility fix
+
+#### v0.10.0 Work Scope
+
+**Required: Java 11 Baseline**
+- Update Maven compiler settings and build plugins for Java 11
+- Update local development, CI, and release documentation to use Java 11+
+- Document that v0.9.x is the final Java 8-compatible release line
+- Run full verification with `./mvnw clean verify "-Dgpg.skip=true"`
+
+**Required: Documentation and Release Hygiene**
+- Update README.md and README_zh.md together for Java 11 requirements
+- Keep version-specific release notes out of README files
+- Document any known Go `text/template` differences that remain after v0.10.0
+- Keep production/experimental warnings consistent across translated docs
+
+**Recommended: Compatibility Polish**
+- Audit and complete common built-in function behavior where gaps are small and testable
+- Add focused pipeline compatibility tests for function chaining, variable assignment, and parenthesized pipelines
+- Improve parse/execution error context, especially missing function and invalid field/key diagnostics
+- Clarify or tighten complex number support; if not completed, document the remaining limitation
+
+**Recommended: Java 11 Modernization**
+- Prefer targeted use of Java 11 APIs such as `String.isBlank()`, `strip()`, and immutable collection factories where they reduce code complexity
+- Avoid broad stylistic rewrites such as converting large areas to `var`
+- Avoid introducing Java 17-only language features such as records or pattern matching
+- Preserve readable, explicit code in parser and executor hot paths
+
+**Optional: Template Definition Compatibility**
+- Review `define`, `template`, and `block` behavior against Go `text/template`
+- Fix only well-bounded discrepancies with focused tests
+- Defer larger template inheritance or composition redesign to a later version
 
 ---
 
-### Next Version: v0.10.0 - Java 11 Migration
+### Next Version: v0.10.0 - Java 11 Migration and Compatibility Polish
 
 #### Overview
 
 Starting from version 0.10.0, gotemplate4j will require **Java 11 or higher**. This strategic decision enables:
-- Access to modern Java language features (var, records, pattern matching)
-- Better performance with G1 GC and JIT improvements
+- Access to modern Java 11 language and library features
+- Better runtime behavior with modern JVM improvements
 - Alignment with industry standards (Java 8 reached end of public updates in 2019)
 - Simplified codebase maintenance
 
@@ -61,7 +97,7 @@ Starting from version 0.10.0, gotemplate4j will require **Java 11 or higher**. T
 ```
 v0.8.0 (Released) → Java 8, Quality improvements + Performance optimization
 v0.9.1 (Current)  → Java 8, bug fixes + Compatibility testing
-v0.10.0 (Next)    → Java 11+, Modern features + Code cleanup
+v0.10.0 (Next)    → Java 11+, Modernization + Compatibility polish
 ```
 
 #### What Changes in v0.10.0?
@@ -72,17 +108,23 @@ v0.10.0 (Next)    → Java 11+, Modern features + Code cleanup
 - Runtime requirement only
 
 **Code Improvements:**
-- Use `var` for cleaner variable declarations
-- Leverage `List.of()`, `Map.of()` for immutable collections
-- Use modern String methods (`isBlank()`, `strip()`, `repeat()`)
-- Enhanced Optional API usage
+- Use Java 11 APIs where they simplify existing code
+- Leverage `List.of()`, `Map.of()` for small immutable collections where mutation is not required
+- Use modern String methods such as `isBlank()`, `strip()`, and `repeat()`
 - Remove Java 8 compatibility workarounds
+- Avoid broad style-only rewrites that increase review risk
 
 **Performance Benefits:**
 - G1 Garbage Collector (default in Java 11)
 - Improved JIT compilation
 - Better memory management
-- Potential 10-20% performance improvement
+- Potential runtime improvements depending on workload and JVM configuration
+
+**Compatibility Improvements:**
+- Focused built-in function behavior fixes
+- Pipeline execution compatibility tests and small fixes
+- Better parser and executor diagnostics
+- Clear documentation for any remaining Go `text/template` differences
 
 #### Migration Guide for Users
 
