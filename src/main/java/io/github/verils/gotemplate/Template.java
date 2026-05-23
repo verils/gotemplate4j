@@ -481,7 +481,7 @@ public class Template {
         }
         if (currentNode instanceof TextNode) {
             TextNode textNode = (TextNode) currentNode;
-            return !textNode.getText().trim().isEmpty();
+            return !textNode.getText().isBlank();
         }
         return true;
     }
