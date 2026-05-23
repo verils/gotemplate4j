@@ -146,8 +146,29 @@ public class NestedTemplateContextTest {
         data.put("Name", "World");
         
         template.execute(writer, data);
-        
+
         assertEquals("Hello, World!", writer.toString());
+    }
+
+    @Test
+    void testNestedTemplateRootVariableUsesPassedContext() throws IOException, TemplateException {
+        Template template = new Template("master");
+        template.parse(
+            "{{define \"detail\"}}Dot: {{.Name}}, Root: {{$.Name}}{{end}}" +
+            "{{template \"detail\" .User}}"
+        );
+
+        Writer writer = new StringWriter();
+        Map<String, Object> user = new HashMap<>();
+        user.put("Name", "Alice");
+
+        Map<String, Object> data = new HashMap<>();
+        data.put("Name", "Root");
+        data.put("User", user);
+
+        template.execute(writer, data);
+
+        assertEquals("Dot: Alice, Root: Alice", writer.toString());
     }
 
     @Test
