@@ -130,6 +130,17 @@ class FunctionsCollectionTest {
     }
 
     @Test
+    void sliceReturnsListForListInput() throws IOException, TemplateException {
+        assertEquals("[b, c]", render("{{slice .Items 1 3}}", data("Items", Arrays.asList("a", "b", "c", "d"))));
+    }
+
+    @Test
+    void directSliceClampsListBounds() {
+        Object result = TemplateTestSupport.invoke("slice", Arrays.asList("a", "b", "c"), -2, 10);
+        assertEquals(Arrays.asList("a", "b", "c"), result);
+    }
+
+    @Test
     void sliceReturnsEmptyArrayWhenArrayStartIsNotBeforeEnd() {
         Object result = TemplateTestSupport.invoke("slice", new String[]{"a", "b", "c"}, 3, 2);
         assertEquals(0, java.lang.reflect.Array.getLength(result));

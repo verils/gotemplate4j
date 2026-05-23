@@ -3,6 +3,7 @@ package io.github.verils.gotemplate;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Array;
 import java.net.URLEncoder;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -299,6 +300,16 @@ public class Functions {
                 //noinspection SuspiciousSystemArraycopy
                 System.arraycopy(collection, start, newArray, 0, length);
                 return newArray;
+            }
+
+            if (collection instanceof List) {
+                List<?> list = (List<?>) collection;
+                if (start < 0) start = 0;
+                if (end > list.size()) end = list.size();
+                if (start >= end) {
+                    return new ArrayList<>();
+                }
+                return new ArrayList<>(list.subList(start, end));
             }
 
             throw new IllegalArgumentException("slice: invalid type " + collection.getClass().getName());
