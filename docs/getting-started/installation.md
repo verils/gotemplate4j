@@ -4,7 +4,7 @@ This guide shows you how to add gotemplate4j to your Java project.
 
 ## Requirements
 
-- **Java Version**: Java 8 or later
+- **Java Version**: Java 11 or later
 - **Build Tool**: Maven, Gradle, or manual JAR inclusion
 - **Dependencies**: None (pure Java implementation)
 
@@ -92,7 +92,7 @@ If this compiles and runs successfully, gotemplate4j is properly installed!
 
 If you get compilation errors:
 
-1. Ensure Java 8+ is installed: `java -version`
+1. Ensure Java 11+ is installed: `java -version`
 2. Verify the dependency is correctly added to your build file
 3. Run a clean build: `mvn clean compile` or `gradle clean build`
 

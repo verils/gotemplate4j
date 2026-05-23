@@ -1,6 +1,6 @@
 # Go Template Compatibility
 
-gotemplate4j implements a Java 8-compatible subset of Go's `text/template` package. The goal is practical compatibility for Java applications that need to evaluate Go-style templates, while keeping Java-specific behavior explicit.
+gotemplate4j implements a Java-compatible subset of Go's `text/template` package. The v0.10.0 development line requires Java 11 or later. The goal is practical compatibility for Java applications that need to evaluate Go-style templates, while keeping Java-specific behavior explicit.
 
 This document provides detailed information about what works the same as Go, what differs, and why those differences exist.
 

@@ -67,7 +67,7 @@ Real-world examples and use cases:
 ## Key Features
 
 ✅ **Go Template Compatible** - Supports core Go `text/template` syntax  
-✅ **Java 8 Compatible** - Works with Java 8 and later  
+✅ **Java 11 Compatible** - Works with Java 11 and later  
 ✅ **Zero Dependencies** - Pure Java implementation  
 ✅ **Rich Function Library** - 18+ built-in functions  
 ✅ **Custom Functions** - Easy extension mechanism  
@@ -76,8 +76,8 @@ Real-world examples and use cases:
 
 ## Version Information
 
-- **Current Version**: 0.6.0
-- **Java Requirement**: Java 8 or later
+- **Current Version**: 0.9.1
+- **Java Requirement**: Java 11 or later
 - **License**: MIT License
 
 ## Need Help?

@@ -628,7 +628,7 @@ Yes. v0.9.1 is fully backward compatible with v0.9.0 and v0.8.x. Existing templa
 
 ### What Java version does v0.9.1 require?
 
-v0.9.1 requires **Java 8 or higher**. The v0.9.x line is the last line to support Java 8. Starting from v0.10.0, Java 11+ will be required.
+v0.9.1 requires **Java 8 or higher**. The v0.9.x line is the last line to support Java 8. The v0.10.0 development line requires **Java 11 or higher**.
 
 ---
 
@@ -727,7 +727,7 @@ Yes! v0.9.0 is fully backward compatible with v0.8.x. All existing templates and
 
 ### What Java version does v0.9.x require?
 
-v0.9.x requires **Java 8 or higher**. This is the last release line to support Java 8. Starting from v0.10.0, Java 11+ will be required.
+v0.9.x requires **Java 8 or higher**. This is the last release line to support Java 8. The v0.10.0 development line requires **Java 11 or higher**.
 
 ---
 
