@@ -16,10 +16,10 @@ A Go template engine implementation for Java that evaluates Go templates and gen
 
 ### Requirements
 
-- Java Version: >= **1.8** (Java 11+ required from v0.10.0)
+- Java Version: >= **11**
 - No additional dependencies required (pure Java)
 
-> ⚠️ **Upcoming Change**: Starting from version 0.10.0, gotemplate4j will require **Java 11 or higher**. See [Future Roadmap](./PLAN.md#future-roadmap-java-11-migration-v0100) for details.
+> ⚠️ **Java 8 Support**: v0.9.x is the final release line supporting Java 8. The v0.10.0 development line requires **Java 11 or higher**. See [Development Plan](./PLAN.md) for details.
 
 ### Installation
 
