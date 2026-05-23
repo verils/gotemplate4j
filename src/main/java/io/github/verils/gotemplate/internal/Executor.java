@@ -654,7 +654,7 @@ public class Executor {
         try {
             return indexFunction.invoke(functionArgs);
         } catch (RuntimeException e) {
-            throw new TemplateExecutionException("function 'index' failed", e);
+            throw new TemplateExecutionException(buildFunctionExecutionError("index", functionArgs, e), e);
         }
     }
 
@@ -1034,8 +1034,8 @@ public class Executor {
         // Include the original error message if it's informative
         String causeMessage = cause.getMessage();
         if (causeMessage != null && !causeMessage.isEmpty()) {
-            // Only include if it provides additional context
-            if (!causeMessage.contains(functionName)) {
+            // Only skip messages that already look like this wrapper; type and argument errors often mention the function name.
+            if (!causeMessage.startsWith(String.format("function '%s' failed", functionName))) {
                 message.append(": ").append(causeMessage);
             }
         }

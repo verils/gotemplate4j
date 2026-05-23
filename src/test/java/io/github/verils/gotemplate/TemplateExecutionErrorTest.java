@@ -18,6 +18,8 @@ class TemplateExecutionErrorTest {
                 () -> template.execute(new StringWriter(), TemplateTestSupport.data("Value", new Object())));
 
         assertTrue(exception.getMessage().contains("function 'index' failed"));
+        assertTrue(exception.getMessage().contains("2 argument(s)"));
+        assertTrue(exception.getMessage().contains("index: invalid type"));
         assertInstanceOf(IllegalArgumentException.class, exception.getCause());
     }
 
