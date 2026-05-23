@@ -236,6 +236,66 @@ class PipeNodeVariableTest {
     }
 
     @Test
+    void testFieldValueAsLastArgumentInPipeline() throws Exception {
+        String template = "{{.Name | printf \"%s\"}}";
+        Template tmpl = new Template("test");
+        tmpl.parse(template);
+
+        Map<String, Object> data = new HashMap<>();
+        data.put("Name", "world");
+
+        StringWriter writer = new StringWriter();
+        tmpl.execute(writer, data);
+
+        assertEquals("world", writer.toString());
+    }
+
+    @Test
+    void testChainedPipelinePassesValueAsLastArgument() throws Exception {
+        String template = "{{printf \"%s\" .Name | printf \"[%s]\"}}";
+        Template tmpl = new Template("test");
+        tmpl.parse(template);
+
+        Map<String, Object> data = new HashMap<>();
+        data.put("Name", "world");
+
+        StringWriter writer = new StringWriter();
+        tmpl.execute(writer, data);
+
+        assertEquals("[world]", writer.toString());
+    }
+
+    @Test
+    void testVariableAssignmentFromFormattedPipeline() throws Exception {
+        String template = "{{$x := .Name | printf \"[%s]\"}}{{$x}}";
+        Template tmpl = new Template("test");
+        tmpl.parse(template);
+
+        Map<String, Object> data = new HashMap<>();
+        data.put("Name", "world");
+
+        StringWriter writer = new StringWriter();
+        tmpl.execute(writer, data);
+
+        assertEquals("[world]", writer.toString());
+    }
+
+    @Test
+    void testParenthesizedPipelineAsFunctionArgument() throws Exception {
+        String template = "{{printf \"outer:%s\" (.Name | printf \"inner:%s\")}}";
+        Template tmpl = new Template("test");
+        tmpl.parse(template);
+
+        Map<String, Object> data = new HashMap<>();
+        data.put("Name", "world");
+
+        StringWriter writer = new StringWriter();
+        tmpl.execute(writer, data);
+
+        assertEquals("outer:inner:world", writer.toString());
+    }
+
+    @Test
     void testVariableWithDotNotation() throws Exception {
         // Direct field access with variable
         String template = "{{$val := .Count}}Count: {{$val}}";
