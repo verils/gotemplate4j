@@ -1,3 +1,46 @@
+v0.10.0 (2026-05-23)
+
+========
+
+**Java 11 Baseline Release** - This release raises the minimum Java requirement to Java 11, keeps the public API stable, and focuses on compatibility polish, diagnostics, and release documentation cleanup.
+
+### ⚠️ Breaking Changes
+
+- **Java 11 is now required**: v0.9.x is the final release line supporting Java 8.
+- **Build baseline updated**: Maven compiler source and target are now set to Java 11.
+
+---
+
+### ✨ Improvements
+
+- **List slicing support**: The built-in `slice` function now supports Java `List` values in addition to strings and arrays.
+- **Function diagnostics**: Runtime failures from the built-in `index` function now use the same enhanced error format as other functions, including argument count and original cause details.
+- **Java 11 cleanup**: Replaced trim-based blank text detection with `String.isBlank()` where the behavior is equivalent.
+
+---
+
+### 🧪 Testing
+
+- Added execution compatibility coverage for chained pipelines, pipeline-based variable assignment, and parenthesized pipelines used as function arguments.
+- Added nested template coverage to verify that `$` is reset to the context passed to `{{template "name" pipeline}}`.
+- Verified the release with JDK 11 and the full Maven test suite.
+
+---
+
+### 📚 Documentation
+
+- Updated README, translated README, and getting-started documentation for the Java 11 requirement.
+- Trimmed stale backlog content from the development plan to keep v0.10.0 planning actionable.
+- Clarified Java 8 support boundaries for the v0.9.x line.
+
+---
+
+### 📦 Upgrade Notes
+
+- Users running Java 8 must stay on v0.9.x or upgrade their runtime to Java 11 or later.
+- No public API changes are planned for existing Java 11+ consumers.
+- Local builds should continue to use the Maven wrapper: `./mvnw`.
+
 v0.9.1 (2026-05-23)
 
 ========

@@ -4,7 +4,7 @@ Get up and running with gotemplate4j in 5 minutes! This guide walks you through 
 
 ## Prerequisites
 
-- Java 8 or later installed
+- Java 11 or later installed
 - A Java project set up (Maven, Gradle, or plain Java)
 - gotemplate4j added to your project (see [Installation](installation.md))
 

@@ -45,7 +45,7 @@ Yes, gotemplate4j is stable and well-tested with 90%+ code coverage. However, it
 
 ### What is the current version and release cycle?
 
-Current version is **0.9.1**. The project follows semantic versioning. Check the [CHANGELOG](../CHANGELOG) for release history.
+Current version is **0.10.0**. The project follows semantic versioning. Check the [CHANGELOG](../CHANGELOG) for release history.
 
 ---
 
@@ -740,4 +740,4 @@ v0.9.x requires **Java 8 or higher**. This is the last release line to support J
 
 ---
 
-*Last updated: 2026-05-23 for gotemplate4j v0.9.1*
+*Last updated: 2026-05-23 for gotemplate4j v0.10.0*
