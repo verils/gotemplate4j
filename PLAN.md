@@ -215,3 +215,12 @@ Run before release:
 - **Template pre-compilation**: defer until real performance data justifies the complexity.
 - **Enhanced template inheritance syntax**: avoid non-Go syntax unless user feedback strongly supports it.
 - **Mutation/property-based/static-analysis tooling**: defer unless quality risks appear that current tests do not catch.
+
+#### Documentation Site Deployment
+**Priority**: Low
+**Status**: Not started
+
+Deploy `docs/` as a static site with bilingual (en/zh) support. Key decisions to make when planning:
+- Choose static site generator (VitePress recommended for i18n support).
+- Handle repo-root cross-references (`CHANGELOG`, `CONTRIBUTING.md`, `src/test/...`) — currently relative paths for local browsing; will need a pre-build script to rewrite to full GitHub URLs during deployment.
+- Set up GitHub Actions to build and publish to GitHub Pages.
