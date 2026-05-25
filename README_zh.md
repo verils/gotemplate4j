@@ -53,7 +53,7 @@ dependencies {
 }
 ```
 
-更多安装选项，请参阅 [安装指南](./docs/getting-started/installation.md)。
+更多安装选项，请参阅 [安装指南](./docs/zh/getting-started/installation.md)。
 
 ### 基本用法
 
@@ -90,47 +90,47 @@ Template tmpl = Template.parseFile(Paths.get("template.tmpl"), StandardCharsets.
 List<Template> templates = Template.parseClasspathResources("templates/*.tmpl");
 ```
 
-更多示例，请参阅 [基础示例](./docs/examples/basic-examples.md)。
+更多示例，请参阅 [基础示例](./docs/zh/examples/basic-examples.md)。
 
 ## 文档
 
 完整的文档可在 `docs/` 目录中找到：
 
 ### 🚀 入门指南
-- [安装指南](./docs/getting-started/installation.md) - 将 gotemplate4j 添加到您的项目
-- [快速入门教程](./docs/getting-started/quick-start.md) - 5分钟内创建第一个模板
-- [基本概念](./docs/getting-started/basic-concepts.md) - 理解核心概念
+- [安装指南](./docs/zh/getting-started/installation.md) - 将 gotemplate4j 添加到您的项目
+- [快速入门教程](./docs/zh/getting-started/quick-start.md) - 5分钟内创建第一个模板
+- [基本概念](./docs/zh/getting-started/basic-concepts.md) - 理解核心概念
 
 ### 📖 用户指南
-- [模板语法参考](./docs/user-guide/template-syntax.md) - 完整语法指南
-- [使用 Java 数据](./docs/user-guide/data-models.md) - JavaBeans、Maps、Lists、Enums
-- [内置和自定义函数](./docs/user-guide/functions.md) - 函数参考
-- [控制流](./docs/user-guide/control-flow.md) - If、range、with、break/continue
-- [模板集和继承](./docs/user-guide/template-sets.md) - Define、template、blocks
-- [错误处理](./docs/user-guide/error-handling.md) - 优雅地处理错误
+- [模板语法参考](./docs/zh/user-guide/template-syntax.md) - 完整语法指南
+- [使用 Java 数据](./docs/zh/user-guide/data-models.md) - JavaBeans、Maps、Lists、Enums
+- [内置和自定义函数](./docs/zh/user-guide/functions.md) - 函数参考
+- [控制流](./docs/zh/user-guide/control-flow.md) - If、range、with、break/continue
+- [模板集和继承](./docs/zh/user-guide/template-sets.md) - Define、template、blocks
+- [错误处理](./docs/zh/user-guide/error-handling.md) - 优雅地处理错误
 
 ### 🔧 高级主题
-- [Go 模板兼容性](./docs/advanced/compatibility.md) - 详细的兼容性指南
-- [从 Go 模板迁移](./docs/advanced/migration.md) - 逐步迁移指南
-- [性能优化](./docs/advanced/performance.md) - 优化模板执行
-- [安全最佳实践](./docs/advanced/security.md) - 安全注意事项
-- [设计模式](./docs/advanced/best-practices.md) - 最佳实践和模式
+- [Go 模板兼容性](./docs/zh/advanced/compatibility.md) - 详细的兼容性指南
+- [从 Go 模板迁移](./docs/zh/advanced/migration.md) - 逐步迁移指南
+- [性能优化](./docs/zh/advanced/performance.md) - 优化模板执行
+- [安全最佳实践](./docs/zh/advanced/security.md) - 安全注意事项
+- [设计模式](./docs/zh/advanced/best-practices.md) - 最佳实践和模式
 
 ### 📚 API 参考
-- [Template API](./docs/api-reference/template-api.md) - Template 类参考
-- [Function API](./docs/api-reference/function-api.md) - Function 接口指南
-- [Exception API](./docs/api-reference/exception-api.md) - 异常层次结构
+- [Template API](./docs/zh/api-reference/template-api.md) - Template 类参考
+- [Function API](./docs/zh/api-reference/function-api.md) - Function 接口指南
+- [Exception API](./docs/zh/api-reference/exception-api.md) - 异常层次结构
 
 ### 💡 示例
-- [基础示例](./docs/examples/basic-examples.md) - 简单用例
-- [Web 模板](./docs/examples/web-templates.md) - HTML 生成模式
-- [邮件模板](./docs/examples/email-templates.md) - 邮件生成示例
-- [复杂场景](./docs/examples/complex-scenarios.md) - 高级实际场景
+- [基础示例](./docs/zh/examples/basic-examples.md) - 简单用例
+- [Web 模板](./docs/zh/examples/web-templates.md) - HTML 生成模式
+- [邮件模板](./docs/zh/examples/email-templates.md) - 邮件生成示例
+- [复杂场景](./docs/zh/examples/complex-scenarios.md) - 高级实际场景
 
 ### ❓ FAQ
-- [常见问题解答](./docs/faq.md) - 常见问题和答案
+- [常见问题解答](./docs/zh/faq.md) - 常见问题和答案
 
-**从这里开始：** [文档中心](./docs/index.md)
+**从这里开始：** [文档中心](./docs/zh/index.md)
 
 ## 参考资料
 

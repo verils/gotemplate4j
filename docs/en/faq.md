@@ -1,6 +1,6 @@
 # Frequently Asked Questions (FAQ)
 
-This document answers the most common questions about gotemplate4j. If you don't find your answer here, please check the [User Guide](../user-guide/) or report an issue on [GitHub](https://github.com/verils/gotemplate4j/issues).
+This document answers the most common questions about gotemplate4j. If you don't find your answer here, please check the [User Guide](user-guide/) or report an issue on [GitHub](https://github.com/verils/gotemplate4j/issues).
 
 ## Table of Contents
 
@@ -45,7 +45,7 @@ Yes, gotemplate4j is stable and well-tested with 90%+ code coverage. However, it
 
 ### What is the current version and release cycle?
 
-Current version is **0.10.0**. The project follows semantic versioning. Check the [CHANGELOG](../CHANGELOG) for release history.
+Current version is **0.10.0**. The project follows semantic versioning. Check the [CHANGELOG](../../CHANGELOG) for release history.
 
 ---
 
@@ -378,7 +378,7 @@ Gotemplate4j is optimized for typical use cases:
 - **Parsing**: ~1-5ms for medium templates
 - **Execution**: ~0.1-1ms per execution (depends on data complexity)
 
-See [TemplateBenchmark.java](../src/test/java/io/github/verils/gotemplate/TemplateBenchmark.java) for detailed benchmarks.
+See [TemplateBenchmark.java](../../src/test/java/io/github/verils/gotemplate/TemplateBenchmark.java) for detailed benchmarks.
 
 ### How can I improve performance?
 
@@ -642,7 +642,7 @@ Version 0.9.0 introduces three major enhancements:
 2. **Integer Range Support** - Go-style `{{range $i := 5}}` syntax for iterating over number sequences
 3. **Enhanced Error Diagnostics** - Intelligent error messages with typo suggestions and available options listing
 
-See the [CHANGELOG](../CHANGELOG) for complete details.
+See the [CHANGELOG](../../CHANGELOG) for complete details.
 
 ### How do I load templates from classpath?
 
@@ -736,7 +736,7 @@ v0.9.x requires **Java 8 or higher**. This is the last release line to support J
 - 📖 Browse the [User Guide](user-guide/) for detailed documentation
 - 💡 Check [Examples](examples/) for real-world use cases
 - 🐛 Report bugs or ask questions on [GitHub Issues](https://github.com/verils/gotemplate4j/issues)
-- 📝 Read the [CHANGELOG](../CHANGELOG) for recent updates
+- 📝 Read the [CHANGELOG](../../CHANGELOG) for recent updates
 
 ---
 

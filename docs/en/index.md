@@ -85,11 +85,11 @@ Real-world examples and use cases:
 - 📖 Browse the documentation sections above
 - 💬 Check the [FAQ](faq.md) for common questions
 - 🐛 Report issues on [GitHub](https://github.com/verils/gotemplate4j/issues)
-- 📝 Read the [CHANGELOG](../CHANGELOG) for recent updates
+- 📝 Read the [CHANGELOG](../../CHANGELOG) for recent updates
 
 ## Contributing
 
-Contributions are welcome! Please see [CONTRIBUTING.md](../CONTRIBUTING.md) for guidelines.
+Contributions are welcome! Please see [CONTRIBUTING.md](../../CONTRIBUTING.md) for guidelines.
 
 ---
 

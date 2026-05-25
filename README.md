@@ -53,7 +53,7 @@ dependencies {
 }
 ```
 
-For more installation options, see the [Installation Guide](./docs/getting-started/installation.md).
+For more installation options, see the [Installation Guide](./docs/en/getting-started/installation.md).
 
 ### Basic Usage
 
@@ -90,47 +90,47 @@ Template tmpl = Template.parseFile(Paths.get("template.tmpl"), StandardCharsets.
 List<Template> templates = Template.parseClasspathResources("templates/*.tmpl");
 ```
 
-For more examples, see [Basic Examples](./docs/examples/basic-examples.md).
+For more examples, see [Basic Examples](./docs/en/examples/basic-examples.md).
 
 ## Documentation
 
 Comprehensive documentation is available in the `docs/` directory:
 
 ### 🚀 Getting Started
-- [Installation Guide](./docs/getting-started/installation.md) - Add gotemplate4j to your project
-- [Quick Start Tutorial](./docs/getting-started/quick-start.md) - Create your first template in 5 minutes
-- [Basic Concepts](./docs/getting-started/basic-concepts.md) - Understand core concepts
+- [Installation Guide](./docs/en/getting-started/installation.md) - Add gotemplate4j to your project
+- [Quick Start Tutorial](./docs/en/getting-started/quick-start.md) - Create your first template in 5 minutes
+- [Basic Concepts](./docs/en/getting-started/basic-concepts.md) - Understand core concepts
 
 ### 📖 User Guide
-- [Template Syntax Reference](./docs/user-guide/template-syntax.md) - Complete syntax guide
-- [Working with Java Data](./docs/user-guide/data-models.md) - JavaBeans, Maps, Lists, Enums
-- [Built-in and Custom Functions](./docs/user-guide/functions.md) - Function reference
-- [Control Flow](./docs/user-guide/control-flow.md) - If, range, with, break/continue
-- [Template Sets and Inheritance](./docs/user-guide/template-sets.md) - Define, template, blocks
-- [Error Handling](./docs/user-guide/error-handling.md) - Handle errors gracefully
+- [Template Syntax Reference](./docs/en/user-guide/template-syntax.md) - Complete syntax guide
+- [Working with Java Data](./docs/en/user-guide/data-models.md) - JavaBeans, Maps, Lists, Enums
+- [Built-in and Custom Functions](./docs/en/user-guide/functions.md) - Function reference
+- [Control Flow](./docs/en/user-guide/control-flow.md) - If, range, with, break/continue
+- [Template Sets and Inheritance](./docs/en/user-guide/template-sets.md) - Define, template, blocks
+- [Error Handling](./docs/en/user-guide/error-handling.md) - Handle errors gracefully
 
 ### 🔧 Advanced Topics
-- [Go Template Compatibility](./docs/advanced/compatibility.md) - Detailed compatibility guide
-- [Migration from Go Templates](./docs/advanced/migration.md) - Step-by-step migration
-- [Performance Tuning](./docs/advanced/performance.md) - Optimize template execution
-- [Security Best Practices](./docs/advanced/security.md) - Security considerations
-- [Design Patterns](./docs/advanced/best-practices.md) - Best practices and patterns
+- [Go Template Compatibility](./docs/en/advanced/compatibility.md) - Detailed compatibility guide
+- [Migration from Go Templates](./docs/en/advanced/migration.md) - Step-by-step migration
+- [Performance Tuning](./docs/en/advanced/performance.md) - Optimize template execution
+- [Security Best Practices](./docs/en/advanced/security.md) - Security considerations
+- [Design Patterns](./docs/en/advanced/best-practices.md) - Best practices and patterns
 
 ### 📚 API Reference
-- [Template API](./docs/api-reference/template-api.md) - Template class reference
-- [Function API](./docs/api-reference/function-api.md) - Function interface guide
-- [Exception API](./docs/api-reference/exception-api.md) - Exception hierarchy
+- [Template API](./docs/en/api-reference/template-api.md) - Template class reference
+- [Function API](./docs/en/api-reference/function-api.md) - Function interface guide
+- [Exception API](./docs/en/api-reference/exception-api.md) - Exception hierarchy
 
 ### 💡 Examples
-- [Basic Examples](./docs/examples/basic-examples.md) - Simple use cases
-- [Web Templates](./docs/examples/web-templates.md) - HTML generation patterns
-- [Email Templates](./docs/examples/email-templates.md) - Email generation examples
-- [Complex Scenarios](./docs/examples/complex-scenarios.md) - Advanced real-world scenarios
+- [Basic Examples](./docs/en/examples/basic-examples.md) - Simple use cases
+- [Web Templates](./docs/en/examples/web-templates.md) - HTML generation patterns
+- [Email Templates](./docs/en/examples/email-templates.md) - Email generation examples
+- [Complex Scenarios](./docs/en/examples/complex-scenarios.md) - Advanced real-world scenarios
 
 ### ❓ FAQ
-- [Frequently Asked Questions](./docs/faq.md) - Common questions and answers
+- [Frequently Asked Questions](./docs/en/faq.md) - Common questions and answers
 
-**Start here:** [Documentation Hub](./docs/index.md)
+**Start here:** [Documentation Hub](./docs/en/index.md)
 
 ## References
 
