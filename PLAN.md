@@ -126,7 +126,7 @@ gotemplate4j 应继续作为一个小型、无运行时外部依赖的 Java 版 
 - `FunctionsLogicalTest`、`TemplateExecutionTruthinessTest` 及中英文文档已同步。
 - Java 11 下 `./mvnw clean test`、`./mvnw verify "-Dgpg.skip=true"` 均通过。
 
-**状态**：待复核
+**状态**：已完成
 
 #### A3. 对齐比较函数的 Go 语义与数值精度
 
@@ -160,7 +160,7 @@ gotemplate4j 应继续作为一个小型、无运行时外部依赖的 Java 版 
 - `FunctionsComparisonTest`、`EnumHandlingTest`、`ComprehensiveTemplateTest` 及中英文文档已同步。
 - Java 11 下 `./mvnw clean test`、`./mvnw verify "-Dgpg.skip=true"` 均通过。
 
-**状态**：待复核
+**状态**：已完成
 
 #### A4. 完善字符串和字符字面量转义
 
@@ -188,7 +188,7 @@ gotemplate4j 应继续作为一个小型、无运行时外部依赖的 Java 版 
 - raw string 保持不处理转义；新增 `LiteralEscapingTest` 并更新相关工具和 parser 测试。
 - Java 11 下 `./mvnw clean test`、`./mvnw verify "-Dgpg.skip=true"` 均通过。
 
-**状态**：待复核
+**状态**：已完成
 
 ### 3.2 高优先级：运行时兼容性与公开 API
 
@@ -218,7 +218,7 @@ gotemplate4j 应继续作为一个小型、无运行时外部依赖的 Java 版 
 - 新增 MapKeySortingTest 回归用例，覆盖混合数值、混合基础类型、null、自定义键和嵌套 map。
 - Java 11 下 `./mvnw clean test`、`./mvnw verify "-Dgpg.skip=true"` 均通过。
 
-**状态**：待复核
+**状态**：已完成
 
 #### B2. 修复 `index` 和 `slice` 的多维与边界语义
 
@@ -380,7 +380,7 @@ gotemplate4j 应继续作为一个小型、无运行时外部依赖的 Java 版 
   并覆盖数组、集合、map、Optional 和数值类型。
 - 该事项合并到 A2，随 A2 一并人工复核。
 
-**状态**：待复核
+**状态**：已完成
 
 #### C4. 让 `deepEqual` 真正递归比较
 
@@ -687,16 +687,19 @@ gotemplate4j 应继续作为一个小型、无运行时外部依赖的 Java 版 
 
 ## 八、当前状态快照
 
+> 2026-10-26 状态同步：A1–A4、由 A2 合并处理的 C3、以及 B1 均已完成人工复核并提交；
+> 下一项为 B2。
+
 | 工作项 | 状态 | 下一步 |
 | --- | --- | --- |
 | 计划中文重写与新旧计划汇总 | 已完成 | 逐项开始 A1 |
-| A1 JavaScript 转义安全 | 已完成 | 进入 A2 |
-| A2 `default` 管道 | 待复核 | 人工复核后进入 A3 |
-| A3 比较函数 | 待复核 | 人工复核后进入 A4 |
-| A4 字面量转义 | 待复核 | 人工复核后进入 B1 |
-| B1 map 排序 | 待复核 | 人工复核后进入 B2 |
-| B2–B6 运行时与 API | 待处理 | 按顺序逐项处理 |
-| C1–C7 契约一致性 | 部分待复核 | C3 已合并到 A2；其余项在 A、B 阶段后处理 |
+| A1 JavaScript 转义安全 | 已完成 | 无 |
+| A2 `default` 管道 | 已完成 | 无 |
+| A3 比较函数 | 已完成 | 无 |
+| A4 字面量转义 | 已完成 | 无 |
+| B1 map 排序 | 已完成 | 无 |
+| B2–B6 运行时与 API | 待处理 | 从 B2 开始按顺序处理 |
+| C1–C7 契约一致性 | 部分完成 | C3 已完成；其余项在 A、B 阶段后处理 |
 | D1–D3 文档、测试、构建 | 待处理 | 随修复同步推进 |
 | D4 错误诊断 | 待复核 | 处理旧计划时复核 |
 | D5 文档站点 | 暂缓 | 文档修复完成后复核 |
