@@ -28,7 +28,8 @@ class StringUtilsTest {
 
     @Test
     void testUnquoteWithSingleQuotes() {
-        assertEquals("hello", StringUtils.unquote("'hello'"));
+        assertEquals("a", StringUtils.unquote("'a'"));
+        assertThrows(IllegalArgumentException.class, () -> StringUtils.unquote("'hello'"));
     }
 
     @Test
@@ -69,5 +70,29 @@ class StringUtilsTest {
     @Test
     void testUnquoteThrowsExceptionForBacktickInsideBackticks() {
         assertThrows(IllegalArgumentException.class, () -> StringUtils.unquote("`hello`world`"));
+    }
+
+    @Test
+    void unquoteDecodesSupportedEscapes() {
+        assertEquals("\u0007\b\f\n\r\t\u000B\\\"'",
+                StringUtils.unquote("\"\\a\\b\\f\\n\\r\\t\\v\\\\\\\"'\""));
+        assertEquals("A", StringUtils.unquote("\"\\x41\""));
+        assertEquals("A", StringUtils.unquote("\"\\101\""));
+        assertEquals("中", StringUtils.unquote("\"\\u4E2D\""));
+        assertEquals("😀", StringUtils.unquote("\"\\U0001F600\""));
+        assertEquals("\u00FF", StringUtils.unquote("\"\\xFF\""));
+    }
+
+    @Test
+    void unquoteRejectsInvalidEscapes() {
+        assertThrows(IllegalArgumentException.class, () -> StringUtils.unquote("\"\\q\""));
+        assertThrows(IllegalArgumentException.class, () -> StringUtils.unquote("\"\\x1\""));
+        assertThrows(IllegalArgumentException.class, () -> StringUtils.unquote("\"\\400\""));
+        assertThrows(IllegalArgumentException.class, () -> StringUtils.unquote("\"\\0\""));
+        assertThrows(IllegalArgumentException.class, () -> StringUtils.unquote("\"\\uD800\""));
+        assertThrows(IllegalArgumentException.class, () -> StringUtils.unquote("\"\\U00110000\""));
+        assertThrows(IllegalArgumentException.class, () -> StringUtils.unquote("\"\\UFFFFFFFF\""));
+        assertThrows(IllegalArgumentException.class, () -> StringUtils.unquote("\"\\'\""));
+        assertThrows(IllegalArgumentException.class, () -> StringUtils.unquote("'\\\"'"));
     }
 }

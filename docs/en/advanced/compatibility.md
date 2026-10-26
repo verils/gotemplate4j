@@ -235,6 +235,15 @@ Workaround: Convert data to Java arrays, collections, or maps before passing to 
 - **Complex number support**: Full Go numeric and complex formatting parity is not implemented.
 - **Format verbs**: Some advanced `printf` format verbs may have limited support compared to Go.
 
+### String and Character Literals
+
+- Quoted strings support Go-style simple, octal, `\x`, `\u`, and `\U` escapes.
+- **`\xNN` mapping**: Go returns a raw byte that may not be valid UTF-8;
+  gotemplate4j returns the Unicode character `U+00NN`.
+- Character constants evaluate to their Unicode code point (`'A'` is `65`).
+  They are not rendered as one-character strings.
+- Raw backtick strings do not process escapes and discard carriage returns.
+
 ---
 
 ## Behavior Differences Summary

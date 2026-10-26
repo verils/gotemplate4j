@@ -83,6 +83,7 @@ class ParserNumberTest {
                 new NumberTest("'\\\\'", true, true, false),
                 new NumberTest("'\\''", true, true, false),
                 new NumberTest("'\\xFF'", true, true, false),
+                new NumberTest("'\\U0001F600'", true, true, false),
                 new NumberTest("'パ'", true, true, false),
                 new NumberTest("'\\u30d1'", true, true, false),
                 new NumberTest("'\\U000030d1'", true, true, false),

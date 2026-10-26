@@ -1,6 +1,5 @@
 package io.github.verils.gotemplate.internal.ast;
 
-import io.github.verils.gotemplate.internal.lang.StringEscapeUtils;
 import io.github.verils.gotemplate.internal.lang.StringUtils;
 
 public class StringNode implements Node {
@@ -10,8 +9,7 @@ public class StringNode implements Node {
 
     public StringNode(String origin) {
         this.origin = origin;
-        String unquoted = StringUtils.unquote(origin);
-        this.text = isRawString() ? unquoted : StringEscapeUtils.unescape(unquoted);
+        this.text = StringUtils.unquote(origin);
     }
 
     public String getText() {

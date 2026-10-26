@@ -34,6 +34,10 @@ unifies template truthiness.
   Integral and decimal literals preserve their separate comparison groups.
 - Incompatible types and direct array, collection, or map comparisons now raise
   clear errors; aggregate values should use `deepEqual`.
+- Quoted strings now decode Go-style simple, escaped quote, octal, `\x`, `\u`,
+  and `\U` sequences. Invalid escapes report source line and column information.
+- Character constants now decode to a single Unicode code point, including
+  supplementary characters, instead of returning the backslash value.
 
 ### 🧪 Testing
 
@@ -44,6 +48,8 @@ unifies template truthiness.
   truthiness coverage across all logical template constructs.
 - Added exact integer, mixed numeric group, NaN/Infinity, aggregate rejection,
   enum comparison, and comparison arity coverage.
+- Added literal decoding, raw string, Unicode, invalid escape location, and
+  character code point coverage.
 
 ### 📚 Documentation
 

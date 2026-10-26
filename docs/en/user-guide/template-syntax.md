@@ -470,21 +470,42 @@ template.parse("Double: {{double 5}}");
 
 ## String Literals
 
-Use quotes for string literals:
+Use double quotes for escaped strings and backticks for raw strings:
 
 ```gotemplate
 {{"hello"}}
-{{'world'}}
+{{`raw\ntext`}}  <!-- Backslash-n remains two characters -->
 ```
 
-Escape characters:
+Quoted strings support Go-style escapes:
 
 ```gotemplate
 {{"line1\nline2"}}    <!-- Newline -->
 {{"tab\there"}}       <!-- Tab -->
 {{"quote: \"hi\""}}   <!-- Quote -->
 {{"backslash: \\"}}   <!-- Backslash -->
+{{"\x41"}}             <!-- A -->
+{{"\101"}}             <!-- A -->
+{{"\u4E2D"}}           <!-- 中 -->
+{{"\U0001F600"}}       <!-- 😀 -->
 ```
+
+Supported escapes are `\a`, `\b`, `\f`, `\n`, `\r`, `\t`, `\v`, `\\`,
+`\"`, three-digit octal, `\xNN`, `\uNNNN`, and `\UHHHHHHHH`. Unknown,
+truncated, or invalid Unicode escapes are parse errors. In gotemplate4j,
+`\xNN` maps to Unicode `U+00NN`; Go treats it as one raw byte, which cannot
+always be represented by a Java `String`.
+
+Single quotes define one Unicode code point constant, not a string:
+
+```gotemplate
+{{'A'}}        <!-- 65 -->
+{{'\n'}}       <!-- 10 -->
+{{'😀'}}       <!-- 128512 -->
+```
+
+Character constants use the matching escape `\'`. Empty or multi-character
+constants are invalid.
 
 ## Numeric Literals
 

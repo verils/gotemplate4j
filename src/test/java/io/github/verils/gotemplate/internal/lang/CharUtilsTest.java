@@ -100,8 +100,17 @@ class CharUtilsTest {
 
     @Test
     void testUnquoteCharWithBackslash() {
-        // This tests the backslash handling path
-        assertEquals('\\', CharUtils.unquoteChar("'\\'"));
+        assertEquals('\'', CharUtils.unquoteChar("'\\''"));
+        assertEquals('\\', CharUtils.unquoteChar("'\\\\'"));
+    }
+
+    @Test
+    void unquoteCodePointDecodesEscapesAndSupplementaryCharacters() {
+        assertEquals('\n', CharUtils.unquoteCodePoint("'\\n'"));
+        assertEquals('A', CharUtils.unquoteCodePoint("'\\x41'"));
+        assertEquals(0x4E2D, CharUtils.unquoteCodePoint("'\\u4E2D'"));
+        assertEquals(0x1F600, CharUtils.unquoteCodePoint("'\\U0001F600'"));
+        assertEquals(0x1F600, CharUtils.unquoteCodePoint("'😀'"));
     }
 
     @Test
@@ -122,6 +131,10 @@ class CharUtilsTest {
     @Test
     void testUnquoteCharThrowsExceptionForTooLong() {
         assertThrows(IllegalArgumentException.class, () -> CharUtils.unquoteChar("'abc'"));
+        assertThrows(IllegalArgumentException.class, () -> CharUtils.unquoteChar("''"));
+        assertThrows(IllegalArgumentException.class, () -> CharUtils.unquoteChar("'\\q'"));
+        assertThrows(IllegalArgumentException.class, () -> CharUtils.unquoteChar("'\\0'"));
+        assertThrows(IllegalArgumentException.class, () -> CharUtils.unquoteChar("'\\uD800'"));
     }
 
     @Test

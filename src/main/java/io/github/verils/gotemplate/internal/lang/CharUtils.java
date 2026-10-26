@@ -93,6 +93,21 @@ public final class CharUtils {
      * @throws IllegalArgumentException if quotes is unclosed
      */
     public static char unquoteChar(String text) throws IllegalArgumentException {
+        int codePoint = unquoteCodePoint(text);
+        if (codePoint > Character.MAX_VALUE) {
+            throw new IllegalArgumentException("character literal is outside Java char range: " + text);
+        }
+        return (char) codePoint;
+    }
+
+    /**
+     * Decode a single-quoted character literal to its Unicode code point.
+     *
+     * @param text quoted character literal
+     * @return decoded Unicode code point
+     * @throws IllegalArgumentException for invalid or multi-character literals
+     */
+    public static int unquoteCodePoint(String text) throws IllegalArgumentException {
         if (text.isEmpty()) {
             throw new IllegalArgumentException("invalid syntax: " + text);
         }
@@ -104,16 +119,10 @@ public final class CharUtils {
         }
 
         String unquoted = text.substring(1, text.length() - 1);
-        char ch = unquoted.charAt(0);
-        if (ch != '\\') {
-            // thx not a backslash
-            if (text.length() > 3) {
-                throw new IllegalArgumentException("invalid syntax: " + text);
-            }
-            return ch;
+        String decoded = StringUtils.decodeEscapes(unquoted, '\'');
+        if (decoded.isEmpty() || decoded.codePointCount(0, decoded.length()) != 1) {
+            throw new IllegalArgumentException("character literal must contain exactly one code point: " + text);
         }
-
-        // do the awful things
-        return ch;
+        return decoded.codePointAt(0);
     }
 }

@@ -204,7 +204,7 @@ public class Parser {
             throwUnexpectErrorWithContext(String.format("unexpected %s in %s", token.value(), context), token, state);
         }
 
-        String blockTemplateName = StringUtils.unquote(token.value());
+        String blockTemplateName = decodeStringLiteral(token);
         TemplateNode blockTemplateNode = new TemplateNode(blockTemplateName);
 
         PipeNode pipeNode = new PipeNode(context);
@@ -249,7 +249,7 @@ public class Parser {
             throw new TemplateParseException(String.format("unexpected %s in %s", token.value(), context), token.line(), token.column());
         }
 
-        String definitionTemplateName = StringUtils.unquote(token.value());
+        String definitionTemplateName = decodeStringLiteral(token);
 
         token = moveToNextNonSpaceToken(lexer, state);
         if (token == null) {
@@ -374,7 +374,7 @@ public class Parser {
             throw new TemplateParseException(String.format("unexpected %s in %s", token.value(), context), token.line(), token.column());
         }
 
-        String templateName = StringUtils.unquote(token.value());
+        String templateName = decodeStringLiteral(token);
         TemplateNode templateNode = new TemplateNode(templateName);
 
         token = moveToNextNonSpaceToken(lexer, state);
@@ -614,7 +614,7 @@ public class Parser {
                     break;
                 case STRING:
                 case RAW_STRING:
-                    node = new StringNode(token.value());
+                    node = parseStringNode(token);
                     break;
                 case LEFT_PAREN:
                     PipeNode nestedPipeNode = new PipeNode("parenthesized pipeline");
@@ -689,6 +689,24 @@ public class Parser {
         return numberNode;
     }
 
+    private StringNode parseStringNode(Token token) throws TemplateParseException {
+        try {
+            return new StringNode(token.value());
+        } catch (IllegalArgumentException e) {
+            throw new TemplateParseException("invalid string literal " + token.value() + ": " + e.getMessage(),
+                    token.line(), token.column(), e);
+        }
+    }
+
+    private String decodeStringLiteral(Token token) throws TemplateParseException {
+        try {
+            return StringUtils.unquote(token.value());
+        } catch (IllegalArgumentException e) {
+            throw new TemplateParseException("invalid string literal " + token.value() + ": " + e.getMessage(),
+                    token.line(), token.column(), e);
+        }
+    }
+
     private boolean hasFunction(String name) {
         return functions.containsKey(name);
     }
@@ -713,17 +731,18 @@ public class Parser {
                 throw new TemplateParseException(String.format("malformed character constant: %s", text), token.line(), token.column());
             }
 
-            int ch;
+            int codePoint;
             try {
-                ch = CharUtils.unquoteChar(text);
+                codePoint = CharUtils.unquoteCodePoint(text);
             } catch (IllegalArgumentException e) {
-                throw new TemplateParseException("invalid syntax: " + text, token.line(), token.column(), e);
+                throw new TemplateParseException("invalid character literal " + text + ": " + e.getMessage(),
+                        token.line(), token.column(), e);
             }
 
             numberNode.setIsInt(true);
-            numberNode.setIntValue(ch);
+            numberNode.setIntValue(codePoint);
             numberNode.setIsFloat(true);
-            numberNode.setFloatValue(ch);
+            numberNode.setFloatValue(codePoint);
 
             return;
         }
