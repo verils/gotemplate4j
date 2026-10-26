@@ -210,16 +210,16 @@ Examples:
 | `eq` | Equal | `{{eq .A .B}}` |
 | `ne` | Not equal | `{{ne .A .B}}` |
 | `lt` | Less than | `{{lt .A .B}}` |
-| `lte` | Less than or equal | `{{lte .A .B}}` |
+| `le` | Less than or equal | `{{le .A .B}}` |
 | `gt` | Greater than | `{{gt .A .B}}` |
-| `gte` | Greater than or equal | `{{gte .A .B}}` |
+| `ge` | Greater than or equal | `{{ge .A .B}}` |
 
 Examples:
 
 ```gotemplate
 {{if eq .Age 18}}Exactly 18{{end}}
 {{if gt .Age 18}}Adult{{end}}
-{{if lte .Score 100}}Valid score{{end}}
+{{if le .Score 100}}Valid score{{end}}
 ```
 
 ### Logical Operators
@@ -729,7 +729,7 @@ Only trim when necessary for clean output.
 
 | Type | Operators |
 |------|-----------|
-| Comparison | `eq`, `ne`, `lt`, `lte`, `gt`, `gte` |
+| Comparison | `eq`, `ne`, `lt`, `le`, `gt`, `ge` |
 | Logical | `and`, `or`, `not` |
 | Arithmetic | `add`, `sub`, `mul`, `div`, `mod` |
 

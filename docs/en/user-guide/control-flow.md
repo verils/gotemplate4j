@@ -111,10 +111,10 @@ Use comparison functions in conditions.
 {{if eq .Count 0}}No items{{end}}
 ```
 
-Compare multiple values (all must be equal):
+Compare multiple candidates (any following value may match):
 
 ```gotemplate
-{{if eq .A .B .C}}All equal{{end}}
+{{if eq .A .B .C}}A equals B or C{{end}}
 ```
 
 ### Not Equal (ne)
@@ -131,11 +131,11 @@ Compare multiple values (all must be equal):
 {{if lt .Score 60}}Failing{{end}}
 ```
 
-### Less Than or Equal (lte)
+### Less Than or Equal (le)
 
 ```gotemplate
-{{if lte .Age 18}}18 or younger{{end}}
-{{if lte .Items 100}}Within limit{{end}}
+{{if le .Age 18}}18 or younger{{end}}
+{{if le .Score 100}}Within limit{{end}}
 ```
 
 ### Greater Than (gt)
@@ -145,11 +145,11 @@ Compare multiple values (all must be equal):
 {{if gt .Score 90}}Excellent{{end}}
 ```
 
-### Greater Than or Equal (gte)
+### Greater Than or Equal (ge)
 
 ```gotemplate
-{{if gte .Age 18}}18 or older{{end}}
-{{if gte .Balance 1000}}Premium customer{{end}}
+{{if ge .Age 18}}18 or older{{end}}
+{{if ge .Balance 1000}}Premium customer{{end}}
 ```
 
 ## Logical Operators
@@ -494,7 +494,7 @@ Real templates often combine multiple constructs.
 
 ```gotemplate
 {{range $i, $item := .Items}}
-  {{if and (gte $i .StartIndex) (lt $i .EndIndex)}}
+  {{if and (ge $i .StartIndex) (lt $i .EndIndex)}}
     <div class="item">{{$item}}</div>
   {{end}}
 {{end}}

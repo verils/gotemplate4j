@@ -111,10 +111,10 @@
 {{if eq .Count 0}}无项目{{end}}
 ```
 
-比较多个值（所有值必须相等）：
+比较多个候选值（后续任意一个相等即可）：
 
 ```gotemplate
-{{if eq .A .B .C}}全部相等{{end}}
+{{if eq .A .B .C}}A 等于 B 或 C{{end}}
 ```
 
 ### 不等于（ne）
@@ -131,11 +131,11 @@
 {{if lt .Score 60}}不及格{{end}}
 ```
 
-### 小于等于（lte）
+### 小于等于（le）
 
 ```gotemplate
-{{if lte .Age 18}}18岁或以下{{end}}
-{{if lte .Items 100}}在限制内{{end}}
+{{if le .Age 18}}18岁或以下{{end}}
+{{if le .Score 100}}在限制内{{end}}
 ```
 
 ### 大于（gt）
@@ -145,11 +145,11 @@
 {{if gt .Score 90}}优秀{{end}}
 ```
 
-### 大于等于（gte）
+### 大于等于（ge）
 
 ```gotemplate
-{{if gte .Age 18}}18岁或以上{{end}}
-{{if gte .Balance 1000}}高级客户{{end}}
+{{if ge .Age 18}}18岁或以上{{end}}
+{{if ge .Balance 1000}}高级客户{{end}}
 ```
 
 ## 逻辑运算符
@@ -494,7 +494,7 @@ template.option("mapkeysorting=false");
 
 ```gotemplate
 {{range $i, $item := .Items}}
-  {{if and (gte $i .StartIndex) (lt $i .EndIndex)}}
+  {{if and (ge $i .StartIndex) (lt $i .EndIndex)}}
     <div class="item">{{$item}}</div>
   {{end}}
 {{end}}

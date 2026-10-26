@@ -10,6 +10,7 @@ public class NumberNode implements Node {
     private long intValue;
 
     private boolean isFloat;
+    private boolean isFloatLiteral;
     private double floatValue;
 
     private boolean isComplex;
@@ -46,6 +47,14 @@ public class NumberNode implements Node {
 
     public boolean isFloat() {
         return isFloat;
+    }
+
+    public boolean isFloatLiteral() {
+        return isFloatLiteral;
+    }
+
+    public void setIsFloatLiteral(boolean isFloatLiteral) {
+        this.isFloatLiteral = isFloatLiteral;
     }
 
     public void setIsFloat(boolean isFloat) {

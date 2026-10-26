@@ -254,6 +254,9 @@ Template template = new Template("demo", functions);
 | `gt` | 大于（>） | `{{if gt .Price 100}}...{{end}}` |
 | `ge` | 大于等于（>=） | `{{if ge .Rating 4}}...{{end}}` |
 
+`eq` 接受两个或更多参数，并测试第一个参数是否等于后续任意一个值。所有比较函数使用
+Go 风格的类型分组；不兼容类型会报错。数组、集合和 map 应使用 `deepEqual`。
+
 ### 逻辑运算符
 
 | 函数 | 描述 | 示例 |

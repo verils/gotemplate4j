@@ -492,7 +492,9 @@ Users:
 
 ## Enums
 
-Enums are supported and can be compared.
+Enums are supported. Values of the same enum type can be compared directly;
+comparing an enum to a string is a type error. Access the `name` method when a
+string comparison is required.
 
 ### Enum Definition
 
@@ -516,7 +518,7 @@ public class User {
 User user = new User("Alice", Status.ACTIVE);
 
 template.parse(
-    "{{if eq .Status \"ACTIVE\"}}" +
+    "{{if eq .Status.name \"ACTIVE\"}}" +
     "User is active" +
     "{{else}}" +
     "User is not active" +
@@ -529,16 +531,16 @@ template.parse(
 Compare enum values:
 
 ```gotemplate
-{{if eq .Status "ACTIVE"}}Active{{end}}
-{{if ne .Status "INACTIVE"}}Not inactive{{end}}
+{{if eq .Status .ExpectedStatus}}Matching enum{{end}}
+{{if eq .Status.name "ACTIVE"}}Active by name{{end}}
 ```
 
 ### Enum in Switch-like Pattern
 
 ```gotemplate
-{{if eq .Status "ACTIVE"}}
+{{if eq .Status.name "ACTIVE"}}
   Active user
-{{else if eq .Status "PENDING"}}
+{{else if eq .Status.name "PENDING"}}
   Pending approval
 {{else}}
   Inactive user
@@ -768,7 +770,8 @@ gotemplate4j performs automatic type conversion in some contexts.
 
 ### Numeric Conversion
 
-Numbers can be compared across types:
+Integer wrapper types can be compared across types. Integer and decimal values
+remain separate comparison groups, matching Go template semantics:
 
 ```gotemplate
 {{if eq .IntValue .LongValue}}Equal{{end}}

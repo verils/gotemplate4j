@@ -61,6 +61,10 @@ gotemplate4j 支持实际使用中最常见的 Go template 功能。
 数字引号实体；`urlquery` 使用 Go `QueryEscape` 语义。Java `null` 参数贡献空字符串，
 而不是 Go 的 `<nil>` 或 `<no value>` 文本。
 
+比较函数遵循 Go 的类型分组：整数类型之间可以比较，小数类型之间可以比较，混用会报错。
+`eq` 判断第一个参数是否等于后续任意一个候选值。数组、集合和 map 不能直接比较，
+应使用 `deepEqual`。
+
 ### 错误处理
 
 - **解析错误**：包含源上下文信息，显示解析失败的位置。
@@ -105,6 +109,8 @@ Optional<String> empty = Optional.empty();
 
 - **toString() 渲染**：枚举使用其 `toString()` 方法渲染。
 - **方法访问**：可以访问诸如 `name()` 和 `ordinal()` 之类的公有无参方法。
+- **比较**：枚举只与相同枚举类型的值比较。需要与字符串比较时，请使用
+  `{{.Status.name}}`。
 
 ```java
 public enum Status { ACTIVE, INACTIVE }

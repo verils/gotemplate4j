@@ -2,9 +2,9 @@ Unreleased
 
 ========
 
-**Security and compatibility fixes** - This release aligns escaping functions
-with Go `text/template`, fixes pipeline handling, and unifies template
-truthiness.
+**Security and compatibility fixes** - This release aligns escaping and
+comparison functions with Go `text/template`, fixes pipeline handling, and
+unifies template truthiness.
 
 ### 🐛 Bug Fixes
 
@@ -27,6 +27,13 @@ truthiness.
 - `if`, `with`, `and`, `or`, `not`, and `default` now share one truthiness rule
   covering arrays, collections, maps, character sequences, Optional values, and
   precise numeric zero checks.
+- Comparison functions now follow Go type grouping and arity rules. `eq` matches
+  its first value against any following candidate, while `ne`, `lt`, `le`, `gt`,
+  and `ge` require exactly two arguments.
+- Integer comparisons no longer lose precision through `double` conversion.
+  Integral and decimal literals preserve their separate comparison groups.
+- Incompatible types and direct array, collection, or map comparisons now raise
+  clear errors; aggregate values should use `deepEqual`.
 
 ### 🧪 Testing
 
@@ -35,6 +42,8 @@ truthiness.
   zero/multiple arguments, and null arguments.
 - Added direct/pipeline `default` matrices, custom override behavior, and shared
   truthiness coverage across all logical template constructs.
+- Added exact integer, mixed numeric group, NaN/Infinity, aggregate rejection,
+  enum comparison, and comparison arity coverage.
 
 ### 📚 Documentation
 

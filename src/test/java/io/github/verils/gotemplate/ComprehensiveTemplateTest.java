@@ -191,10 +191,10 @@ public class ComprehensiveTemplateTest {
             "[Comparison Functions]\n" +
             "  eq(1,1,1):  {{eq 1 1 1}}\n" +
             "  ne(1,2):    {{ne 1 2}}\n" +
-            "  lt(1,2,3):  {{lt 1 2 3}}\n" +
-            "  le(1,1,2):  {{le 1 1 2}}\n" +
-            "  gt(3,2,1):  {{gt 3 2 1}}\n" +
-            "  ge(2,2,1):  {{ge 2 2 1}}\n" +
+            "  lt(1,2):  {{lt 1 2}}\n" +
+            "  le(1,1):  {{le 1 1}}\n" +
+            "  gt(3,2):  {{gt 3 2}}\n" +
+            "  ge(2,2):  {{ge 2 2}}\n" +
             "\n" +
             // -- type introspection --
             "[Type Introspection]\n" +
@@ -364,10 +364,10 @@ public class ComprehensiveTemplateTest {
         // comparison functions
         assertTrue(out.contains("eq(1,1,1):  true"), "eq");
         assertTrue(out.contains("ne(1,2):    true"), "ne");
-        assertTrue(out.contains("lt(1,2,3):  true"), "lt chained");
-        assertTrue(out.contains("le(1,1,2):  true"), "le chained");
-        assertTrue(out.contains("gt(3,2,1):  true"), "gt chained");
-        assertTrue(out.contains("ge(2,2,1):  true"), "ge chained");
+        assertTrue(out.contains("lt(1,2):  true"), "lt ordered comparison");
+        assertTrue(out.contains("le(1,1):  true"), "le comparison");
+        assertTrue(out.contains("gt(3,2):  true"), "gt comparison");
+        assertTrue(out.contains("ge(2,2):  true"), "ge comparison");
 
         // type introspection
         assertTrue(out.contains("typeof items:"), "typeof");

@@ -9,6 +9,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Tests for Enum type handling in templates.
@@ -86,18 +88,16 @@ public class EnumHandlingTest {
     }
 
     @Test
-    void testEnumInIfCondition() throws IOException, TemplateException {
+    void enumCannotBeComparedToString() throws IOException, TemplateException {
         Template template = new Template("test");
         template.parse("{{if eq .status \"ACTIVE\"}}Active Task{{else}}Other Status{{end}}");
         
         Writer writer = new StringWriter();
         Task task = new Task("Task 1", Status.ACTIVE, Priority.HIGH);
-        
-        template.execute(writer, task);
-        
-        // Note: Comparing enum with string may not work as expected
-        // This test documents current behavior
-        assertEquals("Other Status", writer.toString());
+
+        TemplateExecutionException exception = assertThrows(TemplateExecutionException.class,
+                () -> template.execute(writer, task));
+        assertTrue(exception.getMessage().contains("incompatible types for comparison"));
     }
 
     @Test

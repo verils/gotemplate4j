@@ -254,6 +254,10 @@ The following functions are available by default in all templates:
 | `gt` | Greater than (>) | `{{if gt .Price 100}}...{{end}}` |
 | `ge` | Greater than or equal (>=) | `{{if ge .Rating 4}}...{{end}}` |
 
+`eq` accepts two or more arguments and tests whether the first equals any
+following value. All comparison functions use Go-style type groups; incompatible
+types raise errors. Use `deepEqual` for arrays, collections, and maps.
+
 ### Logical Operators
 
 | Function | Description | Example |

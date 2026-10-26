@@ -210,16 +210,16 @@ If/Else If/Else：
 | `eq` | 等于 | `{{eq .A .B}}` |
 | `ne` | 不等于 | `{{ne .A .B}}` |
 | `lt` | 小于 | `{{lt .A .B}}` |
-| `lte` | 小于等于 | `{{lte .A .B}}` |
+| `le` | 小于等于 | `{{le .A .B}}` |
 | `gt` | 大于 | `{{gt .A .B}}` |
-| `gte` | 大于等于 | `{{gte .A .B}}` |
+| `ge` | 大于等于 | `{{ge .A .B}}` |
 
 示例：
 
 ```gotemplate
 {{if eq .Age 18}}正好18岁{{end}}
 {{if gt .Age 18}}成年人{{end}}
-{{if lte .Score 100}}有效分数{{end}}
+{{if le .Score 100}}有效分数{{end}}
 ```
 
 ### 逻辑运算符
@@ -729,7 +729,7 @@ data.put("ShouldShow", calculateCondition());
 
 | 类型 | 运算符 |
 |------|-----------|
-| 比较 | `eq`、`ne`、`lt`、`lte`、`gt`、`gte` |
+| 比较 | `eq`、`ne`、`lt`、`le`、`gt`、`ge` |
 | 逻辑 | `and`、`or`、`not` |
 | 算术 | `add`、`sub`、`mul`、`div`、`mod` |
 

@@ -761,6 +761,7 @@ public class Parser {
             try {
                 double floatValue = parseFloatValue(text);
                 numberNode.setIsFloat(true);
+                numberNode.setIsFloatLiteral(true);
                 numberNode.setFloatValue(floatValue);
                 simplifyFloat(numberNode, floatValue);
             } catch (NumberFormatException ignoredAgain) {

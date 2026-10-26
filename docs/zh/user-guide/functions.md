@@ -217,11 +217,14 @@
 
 #### eq
 
-等于比较。
+相等比较。`eq` 至少需要两个参数，第一个值等于后续任意一个值时返回 true。
 
 ```gotemplate
 {{eq 1 1}}
 <!-- 输出: true -->
+
+{{eq .Status "active" "pending"}}
+<!-- .Status 为 active 或 pending 时返回 true。 -->
 
 {{eq .Status "active"}}
 {{if eq .Age 18}}正好18岁{{end}}
@@ -229,7 +232,7 @@
 
 #### ne
 
-不等于比较。
+不等于比较。必须提供恰好两个参数。
 
 ```gotemplate
 {{ne 1 2}}
@@ -240,7 +243,7 @@
 
 #### lt
 
-小于。
+小于。必须提供恰好两个参数。
 
 ```gotemplate
 {{lt 1 2}}
@@ -249,20 +252,20 @@
 {{if lt .Age 18}}未成年人{{end}}
 ```
 
-#### lte
+#### le
 
-小于等于。
+小于等于。必须提供恰好两个参数。
 
 ```gotemplate
-{{lte 2 2}}
+{{le 2 2}}
 <!-- 输出: true -->
 
-{{if lte .Score 100}}有效分数{{end}}
+{{if le .Score 100}}有效分数{{end}}
 ```
 
 #### gt
 
-大于。
+大于。必须提供恰好两个参数。
 
 ```gotemplate
 {{gt 2 1}}
@@ -271,16 +274,19 @@
 {{if gt .Age 18}}成年人{{end}}
 ```
 
-#### gte
+#### ge
 
-大于等于。
+大于等于。必须提供恰好两个参数。
 
 ```gotemplate
-{{gte 2 2}}
+{{ge 2 2}}
 <!-- 输出: true -->
 
-{{if gte .Score 60}}及格{{end}}
+{{if ge .Score 60}}及格{{end}}
 ```
+
+比较遵循 Go 风格的类型分组：整数类型之间可以比较，小数类型之间可以比较，但整数和小数不能
+混用。布尔值只支持 `eq/ne`。数组、集合和 map 应使用 `deepEqual`；不兼容类型会抛出模板执行错误。
 
 ### 逻辑函数
 

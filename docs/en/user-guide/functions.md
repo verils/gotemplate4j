@@ -217,11 +217,15 @@ Power function (if available).
 
 #### eq
 
-Equal comparison.
+Equality comparison. `eq` requires at least two arguments and returns true when
+the first value equals any following value.
 
 ```gotemplate
 {{eq 1 1}}
 <!-- Output: true -->
+
+{{eq .Status "active" "pending"}}
+<!-- True when .Status is either active or pending. -->
 
 {{eq .Status "active"}}
 {{if eq .Age 18}}Exactly 18{{end}}
@@ -229,7 +233,7 @@ Equal comparison.
 
 #### ne
 
-Not equal comparison.
+Not-equal comparison. It requires exactly two arguments.
 
 ```gotemplate
 {{ne 1 2}}
@@ -240,7 +244,7 @@ Not equal comparison.
 
 #### lt
 
-Less than.
+Less than. It requires exactly two arguments.
 
 ```gotemplate
 {{lt 1 2}}
@@ -249,20 +253,20 @@ Less than.
 {{if lt .Age 18}}Minor{{end}}
 ```
 
-#### lte
+#### le
 
-Less than or equal.
+Less than or equal. It requires exactly two arguments.
 
 ```gotemplate
-{{lte 2 2}}
+{{le 2 2}}
 <!-- Output: true -->
 
-{{if lte .Score 100}}Valid score{{end}}
+{{if le .Score 100}}Valid score{{end}}
 ```
 
 #### gt
 
-Greater than.
+Greater than. It requires exactly two arguments.
 
 ```gotemplate
 {{gt 2 1}}
@@ -271,16 +275,22 @@ Greater than.
 {{if gt .Age 18}}Adult{{end}}
 ```
 
-#### gte
+#### ge
 
-Greater than or equal.
+Greater than or equal. It requires exactly two arguments.
 
 ```gotemplate
-{{gte 2 2}}
+{{ge 2 2}}
 <!-- Output: true -->
 
-{{if gte .Score 60}}Pass{{end}}
+{{if ge .Score 60}}Pass{{end}}
 ```
+
+Comparisons use Go-style type groups. Integer types can compare with each other,
+and decimal types with each other, but integers and decimals are not
+interchangeable. Boolean values only support `eq/ne`. Arrays, collections, and
+maps must be compared with `deepEqual`; incompatible types raise a template
+execution error.
 
 ### Logical Functions
 

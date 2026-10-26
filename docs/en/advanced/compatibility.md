@@ -63,6 +63,11 @@ printable Unicode and Unicode-escapes HTML-sensitive and control characters;
 semantics. A Java `null` argument contributes an empty string rather than Go's
 `<nil>` or `<no value>` text.
 
+Comparison functions follow Go's type grouping: integer types compare with each
+other, decimal types compare with each other, and mixing groups raises an error.
+`eq` matches the first argument against any following candidate. Arrays,
+collections, and maps are not directly comparable and should use `deepEqual`.
+
 ### Error Handling
 
 - **Parse errors**: Include source context showing where parsing failed.
@@ -107,6 +112,8 @@ Optional<String> empty = Optional.empty();
 
 - **toString() rendering**: Enums render using their `toString()` method.
 - **Method access**: Public no-argument methods like `name()` and `ordinal()` are accessible.
+- **Comparison**: Enums compare with values of the same enum type. Use
+  `{{.Status.name}}` when comparing against a string.
 
 ```java
 public enum Status { ACTIVE, INACTIVE }

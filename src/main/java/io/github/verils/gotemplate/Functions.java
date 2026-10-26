@@ -1,5 +1,6 @@
 package io.github.verils.gotemplate;
 
+import io.github.verils.gotemplate.internal.lang.ComparisonUtils;
 import io.github.verils.gotemplate.internal.lang.Truthiness;
 
 import java.lang.reflect.Array;
@@ -92,63 +93,56 @@ public class Functions {
             }
             Object first = args[0];
             for (int i = 1; i < args.length; i++) {
-                if (!equal(first, args[i])) {
-                    return false;
+                if (ComparisonUtils.equal(first, args[i])) {
+                    return true;
                 }
             }
-            return true;
+            return false;
         };
     }
 
     private static Function ne() {
         return args -> {
-            if (args.length < 2) {
-                throw new IllegalArgumentException("ne requires at least 2 arguments");
+            if (args.length != 2) {
+                throw new IllegalArgumentException("ne requires exactly 2 arguments");
             }
-            Object first = args[0];
-            for (int i = 1; i < args.length; i++) {
-                if (equal(first, args[i])) {
-                    return false;
-                }
-            }
-            return true;
+            return !ComparisonUtils.equal(args[0], args[1]);
         };
     }
 
     private static Function lt() {
         return args -> {
-            if (args.length < 2) {
-                throw new IllegalArgumentException("lt requires at least 2 arguments");
+            if (args.length != 2) {
+                throw new IllegalArgumentException("lt requires exactly 2 arguments");
             }
-            return compare(args, -1);
+            return ComparisonUtils.lessThan(args[0], args[1]);
         };
     }
 
     private static Function le() {
         return args -> {
-            if (args.length < 2) {
-                throw new IllegalArgumentException("le requires at least 2 arguments");
+            if (args.length != 2) {
+                throw new IllegalArgumentException("le requires exactly 2 arguments");
             }
-            return compare(args, 0);
+            return ComparisonUtils.lessThanOrEqual(args[0], args[1]);
         };
     }
 
     private static Function gt() {
         return args -> {
-            if (args.length < 2) {
-                throw new IllegalArgumentException("gt requires at least 2 arguments");
+            if (args.length != 2) {
+                throw new IllegalArgumentException("gt requires exactly 2 arguments");
             }
-            return compare(args, 1);
+            return ComparisonUtils.greaterThan(args[0], args[1]);
         };
     }
 
     private static Function ge() {
         return args -> {
-            if (args.length < 2) {
-                throw new IllegalArgumentException("ge requires at least 2 arguments");
+            if (args.length != 2) {
+                throw new IllegalArgumentException("ge requires exactly 2 arguments");
             }
-            // ge means greater than or equal, so we want cmp >= 0
-            return compare(args, 0, true);
+            return ComparisonUtils.greaterThanOrEqual(args[0], args[1]);
         };
     }
 
@@ -392,62 +386,6 @@ public class Functions {
     }
 
     // Helper methods
-    private static boolean equal(Object a, Object b) {
-        if (a == b) {
-            return true;
-        }
-        if (a == null || b == null) {
-            return false;
-        }
-        if (a instanceof Number && b instanceof Number) {
-            return Double.compare(((Number) a).doubleValue(), ((Number) b).doubleValue()) == 0;
-        }
-        return a.equals(b);
-    }
-
-    private static boolean compare(Object[] args, int expectedSign) {
-        return compare(args, expectedSign, false);
-    }
-
-    private static boolean compare(Object[] args, int expectedSign, boolean reverseForGe) {
-        if (args.length < 2) {
-            return false;
-        }
-
-        for (int i = 0; i < args.length - 1; i++) {
-            int cmp = compareValues(args[i], args[i + 1]);
-            if (reverseForGe) {
-                // For ge, we want cmp >= 0 (a >= b)
-                if (cmp < 0) {
-                    return false;
-                }
-            } else if (expectedSign == -1 && cmp >= 0) {
-                // For lt, we want cmp < 0 (a < b)
-                return false;
-            } else if (expectedSign == 1 && cmp <= 0) {
-                // For gt, we want cmp > 0 (a > b)
-                return false;
-            } else if (expectedSign == 0 && cmp > 0) {
-                // For le, we want cmp <= 0 (a <= b)
-                return false;
-            }
-        }
-        return true;
-    }
-
-    private static int compareValues(Object a, Object b) {
-        if (a instanceof Number && b instanceof Number) {
-            double da = ((Number) a).doubleValue();
-            double db = ((Number) b).doubleValue();
-            return Double.compare(da, db);
-        }
-        if (a instanceof String && b instanceof String) {
-            return ((String) a).compareTo((String) b);
-        }
-        throw new IllegalArgumentException("incompatible types for comparison: " +
-                a.getClass().getName() + " and " + b.getClass().getName());
-    }
-
     private static int toInt(Object obj) {
         if (obj == null) {
             return 0;

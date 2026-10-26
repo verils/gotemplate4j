@@ -361,6 +361,9 @@ public class Executor {
         }
         if (firstArgument instanceof NumberNode) {
             NumberNode numberNode = (NumberNode) firstArgument;
+            if (numberNode.isFloatLiteral() && numberNode.isFloat()) {
+                return numberNode.getFloatValue();
+            }
             if (numberNode.isInt()) {
                 return numberNode.getIntValue();
             }
@@ -769,6 +772,9 @@ public class Executor {
 
         if (argument instanceof NumberNode) {
             NumberNode numberNode = (NumberNode) argument;
+            if (numberNode.isFloatLiteral() && numberNode.isFloat()) {
+                return numberNode.getFloatValue();
+            }
             if (numberNode.isInt()) {
                 return numberNode.getIntValue();
             }

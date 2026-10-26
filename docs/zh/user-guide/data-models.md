@@ -492,7 +492,8 @@ data.put("Users", users);
 
 ## 枚举
 
-支持枚举并可以比较。
+支持枚举。相同枚举类型的值可以直接比较；枚举与字符串比较会触发类型错误。需要字符串比较时，
+请访问 `name` 方法。
 
 ### 枚举定义
 
@@ -516,7 +517,7 @@ public class User {
 User user = new User("Alice", Status.ACTIVE);
 
 template.parse(
-    "{{if eq .Status \"ACTIVE\"}}" +
+    "{{if eq .Status.name \"ACTIVE\"}}" +
     "用户已激活" +
     "{{else}}" +
     "用户未激活" +
@@ -529,16 +530,16 @@ template.parse(
 比较枚举值：
 
 ```gotemplate
-{{if eq .Status "ACTIVE"}}已激活{{end}}
-{{if ne .Status "INACTIVE"}}非不活跃{{end}}
+{{if eq .Status .ExpectedStatus}}枚举匹配{{end}}
+{{if eq .Status.name "ACTIVE"}}按名称判断已激活{{end}}
 ```
 
 ### 类 Switch 模式
 
 ```gotemplate
-{{if eq .Status "ACTIVE"}}
+{{if eq .Status.name "ACTIVE"}}
   活跃用户
-{{else if eq .Status "PENDING"}}
+{{else if eq .Status.name "PENDING"}}
   等待审批
 {{else}}
   不活跃用户
@@ -768,7 +769,7 @@ gotemplate4j 在某些上下文中执行自动类型转换。
 
 ### 数字转换
 
-数字可以跨类型比较：
+整数包装类型可以跨类型比较。整数和小数属于不同的比较类型组，与 Go template 语义一致：
 
 ```gotemplate
 {{if eq .IntValue .LongValue}}相等{{end}}
