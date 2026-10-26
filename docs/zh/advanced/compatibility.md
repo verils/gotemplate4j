@@ -145,7 +145,8 @@ map.put("a", "first");
 
 以下函数是 gotemplate4j 的附加功能，不属于 Go 标准库：
 
-- **`default`**：提供回退值（`{{.value | default "fallback"}}`）
+- **`default`**：提供回退值（`{{.value | default "fallback"}}`）；它与
+  `if`、`with`、`and`、`or`、`not` 使用相同真值规则，包括空数组、集合、map、字符串和 Optional。
 - **`deepEqual`**：复杂对象的深度比较
 - **`typeof`**：获取值的 Java 类型名称
 - **`kindOf`**：获取值的类别/种类

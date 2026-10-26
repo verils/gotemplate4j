@@ -2,9 +2,9 @@ Unreleased
 
 ========
 
-**Security and Go escaping compatibility fixes** - This release updates the
-`html`, `js`, and `urlquery` built-in functions to follow Go
-`text/template` escaping semantics.
+**Security and compatibility fixes** - This release aligns escaping functions
+with Go `text/template`, fixes pipeline handling, and unifies template
+truthiness.
 
 ### 🐛 Bug Fixes
 
@@ -20,12 +20,21 @@ Unreleased
 - `html`, `js`, and `urlquery` now accept zero or more arguments and join them
   using Go-style spacing rules. Java `null` continues to contribute an empty
   string.
+- `default` now interprets the pipeline value as the value to check, so
+  `{{.Value | default "fallback"}}` works when `.Value` is present or null.
+- Pipeline execution now distinguishes a missing upstream value from an actual
+  `null` result.
+- `if`, `with`, `and`, `or`, `not`, and `default` now share one truthiness rule
+  covering arrays, collections, maps, character sequences, Optional values, and
+  precise numeric zero checks.
 
 ### 🧪 Testing
 
 - Added regression coverage for script-closing injection, control characters,
   printable and non-printable Unicode, HTML entities, URL query encoding,
   zero/multiple arguments, and null arguments.
+- Added direct/pipeline `default` matrices, custom override behavior, and shared
+  truthiness coverage across all logical template constructs.
 
 ### 📚 Documentation
 

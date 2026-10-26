@@ -51,8 +51,8 @@ gotemplate4j 应继续作为一个小型、无运行时外部依赖的 Java 版 
 
 ### 2.1 已验证的基线
 
-- Java 11 下执行 `./mvnw clean test` 成功，866 个测试全部通过。
-- 指令覆盖率约 90.67%，分支覆盖率约 88.60%，达到当前 JaCoCo 阈值。
+- Java 11 下执行 `./mvnw clean test` 成功，910 个测试全部通过。
+- 指令覆盖率约 90.57%，分支覆盖率约 88.32%，达到当前 JaCoCo 阈值。
 - `./mvnw verify "-Dgpg.skip=true"` 成功。
 - JDK 25 下 JaCoCo 0.8.11 会输出 `Unsupported class file major version 69`，覆盖率数据不可信；JDK 11 下无此问题。
 
@@ -99,7 +99,7 @@ gotemplate4j 应继续作为一个小型、无运行时外部依赖的 Java 版 
 - `FunctionsEscapingTest`、`ComprehensiveTemplateTest` 以及相关中英文文档已同步。
 - Java 11 下 `./mvnw clean test`、`./mvnw verify "-Dgpg.skip=true"` 均通过。
 
-**状态**：待复核
+**状态**：已完成
 
 #### A2. 修复 `default` 的管道语义
 
@@ -117,7 +117,16 @@ gotemplate4j 应继续作为一个小型、无运行时外部依赖的 Java 版 
 - `V` 为 `null`、空字符串、`0`、`false`、空集合时输出 `fallback`。
 - 直接调用和管道调用均有测试。
 
-**状态**：待处理
+**处理说明（2026-10-26）**：
+
+- 执行器现可区分“无管道上游值”和“上游值为 null”，通用函数仍按 Go 规则把上游值追加到末尾。
+- 内置 `default` 的管道调用按“上游值、fallback”解释；直接调用和自定义 `default` 覆盖行为保持兼容。
+- 新增统一 `Truthiness` 判断，供 `if`、`with`、`and`、`or`、`not`、`default` 共用，覆盖空数组、
+  集合、map、字符序列、Optional 和精确数值零值。
+- `FunctionsLogicalTest`、`TemplateExecutionTruthinessTest` 及中英文文档已同步。
+- Java 11 下 `./mvnw clean test`、`./mvnw verify "-Dgpg.skip=true"` 均通过。
+
+**状态**：待复核
 
 #### A3. 对齐比较函数的 Go 语义与数值精度
 
@@ -336,7 +345,13 @@ gotemplate4j 应继续作为一个小型、无运行时外部依赖的 Java 版 
 - 空列表、空 map、空数组在 `if`、`not`、`default` 中的结果一致。
 - 增加各类型真值矩阵测试。
 
-**状态**：待处理
+**处理说明（2026-10-26）**：
+
+- 真值规则统一下沉到内部 `Truthiness`，`if`、`and`、`or`、`not`、`default` 已共享同一实现，
+  并覆盖数组、集合、map、Optional 和数值类型。
+- 该事项合并到 A2，随 A2 一并人工复核。
+
+**状态**：待复核
 
 #### C4. 让 `deepEqual` 真正递归比较
 
@@ -643,12 +658,12 @@ gotemplate4j 应继续作为一个小型、无运行时外部依赖的 Java 版 
 | 工作项 | 状态 | 下一步 |
 | --- | --- | --- |
 | 计划中文重写与新旧计划汇总 | 已完成 | 逐项开始 A1 |
-| A1 JavaScript 转义安全 | 待复核 | 人工复核差异并决定是否标记完成 |
-| A2 `default` 管道 | 待处理 | 先写直接调用与管道调用对照测试 |
+| A1 JavaScript 转义安全 | 已完成 | 进入 A2 |
+| A2 `default` 管道 | 待复核 | 人工复核后进入 A3 |
 | A3 比较函数 | 待处理 | 先写 Go 差分用例 |
 | A4 字面量转义 | 待处理 | 先写转义和字符常量测试 |
 | B1–B6 运行时与 API | 待处理 | 按顺序逐项处理 |
-| C1–C7 契约一致性 | 待处理 | 在 A、B 阶段后处理 |
+| C1–C7 契约一致性 | 部分待复核 | C3 已合并到 A2；其余项在 A、B 阶段后处理 |
 | D1–D3 文档、测试、构建 | 待处理 | 随修复同步推进 |
 | D4 错误诊断 | 待复核 | 处理旧计划时复核 |
 | D5 文档站点 | 暂缓 | 文档修复完成后复核 |

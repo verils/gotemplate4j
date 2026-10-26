@@ -404,14 +404,21 @@ Get the kind of a value (Go-compatible).
 
 #### default
 
-Return default value if input is empty or null.
+Return a fallback when the input has a Go-template zero value. Falsy inputs are
+`null`, `false`, numeric zero, empty strings or character sequences, empty
+arrays, collections and maps, and empty `Optional` values. Whitespace-only
+strings and other non-null objects are truthy.
 
 ```gotemplate
 {{default .Name "Anonymous"}}
 {{.Name | default "Anonymous"}}
+<!-- Both forms output Anonymous when .Name is null or empty. -->
 
 {{if eq (.Name | default "") ""}}No name{{end}}
 ```
+
+Direct and pipeline calls use the same order conceptually: the value is checked
+and the explicit argument supplies the fallback.
 
 #### index
 

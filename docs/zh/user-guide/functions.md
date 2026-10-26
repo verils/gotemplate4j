@@ -404,14 +404,20 @@
 
 #### default
 
-如果输入为空或 null，返回默认值。
+当输入是 Go template 意义上的零值时返回回退值。假值包括 `null`、`false`、数值零、
+空字符串或字符序列、空数组、空集合、空 map 和空 `Optional`。仅包含空白的字符串及其他
+非 null 对象为真值。
 
 ```gotemplate
 {{default .Name "匿名"}}
 {{.Name | default "匿名"}}
+<!-- 当 .Name 为 null 或空值时，两种形式都输出“匿名”。 -->
 
 {{if eq (.Name | default "") ""}}无姓名{{end}}
 ```
+
+直接调用和管道调用的概念顺序一致：前者指定待检查值，后者使用管道上游值，
+显式参数都提供回退值。
 
 #### index
 

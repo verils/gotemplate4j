@@ -1,5 +1,7 @@
 package io.github.verils.gotemplate;
 
+import io.github.verils.gotemplate.internal.lang.Truthiness;
+
 import java.lang.reflect.Array;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -179,7 +181,10 @@ public class Functions {
      * @return true if the argument is falsy, false otherwise
      */
     private static boolean not(Object[] args) {
-        return isFalsy(args[0]);
+        if (args.length != 1) {
+            throw new IllegalArgumentException("not requires exactly 1 argument");
+        }
+        return Truthiness.isFalsy(args[0]);
     }
 
     // Collection functions
@@ -398,36 +403,6 @@ public class Functions {
             return Double.compare(((Number) a).doubleValue(), ((Number) b).doubleValue()) == 0;
         }
         return a.equals(b);
-    }
-
-    /**
-     * Determines if a value is falsy according to Go template semantics.
-     * <p>
-     * Falsy values include:
-     * <ul>
-     *   <li>null</li>
-     *   <li>false (Boolean)</li>
-     *   <li>0 or 0.0 (Number)</li>
-     *   <li>empty string (String)</li>
-     * </ul>
-     *
-     * @param obj the object to check
-     * @return true if the value is falsy, false otherwise
-     */
-    private static boolean isFalsy(Object obj) {
-        if (obj == null) {
-            return true;
-        }
-        if (obj instanceof Boolean) {
-            return !(Boolean) obj;
-        }
-        if (obj instanceof Number) {
-            return ((Number) obj).doubleValue() == 0;
-        }
-        if (obj instanceof String) {
-            return ((String) obj).isEmpty();
-        }
-        return false;
     }
 
     private static boolean compare(Object[] args, int expectedSign) {
@@ -711,7 +686,7 @@ public class Functions {
             Object defaultValue = args[1];
 
             // Return default value if the first argument is null or falsy
-            if (isFalsy(value)) {
+            if (Truthiness.isFalsy(value)) {
                 return defaultValue;
             }
             return value;

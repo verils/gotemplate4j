@@ -3,6 +3,7 @@ package io.github.verils.gotemplate.internal;
 import io.github.verils.gotemplate.*;
 import io.github.verils.gotemplate.internal.ast.*;
 import io.github.verils.gotemplate.internal.lang.ErrorUtils;
+import io.github.verils.gotemplate.internal.lang.Truthiness;
 
 import java.beans.BeanInfo;
 import java.beans.PropertyDescriptor;
@@ -15,6 +16,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class Executor {
 
     private static final String NO_VALUE = "<no value>";
+    private static final Object NO_PIPELINE_VALUE = new Object();
 
     private final Map<String, Node> rootNodes;
     private final Map<String, Function> functions;
@@ -115,7 +117,7 @@ public class Executor {
             TemplateExecutionException, TemplateNotFoundException {
         Map<String, Object> blockVariables = new HashMap<>(variables);
         Object value = executePipe(ifNode.getPipeNode(), data, beanInfo, blockVariables);
-        if (isTrue(value)) {
+        if (Truthiness.isTrue(value)) {
             writeNode(writer, ifNode.getIfListNode(), data, beanInfo, blockVariables);
         } else if (ifNode.getElseListNode() != null) {
             writeNode(writer, ifNode.getElseListNode(), data, beanInfo, blockVariables);
@@ -275,7 +277,7 @@ public class Executor {
             TemplateExecutionException, TemplateNotFoundException {
         Map<String, Object> blockVariables = new HashMap<>(variables);
         Object value = executePipe(withNode.getPipeNode(), data, beanInfo, blockVariables);
-        if (isTrue(value)) {
+        if (Truthiness.isTrue(value)) {
             BeanInfo valueBeanInfo = getBeanInfo(value);
             writeNode(writer, withNode.getIfListNode(), value, valueBeanInfo, blockVariables);
         } else if (withNode.getElseListNode() != null) {
@@ -318,9 +320,12 @@ public class Executor {
             return data;
         }
 
-        Object value = null;
+        Object value = NO_PIPELINE_VALUE;
         for (CommandNode command : pipeNode.getCommands()) {
             value = executeCommand(command, data, beanInfo, value, variables);
+        }
+        if (value == NO_PIPELINE_VALUE) {
+            value = null;
         }
 
         // Handle variable assignments: {{$x := .Value | upper}}
@@ -587,7 +592,14 @@ public class Executor {
             List<Node> functionArgNodes = cmdArgNodes.subList(1, cmdArgNodes.size());
 
             Object[] functionArgs;
-            if (finalValue != null) {
+            boolean hasPipelineValue = finalValue != NO_PIPELINE_VALUE;
+            if (hasPipelineValue
+                    && "default".equals(identifier)
+                    && function == Functions.BUILTIN.get("default")) {
+                functionArgs = new Object[functionArgNodes.size() + 1];
+                functionArgs[0] = finalValue;
+                executeArguments(data, beanInfo, functionArgNodes, functionArgs, variables, 1);
+            } else if (hasPipelineValue) {
 
                 // per https://pkg.go.dev/text/template, "In a chained pipeline, the result of
                 // each command is passed as the last argument of the following command." (This is necessary
@@ -618,7 +630,7 @@ public class Executor {
     private Object executeIndex(List<Node> functionArgNodes, Object data, BeanInfo beanInfo,
                                 Object finalValue, Map<String, Object> variables) throws TemplateExecutionException {
         Object[] functionArgs;
-        if (finalValue != null) {
+        if (finalValue != NO_PIPELINE_VALUE) {
             functionArgs = new Object[functionArgNodes.size() + 1];
             executeArguments(data, beanInfo, functionArgNodes, functionArgs, variables);
             functionArgs[functionArgNodes.size()] = finalValue;
@@ -712,20 +724,20 @@ public class Executor {
         Object last = null;
         for (Node argNode : functionArgNodes) {
             last = executeArgument(argNode, data, beanInfo, variables);
-            if ("and".equals(identifier) && !isTrue(last)) {
+            if ("and".equals(identifier) && Truthiness.isFalsy(last)) {
                 return last;
             }
-            if ("or".equals(identifier) && isTrue(last)) {
+            if ("or".equals(identifier) && Truthiness.isTrue(last)) {
                 return last;
             }
         }
 
-        if (finalValue != null) {
+        if (finalValue != NO_PIPELINE_VALUE) {
             last = finalValue;
-            if ("and".equals(identifier) && !isTrue(last)) {
+            if ("and".equals(identifier) && Truthiness.isFalsy(last)) {
                 return last;
             }
-            if ("or".equals(identifier) && isTrue(last)) {
+            if ("or".equals(identifier) && Truthiness.isTrue(last)) {
                 return last;
             }
         }
@@ -734,9 +746,14 @@ public class Executor {
     }
 
     private void executeArguments(Object data, BeanInfo beanInfo, List<Node> args, Object[] argumentValues, Map<String, Object> variables) throws TemplateExecutionException {
+        executeArguments(data, beanInfo, args, argumentValues, variables, 0);
+    }
+
+    private void executeArguments(Object data, BeanInfo beanInfo, List<Node> args, Object[] argumentValues,
+                                  Map<String, Object> variables, int offset) throws TemplateExecutionException {
         for (int i = 0; i < args.size(); i++) {
             Object value = executeArgument(args.get(i), data, beanInfo, variables);
-            argumentValues[i] = value;
+            argumentValues[offset + i] = value;
         }
     }
 
@@ -894,55 +911,6 @@ public class Executor {
                 "equals".equals(methodName);
     }
 
-
-    /**
-     * Determine if a pipe evaluation returns a positive result, such as 'true' for a bool,
-     * a none-null value for an object, a none-empty array or list
-     *
-     * @param value The result of the pipe evaluation
-     * @return true if evaluation returns a positive result
-     */
-    private boolean isTrue(Object value) {
-        if (value instanceof Boolean) {
-            return (Boolean) value;
-        }
-        if (value instanceof CharSequence) {
-            return ((CharSequence) value).length() != 0;
-        }
-        if (value instanceof Number) {
-            // Zero values are falsy in Go templates
-            if (value instanceof Integer) {
-                return ((Integer) value) != 0;
-            }
-            if (value instanceof Long) {
-                return ((Long) value) != 0L;
-            }
-            if (value instanceof Float) {
-                return ((Float) value) != 0.0f;
-            }
-            if (value instanceof Double) {
-                return ((Double) value) != 0.0;
-            }
-            if (value instanceof Short) {
-                return ((Short) value) != 0;
-            }
-            if (value instanceof Byte) {
-                return ((Byte) value) != 0;
-            }
-            // For other number types, check if not zero
-            return ((Number) value).doubleValue() != 0.0;
-        }
-        if (value != null && value.getClass().isArray()) {
-            return java.lang.reflect.Array.getLength(value) > 0;
-        }
-        if (value instanceof Collection) {
-            return !((Collection<?>) value).isEmpty();
-        }
-        if (value instanceof Map) {
-            return !((Map<?, ?>) value).isEmpty();
-        }
-        return value != null;
-    }
 
     private void printValue(Writer writer, Object value) throws IOException {
         if (value == null) {

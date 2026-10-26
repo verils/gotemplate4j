@@ -147,7 +147,9 @@ map.put("a", "first");
 
 These functions are gotemplate4j additions, not part of Go's standard library:
 
-- **`default`**: Provide fallback values (`{{.value | default "fallback"}}`)
+- **`default`**: Provide fallback values (`{{.value | default "fallback"}}`);
+  it shares the same truthiness rules as `if`, `with`, `and`, `or`, and `not`,
+  including empty arrays, collections, maps, strings, and Optional values.
 - **`deepEqual`**: Deep comparison of complex objects
 - **`typeof`**: Get the Java type name of a value
 - **`kindOf`**: Get the kind/category of a value

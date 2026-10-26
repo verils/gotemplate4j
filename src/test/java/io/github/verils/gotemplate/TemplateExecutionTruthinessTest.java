@@ -1,12 +1,18 @@
 package io.github.verils.gotemplate;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.Collections;
+import java.util.Optional;
+import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.params.provider.Arguments.arguments;
 
 class TemplateExecutionTruthinessTest {
 
@@ -45,7 +51,56 @@ class TemplateExecutionTruthinessTest {
         assertEquals("false", TemplateTestSupport.render("{{.Value | or}}", TemplateTestSupport.data("Value", false)));
     }
 
+    @ParameterizedTest
+    @MethodSource("sharedTruthinessCases")
+    void logicalConstructsShareTruthiness(Object value, boolean expected)
+            throws IOException, TemplateException {
+        assertEquals(expected ? "yes" : "no", renderIfValue(value));
+        assertEquals(expected ? "yes" : "no",
+                render("{{with .Value}}yes{{else}}no{{end}}", value));
+        assertEquals(expected ? "yes" : "no",
+                render("{{if and .Value true}}yes{{else}}no{{end}}", value));
+        assertEquals(expected ? "yes" : "no",
+                render("{{if or .Value false}}yes{{else}}no{{end}}", value));
+        assertEquals(expected ? "false" : "true", render("{{not .Value}}", value));
+    }
+
+    private static Stream<org.junit.jupiter.params.provider.Arguments> sharedTruthinessCases() {
+        return Stream.of(
+                arguments(null, false),
+                arguments(false, false),
+                arguments(true, true),
+                arguments("", false),
+                arguments(" ", true),
+                arguments("0", true),
+                arguments(0, false),
+                arguments(0L, false),
+                arguments(0.0d, false),
+                arguments(-0.0d, false),
+                arguments(Double.NaN, true),
+                arguments(1, true),
+                arguments(BigInteger.ZERO, false),
+                arguments(BigInteger.ONE, true),
+                arguments(BigDecimal.ZERO, false),
+                arguments(new BigDecimal("1E-400"), true),
+                arguments(new String[0], false),
+                arguments(new String[]{"x"}, true),
+                arguments(Collections.emptyList(), false),
+                arguments(Collections.singletonList("x"), true),
+                arguments(Collections.emptyMap(), false),
+                arguments(Collections.singletonMap("key", "value"), true),
+                arguments(Optional.empty(), false),
+                arguments(Optional.of(""), false),
+                arguments(Optional.of("value"), true),
+                arguments(new Object(), true)
+        );
+    }
+
+    private String render(String template, Object value) throws IOException, TemplateException {
+        return TemplateTestSupport.render(template, TemplateTestSupport.data("Value", value));
+    }
+
     private String renderIfValue(Object value) throws IOException, TemplateException {
-        return TemplateTestSupport.render("{{if .Value}}yes{{else}}no{{end}}", TemplateTestSupport.data("Value", value));
+        return render("{{if .Value}}yes{{else}}no{{end}}", value);
     }
 }

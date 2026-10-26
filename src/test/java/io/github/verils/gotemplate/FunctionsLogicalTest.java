@@ -5,11 +5,16 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 
 import java.io.IOException;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Stream;
 
 import static io.github.verils.gotemplate.TemplateTestSupport.data;
 import static io.github.verils.gotemplate.TemplateTestSupport.render;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
 
 class FunctionsLogicalTest {
@@ -48,24 +53,68 @@ class FunctionsLogicalTest {
         assertEquals("yes", render(template, data("Value", 0)));
     }
 
-    @Test
-    void defaultReturnsFallbackForFalsyValues() throws IOException, TemplateException {
-        assertEquals("Anonymous", render("{{default .Value \"Anonymous\"}}", data("Value", null)));
-        assertEquals("Anonymous", render("{{default .Value \"Anonymous\"}}", data("Value", "")));
-        assertEquals("10", render("{{default .Value 10}}", data("Value", 0)));
-        assertEquals("true", render("{{default .Value true}}", data("Value", false)));
+    @ParameterizedTest
+    @MethodSource("defaultCases")
+    void defaultUsesGoTruthinessForDirectAndPipelineCalls(Object value, String expected)
+            throws IOException, TemplateException {
+        Map<String, Object> data = data("Value", value);
+
+        assertEquals(expected, render("{{default .Value \"fallback\"}}", data));
+        assertEquals(expected, render("{{.Value | default \"fallback\"}}", data));
+    }
+
+    private static Stream<org.junit.jupiter.params.provider.Arguments> defaultCases() {
+        return Stream.of(
+                arguments(null, "fallback"),
+                arguments("", "fallback"),
+                arguments(0, "fallback"),
+                arguments(0L, "fallback"),
+                arguments(0.0d, "fallback"),
+                arguments(false, "fallback"),
+                arguments(new String[0], "fallback"),
+                arguments(Collections.emptyList(), "fallback"),
+                arguments(Collections.emptyMap(), "fallback"),
+                arguments(Optional.empty(), "fallback"),
+                arguments("value", "value"),
+                arguments(" ", " "),
+                arguments(1, "1"),
+                arguments(true, "true"),
+                arguments(Collections.singletonList("x"), "[x]"),
+                arguments(Collections.singletonMap("key", "value"), "{key=value}"),
+                arguments(Optional.of("value"), "value")
+        );
     }
 
     @Test
-    void defaultKeepsTruthyValues() throws IOException, TemplateException {
-        assertEquals("Alice", render("{{default .Value \"Anonymous\"}}", data("Value", "Alice")));
-        assertEquals("7", render("{{default .Value 10}}", data("Value", 7)));
+    void defaultReceivesNullAndMissingPipelineValues() throws IOException, TemplateException {
+        assertEquals("fallback", render("{{nil | default \"fallback\"}}"));
+        assertEquals("fallback", render("{{.Missing | default \"fallback\"}}", data()));
+    }
+
+    @Test
+    void customDefaultKeepsStandardPipelineArgumentOrder() throws IOException, TemplateException {
+        Map<String, Function> functions = new HashMap<>();
+        functions.put("default", args -> args.length + "|" + args[0] + "|" + args[1]);
+        Template template = new Template("test", functions);
+        template.parse("{{.Value | default \"fallback\"}}");
+
+        java.io.StringWriter writer = new java.io.StringWriter();
+        template.execute(writer, data("Value", "pipeline-value"));
+
+        assertEquals("2|fallback|pipeline-value", writer.toString());
     }
 
     @Test
     void defaultRequiresExactlyTwoArguments() {
-        org.junit.jupiter.api.Assertions.assertThrows(
-                IllegalArgumentException.class,
-                () -> TemplateTestSupport.invoke("default", "fallback"));
+        assertThrows(IllegalArgumentException.class, () -> TemplateTestSupport.invoke("default"));
+        assertThrows(IllegalArgumentException.class, () -> TemplateTestSupport.invoke("default", "fallback"));
+        assertThrows(IllegalArgumentException.class,
+                () -> TemplateTestSupport.invoke("default", "value", "fallback", "extra"));
+    }
+
+    @Test
+    void notRequiresExactlyOneArgument() {
+        assertThrows(IllegalArgumentException.class, () -> TemplateTestSupport.invoke("not"));
+        assertThrows(IllegalArgumentException.class, () -> TemplateTestSupport.invoke("not", true, false));
     }
 }
