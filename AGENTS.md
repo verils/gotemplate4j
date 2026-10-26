@@ -136,6 +136,16 @@ The project uses JaCoCo for code coverage analysis with automatic enforcement:
 
 ## Workflow Guidelines
 
+### Commit Policy
+- **Never commit automatically.** A human reviewer must explicitly review and approve the staged diff before any commit is created.
+- Every commit message must include both trailers:
+  ```
+  Co-Authored-By: <name> <email>
+  Signed-off-by: <name> <email>
+  ```
+- Use identities confirmed by the maintainer or configured in Git; never invent placeholder identities.
+- Keep the Conventional Commits title and include a body that explains what changed and why.
+
 ### Task Management Rules
 - For changes >200 lines: create detailed plan before implementation
 - Break complex tasks into smaller, verifiable steps
