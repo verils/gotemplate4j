@@ -444,32 +444,48 @@
 
 #### urlquery
 
-对字符串进行 URL 编码。
+按照 Go `text/template` 的查询字符串转义语义进行 URL 编码。该函数接受零个或多个参数，
+并使用 Go `Sprint` 的空格规则拼接参数。
 
 ```gotemplate
 {{urlquery "hello world"}}
 <!-- 输出: hello+world -->
+
+{{urlquery "a~*"}}
+<!-- 输出: a~%2A -->
 
 <a href="/search?q={{urlquery .Query}}">搜索</a>
 ```
 
 #### html
 
-对字符串进行 HTML 转义。
+按照 Go `text/template` 语义进行 HTML 转义。该函数接受零个或多个参数，保留可打印 Unicode，
+并把 NUL 替换为 Unicode 替换字符。
 
 ```gotemplate
 {{html "<script>alert('xss')</script>"}}
 <!-- 输出: &lt;script&gt;alert(&#39;xss&#39;)&lt;/script&gt; -->
+
+{{html "\"quoted\""}}
+<!-- 输出: &#34;quoted&#34; -->
 ```
 
 #### js
 
-对字符串进行 JavaScript 转义。
+按照 Go `JSEscapeString` 语义进行 JavaScript 转义。HTML 敏感字符和 ASCII 控制字符会转换为
+Unicode 转义，可打印 Unicode 字符则原样保留。该函数接受零个或多个参数。
 
 ```gotemplate
 {{js "hello\nworld"}}
-<!-- 输出: hello\nworld（已转义） -->
+<!-- 输出: hello\u000Aworld -->
+
+{{js "</script>"}}
+<!-- 输出: \u003C/script\u003E -->
 ```
+
+`js` 是 Go `text/template` 提供的字符串转义函数，并不等同于 Go `html/template`
+的上下文自动转义。请确保转义值位于带引号的 JavaScript 字符串中，并针对其他 JavaScript
+上下文采用相应的校验和编码策略。
 
 ### 日期和时间函数
 

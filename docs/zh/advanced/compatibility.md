@@ -56,6 +56,11 @@ gotemplate4j 支持实际使用中最常见的 Go template 功能。
 - **函数调用**：`call` 用于调用 Function 实例
 - **gotemplate4j 扩展**：`default`、`deepEqual`、`typeof`、`kindOf`
 
+`html`、`js` 和 `urlquery` 接受零个或多个参数，并遵循 Go `text/template` 的参数拼接与
+转义规则。`js` 保留可打印 Unicode，并转义 HTML 敏感字符和控制字符；`html` 使用 Go 的
+数字引号实体；`urlquery` 使用 Go `QueryEscape` 语义。Java `null` 参数贡献空字符串，
+而不是 Go 的 `<nil>` 或 `<no value>` 文本。
+
 ### 错误处理
 
 - **解析错误**：包含源上下文信息，显示解析失败的位置。

@@ -286,6 +286,9 @@ The following functions are available by default in all templates:
 | `js` | JavaScript escape | `{{js .UserInput}}` |
 | `urlquery` | URL query escape | `{{urlquery .Param}}` |
 
+All three functions accept zero or more arguments and follow Go
+`text/template` escaping semantics. Java `null` contributes an empty string.
+
 ### Other Functions
 
 | Function | Description | Example |

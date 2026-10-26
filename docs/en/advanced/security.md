@@ -323,6 +323,18 @@ When embedding data in JavaScript:
 </script>
 ```
 
+For example, a script-closing payload is neutralized:
+
+```gotemplate
+{{js "</script>"}}
+<!-- Output: \u003C/script\u003E -->
+```
+
+`js` implements Go `text/template`'s `JSEscapeString`, not the context-sensitive
+auto-escaping of Go `html/template`. Keep its output inside quoted JavaScript
+strings and apply context-specific validation when generating identifiers,
+regular expressions, or other JavaScript syntax.
+
 Or in Java:
 ```java
 import org.owasp.encoder.Encode;
@@ -360,8 +372,9 @@ public class ContextAwareEscaper {
             input.replace("&", "&amp;")
                  .replace("<", "&lt;")
                  .replace(">", "&gt;")
-                 .replace("\"", "&quot;")
-                 .replace("'", "&#x27;");
+                 .replace("\"", "&#34;")
+                 .replace("'", "&#39;")
+                 .replace("\0", "\uFFFD");
     }
     
     public static String escapeForHtmlAttribute(String input) {
@@ -373,6 +386,10 @@ public class ContextAwareEscaper {
         return input.replace("\\", "\\\\")
                     .replace("\"", "\\\"")
                     .replace("'", "\\'")
+                    .replace("<", "\\u003C")
+                    .replace(">", "\\u003E")
+                    .replace("&", "\\u0026")
+                    .replace("=", "\\u003D")
                     .replace("\n", "\\n")
                     .replace("\r", "\\r");
     }

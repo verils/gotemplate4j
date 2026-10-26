@@ -350,7 +350,7 @@ public class ComprehensiveTemplateTest {
 
         // escaping functions
         assertTrue(out.contains("html tag:         &lt;tag&gt;"), "html tag escape");
-        assertTrue(out.contains("js newline:       hello\\nworld"), "js escape");
+        assertTrue(out.contains("js newline:       hello\\u000Aworld"), "js escape");
         assertTrue(out.contains("urlquery:         hello+world"), "urlquery escape");
 
         // raw string literal (backtick-quoted, no escape processing)

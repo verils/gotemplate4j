@@ -1,8 +1,7 @@
 package io.github.verils.gotemplate;
 
-import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Array;
-import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashMap;
@@ -334,44 +333,22 @@ public class Functions {
 
     private static Function html() {
         return args -> {
-            if (args.length != 1) {
-                throw new IllegalArgumentException("html requires exactly 1 argument");
-            }
-            if (args[0] == null) {
-                return "";
-            }
-            String str = String.valueOf(args[0]);
+            String str = formatArguments(args);
             return escapeHtml(str);
         };
     }
 
     private static Function js() {
         return args -> {
-            if (args.length != 1) {
-                throw new IllegalArgumentException("js requires exactly 1 argument");
-            }
-            if (args[0] == null) {
-                return "";
-            }
-            String str = String.valueOf(args[0]);
+            String str = formatArguments(args);
             return escapeJs(str);
         };
     }
 
     private static Function urlquery() {
         return args -> {
-            if (args.length != 1) {
-                throw new IllegalArgumentException("urlquery requires exactly 1 argument");
-            }
-            if (args[0] == null) {
-                return "";
-            }
-            String str = String.valueOf(args[0]);
-            try {
-                return URLEncoder.encode(str, "UTF-8");
-            } catch (UnsupportedEncodingException e) {
-                throw new RuntimeException("UTF-8 encoding not supported", e);
-            }
+            String str = formatArguments(args);
+            return escapeUrlQuery(str);
         };
     }
 
@@ -523,6 +500,9 @@ public class Functions {
         for (int i = 0; i < str.length(); i++) {
             char c = str.charAt(i);
             switch (c) {
+                case '\0':
+                    sb.append('\uFFFD');
+                    break;
                 case '&':
                     sb.append("&amp;");
                     break;
@@ -533,7 +513,7 @@ public class Functions {
                     sb.append("&gt;");
                     break;
                 case '"':
-                    sb.append("&quot;");
+                    sb.append("&#34;");
                     break;
                 case '\'':
                     sb.append("&#39;");
@@ -547,36 +527,130 @@ public class Functions {
 
     private static String escapeJs(String str) {
         StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < str.length(); i++) {
-            char c = str.charAt(i);
-            switch (c) {
-                case '\\':
-                    sb.append("\\\\");
-                    break;
-                case '"':
-                    sb.append("\\\"");
-                    break;
-                case '\'':
-                    sb.append("\\'");
-                    break;
-                case '\n':
-                    sb.append("\\n");
-                    break;
-                case '\r':
-                    sb.append("\\r");
-                    break;
-                case '\t':
-                    sb.append("\\t");
-                    break;
-                default:
-                    if (c < 32 || c > 126) {
-                        sb.append(String.format("\\u%04x", (int) c));
-                    } else {
-                        sb.append(c);
-                    }
+        for (int i = 0; i < str.length(); ) {
+            int codePoint = str.codePointAt(i);
+            if (codePoint < 0x80) {
+                switch (codePoint) {
+                    case '\\':
+                        sb.append("\\\\");
+                        break;
+                    case '"':
+                        sb.append("\\\"");
+                        break;
+                    case '\'':
+                        sb.append("\\'");
+                        break;
+                    case '<':
+                        sb.append("\\u003C");
+                        break;
+                    case '>':
+                        sb.append("\\u003E");
+                        break;
+                    case '&':
+                        sb.append("\\u0026");
+                        break;
+                    case '=':
+                        sb.append("\\u003D");
+                        break;
+                    default:
+                        if (codePoint < ' ') {
+                            appendUnicodeEscape(sb, codePoint);
+                        } else {
+                            sb.append((char) codePoint);
+                        }
+                }
+            } else if (isGoPrintable(codePoint)) {
+                sb.appendCodePoint(codePoint);
+            } else {
+                appendUnicodeEscape(sb, codePoint);
+            }
+            i += Character.charCount(codePoint);
+        }
+        return sb.toString();
+    }
+
+    private static String escapeUrlQuery(String str) {
+        byte[] bytes = str.getBytes(StandardCharsets.UTF_8);
+        StringBuilder sb = new StringBuilder(bytes.length);
+        for (byte value : bytes) {
+            int c = value & 0xFF;
+            if (isUnreservedUrlCharacter(c)) {
+                sb.append((char) c);
+            } else if (c == ' ') {
+                sb.append('+');
+            } else {
+                sb.append('%');
+                sb.append(Character.toUpperCase(Character.forDigit(c >> 4, 16)));
+                sb.append(Character.toUpperCase(Character.forDigit(c & 0x0F, 16)));
             }
         }
         return sb.toString();
+    }
+
+    private static boolean isUnreservedUrlCharacter(int c) {
+        return c >= 'a' && c <= 'z'
+                || c >= 'A' && c <= 'Z'
+                || c >= '0' && c <= '9'
+                || c == '-' || c == '.' || c == '_' || c == '~';
+    }
+
+    private static boolean isGoPrintable(int codePoint) {
+        if (codePoint == ' ') {
+            return true;
+        }
+        switch (Character.getType(codePoint)) {
+            case Character.UPPERCASE_LETTER:
+            case Character.LOWERCASE_LETTER:
+            case Character.TITLECASE_LETTER:
+            case Character.MODIFIER_LETTER:
+            case Character.OTHER_LETTER:
+            case Character.NON_SPACING_MARK:
+            case Character.ENCLOSING_MARK:
+            case Character.COMBINING_SPACING_MARK:
+            case Character.DECIMAL_DIGIT_NUMBER:
+            case Character.LETTER_NUMBER:
+            case Character.OTHER_NUMBER:
+            case Character.CONNECTOR_PUNCTUATION:
+            case Character.DASH_PUNCTUATION:
+            case Character.START_PUNCTUATION:
+            case Character.END_PUNCTUATION:
+            case Character.INITIAL_QUOTE_PUNCTUATION:
+            case Character.FINAL_QUOTE_PUNCTUATION:
+            case Character.OTHER_PUNCTUATION:
+            case Character.MATH_SYMBOL:
+            case Character.CURRENCY_SYMBOL:
+            case Character.MODIFIER_SYMBOL:
+            case Character.OTHER_SYMBOL:
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    private static void appendUnicodeEscape(StringBuilder sb, int codePoint) {
+        sb.append("\\u");
+        String hex = Integer.toHexString(codePoint).toUpperCase();
+        for (int i = hex.length(); i < 4; i++) {
+            sb.append('0');
+        }
+        sb.append(hex);
+    }
+
+    private static String formatArguments(Object[] args) {
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < args.length; i++) {
+            if (i > 0 && !isStringArgument(args[i - 1]) && !isStringArgument(args[i])) {
+                sb.append(' ');
+            }
+            if (args[i] != null) {
+                sb.append(args[i]);
+            }
+        }
+        return sb.toString();
+    }
+
+    private static boolean isStringArgument(Object value) {
+        return value == null || value instanceof String;
     }
 
     private static boolean deepEquals(Object a, Object b) {

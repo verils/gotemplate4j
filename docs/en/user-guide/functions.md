@@ -444,32 +444,53 @@ Extract slice from array or string.
 
 #### urlquery
 
-URL-encode a string.
+URL-encode values using Go `text/template` query-escaping semantics. The
+function accepts zero or more arguments and joins them using Go's `Sprint`
+spacing rules.
 
 ```gotemplate
 {{urlquery "hello world"}}
 <!-- Output: hello+world -->
+
+{{urlquery "a~*"}}
+<!-- Output: a~%2A -->
 
 <a href="/search?q={{urlquery .Query}}">Search</a>
 ```
 
 #### html
 
-HTML-escape a string.
+HTML-escape values using Go `text/template` semantics. The function accepts zero
+or more arguments, preserves printable Unicode, and replaces NUL with the
+Unicode replacement character.
 
 ```gotemplate
 {{html "<script>alert('xss')</script>"}}
 <!-- Output: &lt;script&gt;alert(&#39;xss&#39;)&lt;/script&gt; -->
+
+{{html "\"quoted\""}}
+<!-- Output: &#34;quoted&#34; -->
 ```
 
 #### js
 
-JavaScript-escape a string.
+JavaScript-escape values using Go's `JSEscapeString` semantics. HTML-sensitive
+characters and ASCII control characters are emitted as Unicode escapes, while
+printable Unicode characters are preserved. The function accepts zero or more
+arguments.
 
 ```gotemplate
 {{js "hello\nworld"}}
-<!-- Output: hello\nworld (escaped) -->
+<!-- Output: hello\u000Aworld -->
+
+{{js "</script>"}}
+<!-- Output: \u003C/script\u003E -->
 ```
+
+The `js` function is a string escaper from Go `text/template`; it is not a
+replacement for the contextual auto-escaping provided by Go `html/template`.
+Keep escaped values inside quoted JavaScript strings and use context-appropriate
+validation when inserting them into other JavaScript contexts.
 
 ### Date and Time Functions
 

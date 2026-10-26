@@ -51,8 +51,8 @@ gotemplate4j 应继续作为一个小型、无运行时外部依赖的 Java 版 
 
 ### 2.1 已验证的基线
 
-- Java 11 下执行 `./mvnw clean test` 成功，851 个测试全部通过。
-- 指令覆盖率约 90.23%，分支覆盖率约 88.57%，达到当前 JaCoCo 阈值。
+- Java 11 下执行 `./mvnw clean test` 成功，866 个测试全部通过。
+- 指令覆盖率约 90.67%，分支覆盖率约 88.60%，达到当前 JaCoCo 阈值。
 - `./mvnw verify "-Dgpg.skip=true"` 成功。
 - JDK 25 下 JaCoCo 0.8.11 会输出 `Unsupported class file major version 69`，覆盖率数据不可信；JDK 11 下无此问题。
 
@@ -89,7 +89,17 @@ gotemplate4j 应继续作为一个小型、无运行时外部依赖的 Java 版 
 - `{{js .V}}` 对 `</script>` 输出不包含可闭合脚本标签的原文。
 - 增加针对脚本注入、引号、反斜杠、控制字符和 Unicode 的回归测试。
 
-**状态**：待处理
+**处理说明（2026-10-26）**：
+
+- `js` 已按 Go `JSEscapeString` 对齐：保留可打印 Unicode，使用大写 Unicode 转义处理
+  ASCII 控制字符和不可打印码点，并转义 `<`、`>`、`&`、`=`。
+- `html` 已对齐 Go 的数字引号实体和 NUL 替换行为。
+- `urlquery` 已改为 Go `QueryEscape` 的 UTF-8 查询编码语义。
+- 三个函数均支持零个或多个参数，并按 Go `Sprint` 空格规则拼接；Java `null` 保持为空字符串。
+- `FunctionsEscapingTest`、`ComprehensiveTemplateTest` 以及相关中英文文档已同步。
+- Java 11 下 `./mvnw clean test`、`./mvnw verify "-Dgpg.skip=true"` 均通过。
+
+**状态**：待复核
 
 #### A2. 修复 `default` 的管道语义
 
@@ -633,7 +643,7 @@ gotemplate4j 应继续作为一个小型、无运行时外部依赖的 Java 版 
 | 工作项 | 状态 | 下一步 |
 | --- | --- | --- |
 | 计划中文重写与新旧计划汇总 | 已完成 | 逐项开始 A1 |
-| A1 JavaScript 转义安全 | 待处理 | 先写注入回归测试 |
+| A1 JavaScript 转义安全 | 待复核 | 人工复核差异并决定是否标记完成 |
 | A2 `default` 管道 | 待处理 | 先写直接调用与管道调用对照测试 |
 | A3 比较函数 | 待处理 | 先写 Go 差分用例 |
 | A4 字面量转义 | 待处理 | 先写转义和字符常量测试 |

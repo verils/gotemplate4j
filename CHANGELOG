@@ -1,3 +1,37 @@
+Unreleased
+
+========
+
+**Security and Go escaping compatibility fixes** - This release updates the
+`html`, `js`, and `urlquery` built-in functions to follow Go
+`text/template` escaping semantics.
+
+### 🐛 Bug Fixes
+
+- `js` now neutralizes `<`, `>`, `&`, and `=` so script-closing payloads cannot
+  break out of JavaScript string contexts.
+- `js` now follows Go `JSEscapeString`: printable Unicode is preserved,
+  ASCII control characters and non-printable code points use uppercase Unicode
+  escapes, and all JS-sensitive characters are escaped.
+- `html` now uses Go's numeric quote entities and replaces NUL with the Unicode
+  replacement character.
+- `urlquery` now follows Go `QueryEscape`, including its UTF-8 byte encoding and
+  handling of characters such as `*` and `~`.
+- `html`, `js`, and `urlquery` now accept zero or more arguments and join them
+  using Go-style spacing rules. Java `null` continues to contribute an empty
+  string.
+
+### 🧪 Testing
+
+- Added regression coverage for script-closing injection, control characters,
+  printable and non-printable Unicode, HTML entities, URL query encoding,
+  zero/multiple arguments, and null arguments.
+
+### 📚 Documentation
+
+- Synchronized English and Chinese function, security, API, and compatibility
+  documentation with the implemented escaping behavior.
+
 v0.10.0 (2026-05-23)
 
 ========

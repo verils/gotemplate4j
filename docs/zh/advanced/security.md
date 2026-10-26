@@ -323,6 +323,17 @@ data.put("userInput", safeInput);
 </script>
 ```
 
+例如，尝试闭合脚本标签的载荷会被消除：
+
+```gotemplate
+{{js "</script>"}}
+<!-- 输出: \u003C/script\u003E -->
+```
+
+`js` 实现的是 Go `text/template` 的 `JSEscapeString`，而不是 Go `html/template`
+的上下文自动转义。请确保其输出位于带引号的 JavaScript 字符串中；生成标识符、正则表达式或其他
+JavaScript 语法时，仍需进行对应的上下文校验。
+
 或在 Java 中：
 ```java
 import org.owasp.encoder.Encode;
@@ -360,8 +371,9 @@ public class ContextAwareEscaper {
             input.replace("&", "&amp;")
                  .replace("<", "&lt;")
                  .replace(">", "&gt;")
-                 .replace("\"", "&quot;")
-                 .replace("'", "&#x27;");
+                 .replace("\"", "&#34;")
+                 .replace("'", "&#39;")
+                 .replace("\0", "\uFFFD");
     }
 
     public static String escapeForHtmlAttribute(String input) {
@@ -373,6 +385,10 @@ public class ContextAwareEscaper {
         return input.replace("\\", "\\\\")
                     .replace("\"", "\\\"")
                     .replace("'", "\\'")
+                    .replace("<", "\\u003C")
+                    .replace(">", "\\u003E")
+                    .replace("&", "\\u0026")
+                    .replace("=", "\\u003D")
                     .replace("\n", "\\n")
                     .replace("\r", "\\r");
     }

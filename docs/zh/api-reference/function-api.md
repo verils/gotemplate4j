@@ -286,6 +286,9 @@ Template template = new Template("demo", functions);
 | `js` | JavaScript 转义 | `{{js .UserInput}}` |
 | `urlquery` | URL 查询转义 | `{{urlquery .Param}}` |
 
+这三个函数都接受零个或多个参数，并遵循 Go `text/template` 的转义语义。Java `null`
+贡献空字符串。
+
 ### 其他函数
 
 | 函数 | 描述 | 示例 |

@@ -56,6 +56,13 @@ All standard Go template functions are supported:
 - **Function calling**: `call` for invoking Function instances
 - **gotemplate4j extensions**: `default`, `deepEqual`, `typeof`, `kindOf`
 
+The `html`, `js`, and `urlquery` functions accept zero or more arguments and
+follow Go `text/template`'s argument joining and escaping rules. `js` preserves
+printable Unicode and Unicode-escapes HTML-sensitive and control characters;
+`html` uses Go's numeric quote entities; `urlquery` uses Go `QueryEscape`
+semantics. A Java `null` argument contributes an empty string rather than Go's
+`<nil>` or `<no value>` text.
+
 ### Error Handling
 
 - **Parse errors**: Include source context showing where parsing failed.
