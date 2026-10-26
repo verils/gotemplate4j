@@ -1,66 +1,645 @@
-# gotemplate4j Development Plan
+# gotemplate4j 开发计划
 
-**Last Updated**: 2026-05-25  
-**Current Version**: 0.10.0 (Released)  
-**Next Version**: TBD  
-**Current Focus**: maintenance, documentation, and backlog grooming
+- **最后更新**：2026-10-26
+- **当前版本**：0.10.0（已发布）
+- **建议下一版本**：0.11.0（兼容性、安全与文档可信度修复）
+- **目标基线**：Java 11 及以上
+- **当前阶段**：代码审查问题修复与文档校准
+- **计划状态**：旧计划保留待复核，本轮不删除
 
----
-
-## Plan Documentation and Rules
-
-### Project Direction
-
-gotemplate4j should remain a small, Java-compatible implementation of Go's `text/template` semantics for Java applications.
-
-**Important Notice**: Since v0.10.0, gotemplate4j requires **Java 11 or higher**. This decision aligns with industry standards and enables the use of modern Java features for cleaner, more maintainable code. Java 8 support ended with v0.9.x.
-
-### Document Maintenance Rules
-
-- Keep this plan short enough to guide work; remove completed tasks instead of accumulating release history.
-- Items in "Future Backlog" should be reviewed periodically and either promoted to active development or removed.
-- Completed version releases should be moved to "Current Progress" section, not kept in detailed planning sections.
+> 本计划自本次更新起使用中文维护。旧计划不删除，统一保留在“旧计划保留区”；处理对应事项时逐项复核，再决定合并、关闭或继续暂缓。
 
 ---
 
-## Future Version Plans (Backlog)
+## 一、项目方向与计划规则
 
-This section should stay short. Keep only work that is plausibly actionable; remove release-history checklists and stale version-specific tasks after the release is complete.
+### 1.1 项目方向
 
-### Near-Term Candidates
+gotemplate4j 应继续作为一个小型、无运行时外部依赖的 Java 版 Go `text/template` 兼容实现，优先保证语义正确、错误可诊断和文档可信，其次再考虑性能与扩展功能。
 
-#### Error Diagnostics Polish
-**Priority**: Medium  
-**Status**: Partially complete
+自 0.10.0 起，项目基线为 Java 11 及以上。0.9.x 是最后一个支持 Java 8 的版本线。
 
-Remaining useful work:
-- Add compact argument type summaries for function execution failures.
-- Keep parse and execution errors actionable without dumping large object values.
-- Continue improving suggestions only where the fix is obvious and low-risk.
+### 1.2 计划维护规则
 
-#### Documentation Cleanup
-**Priority**: Medium  
-**Status**: Ongoing
+- 本计划文档使用中文维护；代码标识、文件路径和命令保留原文。
+- 旧计划项在处理完成并经过复核前不得删除。
+- 新发现的缺陷按“最高、高、中、低”优先级排列，优先处理安全、数据正确性和会导致崩溃的问题。
+- 每个行为变更必须有聚焦测试；修复兼容性问题时优先补充与 Go `text/template` 的差分用例。
+- 每个阶段完成后更新本计划状态；发布相关变更同步写入 `CHANGELOG`。
+- 文档修改必须同步检查英文和中文版本，避免 README、用户指南和兼容性说明互相矛盾。
+- 不新增运行时外部依赖，不修改 `LICENSE` 和项目元数据，除非用户明确要求。
+- 公共 API 修复优先采用兼容方式；如果必须破坏兼容，先在计划中记录迁移方案并单独确认。
 
-Remaining useful work:
-- Keep README.md and README_zh.md synchronized.
-- Keep Java version requirements consistent across docs.
-- Remove version-specific feature tours from stable getting-started docs; keep release details in CHANGELOG.
-- Document any known Go `text/template` differences in compatibility docs.
+### 1.3 状态与优先级
 
-### Deferred
+**状态**：待处理、进行中、待复核、已完成、暂缓。
 
-- **Test suite reorganization**: useful but high-churn; defer until the package layout creates real maintenance pain.
-- **Method invocation with arguments**: requires security design; continue using explicit `Function` registration.
-- **Template pre-compilation**: defer until real performance data justifies the complexity.
-- **Enhanced template inheritance syntax**: avoid non-Go syntax unless user feedback strongly supports it.
-- **Mutation/property-based/static-analysis tooling**: defer unless quality risks appear that current tests do not catch.
+**优先级**：
 
-#### Documentation Site Deployment
-**Priority**: Low
-**Status**: Not started
+| 优先级 | 范围 |
+| --- | --- |
+| 最高 | 安全问题、静默错误输出、崩溃、核心解析错误 |
+| 高 | Go 兼容性、公开 API 行为、文件加载、边界错误 |
+| 中 | 契约一致性、真值语义、扩展函数正确性、错误类型 |
+| 低 | 文档、测试质量、构建工具链、非阻塞工程改进 |
 
-Deploy `docs/` as a static site with bilingual (en/zh) support. Key decisions to make when planning:
-- Choose static site generator (VitePress recommended for i18n support).
-- Handle repo-root cross-references (`CHANGELOG`, `CONTRIBUTING.md`, `src/test/...`) — currently relative paths for local browsing; will need a pre-build script to rewrite to full GitHub URLs during deployment.
-- Set up GitHub Actions to build and publish to GitHub Pages.
+---
+
+## 二、当前审查基线
+
+本次审查基于当前 `master` 分支，完成于 2026-10-26。
+
+### 2.1 已验证的基线
+
+- Java 11 下执行 `./mvnw clean test` 成功，851 个测试全部通过。
+- 指令覆盖率约 90.23%，分支覆盖率约 88.57%，达到当前 JaCoCo 阈值。
+- `./mvnw verify "-Dgpg.skip=true"` 成功。
+- JDK 25 下 JaCoCo 0.8.11 会输出 `Unsupported class file major version 69`，覆盖率数据不可信；JDK 11 下无此问题。
+
+### 2.2 总体结论
+
+代码结构清晰，核心链路完整，测试数量充足，但当前状态不适合直接宣称“生产就绪”。主要风险集中在：
+
+- JavaScript 转义函数的跨站脚本风险。
+- `default`、比较函数、`index`、`slice`、`printf` 等内置函数与 Go 语义不一致。
+- 字符串和字符字面量转义不完整。
+- map 排序、模板定义、文件加载等公开行为存在崩溃或静默错误。
+- 公开文档与实现严重脱节，部分测试还把错误行为固化为预期。
+
+---
+
+## 三、新计划：审查问题修复
+
+以下编号用于后续逐项推进和记录状态。每项处理时先补充最小复现，再修改实现和测试，最后更新文档与本计划。
+
+### 3.1 最高优先级：安全与核心数据正确性
+
+#### A1. 修复 `js` 转义安全
+
+**当前问题**：`js` 未转义 `<`、`>`、`&`、`=`，`</script><script>alert(1)</script>` 会原样输出，文档却推荐在 JavaScript 上下文中使用该函数。
+
+**处理要点**：
+
+- 转义 `<`、`>`、`&`、`=`、单引号、双引号、反斜杠、控制字符和非 ASCII 字符。
+- 与 Go `text/template` 的 `JSEscapeString` 行为对齐，或明确记录并测试可接受的差异。
+- 检查 `html`、`urlquery` 的参数数量和编码差异，避免同类问题继续存在。
+
+**验收标准**：
+
+- `{{js .V}}` 对 `</script>` 输出不包含可闭合脚本标签的原文。
+- 增加针对脚本注入、引号、反斜杠、控制字符和 Unicode 的回归测试。
+
+**状态**：待处理
+
+#### A2. 修复 `default` 的管道语义
+
+**当前问题**：管道值被追加到参数末尾，而 `default` 把第一个参数当作值，导致 `{{.V | default "fallback"}}` 在 `V` 有值时仍返回 `fallback`。
+
+**处理要点**：
+
+- 统一直接调用和管道调用两种形式的参数解释。
+- 保持 `{{default .V "fallback"}}` 现有正确行为。
+- 明确 `default` 的真值定义，并与 `if`、`not` 使用同一个真值判断函数。
+
+**验收标准**：
+
+- `V=value` 时，`{{.V | default "fallback"}}` 输出 `value`。
+- `V` 为 `null`、空字符串、`0`、`false`、空集合时输出 `fallback`。
+- 直接调用和管道调用均有测试。
+
+**状态**：待处理
+
+#### A3. 对齐比较函数的 Go 语义与数值精度
+
+**当前问题**：
+
+- `eq` 当前要求所有参数相等，而 Go 要求第一个参数等于后续任意一个。
+- `ne`、`lt`、`le`、`gt`、`ge` 在 Go 中只接受两个参数，当前实现接受并串联多个参数。
+- 所有数值都转成 `double` 比较，导致大整数精度丢失。
+
+**处理要点**：
+
+- `eq` 改为“第一个参数等于后续任意一个”。
+- `ne`、`lt`、`le`、`gt`、`ge` 严格校验参数数量为两个。
+- 按数值类型精确比较整数，避免 `long` 转 `double`。
+- 明确跨类型比较规则；不能兼容时抛出清晰错误，而不是静默返回错误结果。
+
+**验收标准**：
+
+- `{{eq 1 1 2}}`、`{{eq 1 2 1}}` 等用例符合 Go。
+- `{{ne 1 2 3}}`、`{{lt 3 2 4}}` 等多余参数用例报错。
+- `{{eq 9007199254740992 9007199254740993}}` 返回 `false`。
+- 测试用例改为 Go 语义，并增加 Go 差分测试。
+
+**状态**：待处理
+
+#### A4. 完善字符串和字符字面量转义
+
+**当前问题**：`\"`、`\xNN`、`\uNNNN`、八进制转义等没有正确解码；字符常量 `'\n'` 被解析成反斜杠的数值。
+
+**处理要点**：
+
+- 支持 Go 常用转义：`\"`、`\\`、`\n`、`\r`、`\t`、`\b`、`\f`、`\xNN`、`\uNNNN`、`\UHHHHHHHH`、八进制转义。
+- 字符常量必须解码为实际字符值；多字符、非法转义和非法 Unicode 明确报错。
+- 保持 raw string 不处理转义的现有行为。
+
+**验收标准**：
+
+- `{{"a\"b"}}` 输出 `a"b`。
+- `{{"\x41"}}` 输出 `A`，`{{'\n'}}` 输出换行而不是数字 `92`。
+- 非法转义返回带位置的解析错误。
+- 增加字符串、字符常量和 raw string 的对照测试。
+
+**状态**：待处理
+
+### 3.2 高优先级：运行时兼容性与公开 API
+
+#### B1. 修复 map 排序导致的崩溃
+
+**当前问题**：默认开启排序时使用 `new TreeMap<>(map)`，非 `Comparable` 键、混合类型键或空键会抛异常。Javadoc 声称按 `toString()` 排序，实际没有实现。
+
+**处理要点**：
+
+- 只对可排序的基础类型键排序；其他键保持稳定的原始遍历顺序或采用明确的可配置策略。
+- 禁止把 `ClassCastException`、空键异常泄漏给模板调用方。
+- 更新 `withMapKeySorting` 的 Javadoc 和用户文档，统一默认行为。
+
+**验收标准**：
+
+- 字符串键和整数键仍按自然顺序排序。
+- 混合类型键、自定义对象键、空键不会崩溃。
+- 增加 map 排序、禁用排序和嵌套 map 的回归测试。
+
+**状态**：待处理
+
+#### B2. 修复 `index` 和 `slice` 的多维与边界语义
+
+**当前问题**：
+
+- `index` 只使用前两个参数，多级索引返回中间集合而不是最终元素。
+- 越界索引返回空值而不是报错。
+- `slice` 强制要求三个参数，并静默截断负下标、反向区间和越界区间。
+
+**处理要点**：
+
+- `index` 支持连续多维索引，并逐级校验类型和边界。
+- `index` 的 map 缺失键继续遵守 `MissingKeyPolicy`。
+- `slice` 支持 1 到 3 个下标；字符串不允许三下标；越界和反向区间明确报错。
+
+**验收标准**：
+
+- `{{index .M 1 0}}` 对二维列表返回第二行第一列。
+- 越界 `index`、反向 `slice`、越界 `slice` 抛出可诊断的模板执行异常。
+- 数组、列表、字符串和 map 均有边界测试。
+
+**状态**：待处理
+
+#### B3. 对齐 `printf`、`print`、`println`
+
+**当前问题**：`printf` 使用 Java `String.format`，`%v`、`%T` 等 Go 占位符直接报错；`print` 对字符串参数也添加空格，与 `fmt.Sprint` 不同。
+
+**处理要点**：
+
+- 明确支持 Go 的核心格式化占位符，优先实现文档和常见模板实际使用的 `%v`、`%T`、`%t`、`%q`、`%d`、`%s`、`%x`、`%f` 等。
+- `print` 按 Go 规则仅在相邻操作数都不是字符串时添加空格。
+- 对不支持的占位符给出明确错误，避免直接暴露 Java 格式化异常。
+
+**验收标准**：
+
+- `{{printf "%v" .V}}` 和 `{{printf "%T" .V}}` 可用。
+- `{{print "hello" "world"}}` 输出 `helloworld`。
+- `{{println 1 2 3}}` 保持 `1 2 3` 加换行。
+- 增加格式化失败和空参数测试。
+
+**状态**：待处理
+
+#### B4. 修复动作内部 `/*` 被误判为注释
+
+**当前问题**：词法分析器在动作内部任意位置搜索 `/*`，导致 `{{printf "/*"}}`、包含 `/*` 的 URL 或正则字符串解析失败。
+
+**处理要点**：
+
+- 只允许注释标记出现在动作起始位置，必要时兼容左裁剪标记。
+- 字符串、raw string 和字符常量中的 `/*`、`*/` 不得参与注释识别。
+- 保留自定义注释分隔符和左右裁剪能力。
+
+**验收标准**：
+
+- `{{printf "/*"}}`、`{{printf "/api/*"}}` 可正常解析和执行。
+- 真正的 `{{/* comment */}}`、带裁剪标记的注释和未闭合注释仍按预期处理。
+
+**状态**：待处理
+
+#### B5. 统一文件与 classpath 加载 API
+
+**当前问题**：
+
+- `parseFromClasspath`、`parseDirectory`、`parseFile(Path, Charset)` 的文档写成静态方法，实际是实例方法。
+- `parseClasspathResources` 文档返回 `List<Template>`，实际返回单个 `Template`。
+- glob 和 JAR 资源扫描基本不可用；测试只断言非 null，甚至注释掉了真正的加载断言。
+- `parseDirectory` 对多个不带 `define` 的文件不会按文件名建立模板，后解析的文件会覆盖前者。
+
+**处理要点**：
+
+- 先确定兼容策略：保留现有实例方法，修正文档并新增按文件名命名的加载接口；必要时废弃错误签名，但不能静默改变既有行为。
+- 实现文件目录和 JAR 资源的安全扫描；找不到资源时明确报错，不返回空模板。
+- 按文件名或显式模板名注册每个模板，避免根模板互相覆盖。
+- 同步修正 README、FAQ、API 参考和示例代码。
+
+**验收标准**：
+
+- README 中所有文件加载示例可以编译并运行。
+- 普通目录、JAR 资源、glob、缺失资源、空目录均有测试。
+- `parseDirectory` 能分别执行多个独立模板。
+
+**状态**：待处理
+
+#### B6. 修复模板定义和根模板语义
+
+**当前问题**：
+
+- 同一文本内重复的非空 `define` 被后者静默覆盖，Go 会报重复定义。
+- 仅包含 `define` 的模板执行根模板时报找不到，而 Go 的根模板是空模板。
+- 只包含注释或空白的重定义不应替换已有模板体，需要复核当前 `isNotEmpty` 的判断。
+
+**处理要点**：
+
+- 单次解析中的非空重复定义报错。
+- 多次解析时，非空定义按 Go 规则覆盖；空白、空节点和仅注释定义不覆盖已有内容。
+- 仅定义模板时，根模板保留为空并可执行。
+
+**验收标准**：
+
+- 重复定义、空定义覆盖、跨多次解析重定义和仅定义模板均有测试。
+- 输出和错误行为与 Go `text/template` 一致。
+
+**状态**：待处理
+
+### 3.3 中优先级：契约一致性与扩展功能
+
+#### C1. 修正 `option` 的参数处理
+
+**当前问题**：`option("mapkeysorting=false")` 被静默忽略，未知 option 也直接返回当前模板；文档却声称不支持时会抛异常。
+
+**处理要点**：
+
+- 严格校验 `key=value` 格式和已知键。
+- 为 `mapkeysorting` 提供真实支持，或从文档和示例中删除该用法。
+- 未知键和未知值抛出 `IllegalArgumentException`。
+
+**验收标准**：
+
+- `missingkey=invalid/zero/error` 仍可用。
+- `mapkeysorting=false` 如果保留，必须实际关闭排序。
+- 未知 option 有明确错误和测试。
+
+**状态**：待处理
+
+#### C2. 统一 `MissingKeyPolicy.ZERO` 的契约
+
+**当前问题**：`ZERO` 在 Java 类型擦除后实际仍返回 `null`，与枚举 Javadoc 的“返回零值”不一致。
+
+**处理要点**：
+
+- 明确 Java 环境下无法获知 map 元素类型时的行为。
+- 如果保留 `ZERO`，统一文档和实现：无类型信息时退化为 `null` 必须写清楚。
+- 如果无法提供有意义的零值，评估移除或重命名该策略的兼容性影响。
+
+**验收标准**：
+
+- 枚举 Javadoc、API 参考、兼容性文档和测试对 `ZERO` 的描述一致。
+- `missingkey=zero` 不再让用户误以为会得到 Java 零值。
+
+**状态**：待处理
+
+#### C3. 统一 `if`、`not`、`default` 的真值规则
+
+**当前问题**：`if` 会把空数组、空集合、空 map 视为假，但 `not` 和 `default` 只处理 null、false、0 和空字符串。
+
+**处理要点**：
+
+- 提取统一的真值判断，覆盖 null、布尔、数值、字符串、数组、集合、map 和 Optional 解包后的值。
+- `if`、`and`、`or`、`not`、`default` 使用同一规则。
+
+**验收标准**：
+
+- 空列表、空 map、空数组在 `if`、`not`、`default` 中的结果一致。
+- 增加各类型真值矩阵测试。
+
+**状态**：待处理
+
+#### C4. 让 `deepEqual` 真正递归比较
+
+**当前问题**：`deepEqual` 只递归顶层数组；map 和集合内部嵌套数组仍使用 `equals`，结果不可靠。
+
+**处理要点**：
+
+- 递归比较数组、map、集合和普通对象。
+- 增加循环引用检测，避免恶意或意外数据导致栈溢出。
+- 保持不同 Java 类型不相等的规则，并记录与 Go `reflect.DeepEqual` 的差异。
+
+**验收标准**：
+
+- 嵌套 map、嵌套列表、对象数组、循环引用的测试通过。
+- 不同数值包装类型和不同集合类型的比较行为有明确断言。
+
+**状态**：待处理
+
+#### C5. 处理复杂数字面量不能静默输出 0
+
+**当前问题**：解析器接受复杂数字面量，但执行器没有处理 `isComplex`，最终返回 `0`。
+
+**处理要点**：
+
+- 优先实现复杂数的显示和基本比较、格式化行为。
+- 如果暂不支持，则在解析或执行阶段明确报错，不能返回错误数值。
+
+**验收标准**：
+
+- `{{1+2i}}` 不会静默输出 `0`。
+- 复杂数的支持范围在兼容性文档中明确。
+
+**状态**：待处理
+
+#### C6. 修正输入流、异常类型和线程安全契约
+
+**当前问题**：
+
+- `parse(Reader)` 和 `parse(InputStream)` 的 Javadoc 说会关闭流，实际没有关闭。
+- `{{template "missing"}}` 抛 `TemplateExecutionException`，`executeTemplate` 抛 `TemplateNotFoundException`，类型不一致。
+- 模板配置字段不是线程安全的，但文档只说“执行线程安全”。
+
+**处理要点**：
+
+- 明确输入流所有权：要么按文档关闭，要么修改文档为“由调用方关闭”。
+- 统一缺失模板的异常类型和文档。
+- 明确解析、配置和执行三个阶段各自的线程安全边界。
+
+**验收标准**：
+
+- 流关闭行为有测试或明确文档。
+- 缺失模板的公开异常类型一致。
+- 并发配置和并发执行的文档不再误导用户。
+
+**状态**：待处理
+
+#### C7. 保护内置函数注册表
+
+**当前问题**：`Functions.BUILTIN` 是公开可变 map，调用方可以修改全局默认函数集合。
+
+**处理要点**：
+
+- 对外暴露不可变视图，内部保留独立可变结构或复制。
+- 保留通过构造函数覆盖内置函数的现有能力。
+
+**验收标准**：
+
+- 外部不能直接修改全局内置函数。
+- 自定义函数覆盖内置函数的行为不变。
+
+**状态**：待处理
+
+### 3.4 低优先级：文档、测试与工程化
+
+#### D1. 统一并修正文档
+
+**当前问题**：
+
+- `functions.md` 列出大量不存在的内置函数。
+- `lte`、`gte` 与实现中的 `le`、`ge` 不一致。
+- README、FAQ 和 API 参考中的静态方法签名与实现不符。
+- 兼容性文档对 map 顺序、整数 range、null 输出等描述互相矛盾。
+
+**处理要点**：
+
+- 以实际实现和最终确定的兼容策略为准，重写内置函数表和文件加载示例。
+- 修正 `default` 管道、`index` 多维、`printf %v/%T` 等示例。
+- 明确 Go 差异，禁止把未实现功能写成内置能力。
+- 同步更新 `README.md`、`README_zh.md`、`docs/en`、`docs/zh`。
+
+**验收标准**：
+
+- 文档中的 API 签名与源码一致。
+- 所有示例至少经过编译或最小执行验证。
+- 中英文文档的核心事实一致。
+
+**状态**：待处理
+
+#### D2. 提升测试质量并引入 Go 差分验证
+
+**当前问题**：部分测试固化了错误语义，部分测试只断言非 null，覆盖率高但语义保障不足。
+
+**处理要点**：
+
+- 修正比较、切片、格式化、文件加载等错误预期。
+- 删除无效断言，补充行为断言和异常断言。
+- 对核心语法和内置函数建立 Go `text/template` 差分用例；可在测试环境调用本机 Go，不作为运行时依赖。
+- 关键回归用例应覆盖本计划中的每个缺陷。
+
+**验收标准**：
+
+- 新修复项都有会失败的回归测试。
+- 测试不再把 Go 不兼容行为命名为“兼容”测试。
+- 覆盖率不低于现有阈值，且关键分支有语义断言。
+
+**状态**：待处理
+
+#### D3. 修正构建与覆盖率工具链
+
+**当前问题**：
+
+- `-source 11 -target 11` 在更高 JDK 上不能阻止误用新 API。
+- JDK 25 下 JaCoCo 0.8.11 报不支持 class 文件版本，覆盖率结果不可信。
+- `AGENTS.md` 和 `CONTRIBUTING.md` 仍写 Java 8。
+
+**处理要点**：
+
+- 改用 `maven.compiler.release=11`。
+- 升级 JaCoCo，或通过 Maven toolchain 固定使用 JDK 11 构建和覆盖率检查。
+- 统一 README、`AGENTS.md`、`CONTRIBUTING.md`、CI 配置中的 Java 基线。
+
+**验收标准**：
+
+- JDK 11 干净构建、测试和覆盖率检查全部通过。
+- 高版本 JDK 下不再出现 JaCoCo 版本错误，或明确要求使用 JDK 11。
+- 文档和 CI 对 Java 版本只有一个答案。
+
+**状态**：待处理
+
+#### D4. 继续错误诊断打磨（承接旧计划）
+
+**当前问题**：旧计划中的错误诊断改进仍未完全结束。
+
+**处理要点**：
+
+- 为函数执行失败补充紧凑的参数类型摘要。
+- 保持解析和执行错误可操作，避免输出大对象内容。
+- 只在修复方式明确且低风险时继续扩展拼写建议。
+
+**验收标准**：
+
+- 常见错误信息包含可执行的下一步。
+- 错误摘要不泄露大对象或敏感数据。
+- 相关错误测试稳定且不依赖冗长完整消息。
+
+**状态**：待复核
+
+#### D5. 文档站点部署（承接旧计划）
+
+**原计划内容**：将 `docs/` 部署为支持中英文的静态站点。
+
+**待复核要点**：
+
+- 选择 VitePress 或其他静态站点生成器。
+- 处理仓库根目录相对链接（`CHANGELOG`、`CONTRIBUTING.md`、`src/test/...`），部署前改写为 GitHub 完整链接。
+- 通过 GitHub Actions 构建并发布到 GitHub Pages。
+- 在文档内容稳定后再启动，避免把错误文档发布到站点。
+
+**状态**：暂缓，待文档修复完成后复核
+
+---
+
+## 四、旧计划保留区
+
+本节保留旧计划内容。处理新计划时逐项复核；在确认迁移、完成或明确暂缓前，不删除旧项。
+
+### 4.1 错误诊断打磨
+
+**原优先级**：中；**原状态**：部分完成
+
+**与新计划关系**：合并到 D4，处理时复核
+
+保留内容：
+
+- 为函数执行失败增加紧凑的参数类型摘要。
+- 保持解析和执行错误可操作，避免转储大型对象内容。
+- 只在修复方式明确且低风险时继续改进建议。
+
+### 4.2 文档清理
+
+**原优先级**：中；**原状态**：持续进行
+
+**与新计划关系**：合并到 D1，处理时复核
+
+保留内容：
+
+- 保持 `README.md` 与 `README_zh.md` 同步。
+- 保持 Java 版本要求在各文档中一致。
+- 从稳定的入门文档中移除版本特定功能导览，把发布细节保留在 `CHANGELOG`。
+- 在兼容性文档中记录所有已知的 Go `text/template` 差异。
+
+### 4.3 暂缓事项
+
+**原状态**：暂缓
+
+**与新计划关系**：保留；只有在出现真实维护痛点或用户反馈时再复核
+
+保留内容：
+
+- 测试套件重组：有维护价值，但改动面大，暂缓到包结构确实造成维护困难时再处理。
+- 带参数的方法调用：需要安全设计，继续使用显式 `Function` 注册。
+- 模板预编译：等真实性能数据证明有必要再做。
+- 增强模板继承语法：除非用户反馈强烈，否则避免引入非 Go 语法。
+- 变异测试、属性测试和静态分析工具：如果现有测试无法捕获新的质量风险，再评估引入。
+
+### 4.4 文档站点部署
+
+**原优先级**：低；**原状态**：未开始
+
+**与新计划关系**：合并到 D5，暂缓到文档修复完成后启动
+
+保留内容：
+
+- 将 `docs/` 部署为静态站点，支持英文和中文。
+- 选择静态站点生成器，VitePress 是候选方案。
+- 处理仓库根目录相对链接，部署前改写为完整链接。
+- 配置 GitHub Actions 构建并发布到 GitHub Pages。
+
+---
+
+## 五、执行顺序与检查点
+
+### 5.1 逐项处理顺序
+
+1. 完成计划更新并提交计划文档。
+2. 处理 A1–A4：安全、`default`、比较函数、字面量转义。
+3. 处理 B1–B6：map 排序、`index/slice`、格式化、注释识别、文件加载、模板定义。
+4. 处理 C1–C7：配置项、缺失键、真值、深度比较、复杂数、API 契约、内置函数注册表。
+5. 处理 D1–D3：文档、测试、构建工具链。
+6. 复核并处理 D4、D5 对应的旧计划项。
+7. 最后复核 4.3 中的暂缓事项，决定继续暂缓、转入新计划或关闭。
+
+### 5.2 单项处理检查点
+
+每个工作项都按以下顺序执行：
+
+1. 写出最小复现或确认现有测试缺口。
+2. 检查是否与旧计划项重复或冲突。
+3. 修改实现，避免顺手改动无关逻辑。
+4. 增加或修正回归测试。
+5. 运行聚焦测试。
+6. 同步修改受影响的中英文文档和 `CHANGELOG`。
+7. 更新本计划中的状态和处理说明。
+8. 运行完整测试和覆盖率检查。
+
+### 5.3 阶段检查点
+
+- 最高优先级阶段完成后，必须重新执行一次安全相关的最小模板验证。
+- 高优先级阶段完成后，必须重新核对 README 和 API 参考中的文件加载示例。
+- 中优先级阶段完成后，必须复核兼容性文档中的 Go 差异。
+- 低优先级阶段完成后，必须执行 JDK 11 干净构建和覆盖率阈值检查。
+
+---
+
+## 六、统一验收标准
+
+- Java 11 下 `./mvnw clean test` 全部通过。
+- `./mvnw verify "-Dgpg.skip=true"` 通过，覆盖率不低于当前阈值。
+- 每个行为变更都有聚焦测试；每个已修复缺陷都有回归测试。
+- 核心比较、格式化、集合和模板定义行为有 Go 差分用例或明确记录的差异。
+- 文档示例可编译或可执行，README 与中文版本同步。
+- 不新增运行时外部依赖。
+- 公共 API 变更必须记录迁移说明，不能只修改实现而留下旧文档。
+- 旧计划项在完成复核前继续保留在本文件中。
+
+---
+
+## 七、风险与默认决策
+
+### 7.1 公共 API 兼容
+
+文件加载 API 的签名和返回类型与文档冲突。默认采用“保留现有实例方法并修正文档，新增按文件名注册的兼容接口”的策略；如果确认现有方法无法修复，再单独评估破坏性变更。
+
+### 7.2 Java 类型擦除
+
+`MissingKeyPolicy.ZERO` 无法可靠获得 map 元素类型的零值。默认将“无类型信息时退化为 null”作为明确契约，并同步修改文档，而不是继续宣称返回零值。
+
+### 7.3 Go 格式化兼容
+
+`printf` 无法直接依赖 Java `String.format` 获得 Go 语义。默认实现文档和常见模板需要的核心占位符；不支持的占位符应明确报错，不能暴露 Java 内部异常。
+
+### 7.4 现有测试可能保护错误行为
+
+比较函数、`slice`、`print` 和文件加载的部分测试当前固化了错误预期。处理对应项时应优先修正测试，而不是为了保持测试通过而保留错误实现。
+
+### 7.5 高版本 JDK 与覆盖率
+
+如果无法立即升级 JaCoCo，默认使用 JDK 11 执行完整验证，并在文档中明确高版本 JDK 仅用于开发、不作为覆盖率判定环境。
+
+---
+
+## 八、当前状态快照
+
+| 工作项 | 状态 | 下一步 |
+| --- | --- | --- |
+| 计划中文重写与新旧计划汇总 | 已完成 | 逐项开始 A1 |
+| A1 JavaScript 转义安全 | 待处理 | 先写注入回归测试 |
+| A2 `default` 管道 | 待处理 | 先写直接调用与管道调用对照测试 |
+| A3 比较函数 | 待处理 | 先写 Go 差分用例 |
+| A4 字面量转义 | 待处理 | 先写转义和字符常量测试 |
+| B1–B6 运行时与 API | 待处理 | 按顺序逐项处理 |
+| C1–C7 契约一致性 | 待处理 | 在 A、B 阶段后处理 |
+| D1–D3 文档、测试、构建 | 待处理 | 随修复同步推进 |
+| D4 错误诊断 | 待复核 | 处理旧计划时复核 |
+| D5 文档站点 | 暂缓 | 文档修复完成后复核 |
+| 旧计划暂缓事项 | 暂缓 | 最后统一复核 |
