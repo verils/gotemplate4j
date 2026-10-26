@@ -10,6 +10,8 @@ import java.beans.PropertyDescriptor;
 import java.io.IOException;
 import java.io.Writer;
 import java.lang.reflect.*;
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -193,13 +195,7 @@ public class Executor {
 
         if (numberOrIterable instanceof Map) {
             Map<?, ?> map = (Map<?, ?>) numberOrIterable;
-
-            // Sort map keys if enabled using TreeMap for natural ordering
-            List<Map.Entry<?, ?>> entries;
-            if (mapKeySorting) {
-                map = new TreeMap<>(map);
-            }
-            entries = new ArrayList<>(map.entrySet());
+            List<Map.Entry<?, ?>> entries = orderedMapEntries(map);
 
             for (Map.Entry<?, ?> entry : entries) {
                 // For maps, when two vars are specified, first is key, second is value
@@ -215,6 +211,60 @@ public class Executor {
         if (!iterated && rangeNode.getElseListNode() != null) {
             writeNode(writer, rangeNode.getElseListNode(), data, beanInfo, new HashMap<>(variables));
         }
+    }
+
+    private List<Map.Entry<?, ?>> orderedMapEntries(Map<?, ?> map) {
+        List<Map.Entry<?, ?>> entries = new ArrayList<>(map.entrySet());
+        if (!mapKeySorting || entries.size() < 2 || !hasUniformSortableKeys(entries)) {
+            return entries;
+        }
+
+        List<Map.Entry<?, ?>> sorted = new ArrayList<>(entries);
+        try {
+            sorted.sort((left, right) -> compareMapKeys(left.getKey(), right.getKey()));
+            return sorted;
+        } catch (RuntimeException ignored) {
+            return entries;
+        }
+    }
+
+    private boolean hasUniformSortableKeys(List<Map.Entry<?, ?>> entries) {
+        Object firstKey = entries.get(0).getKey();
+        if (firstKey == null) {
+            return false;
+        }
+
+        Class<?> keyType = firstKey.getClass();
+        if (!isSortableMapKeyType(keyType)) {
+            return false;
+        }
+        for (int i = 1; i < entries.size(); i++) {
+            Object key = entries.get(i).getKey();
+            if (key == null || key.getClass() != keyType) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private boolean isSortableMapKeyType(Class<?> keyType) {
+        return keyType == String.class
+                || keyType == Boolean.class
+                || keyType == Character.class
+                || keyType == Byte.class
+                || keyType == Short.class
+                || keyType == Integer.class
+                || keyType == Long.class
+                || keyType == Float.class
+                || keyType == Double.class
+                || keyType == BigInteger.class
+                || keyType == BigDecimal.class
+                || Enum.class.isAssignableFrom(keyType);
+    }
+
+    @SuppressWarnings("unchecked")
+    private int compareMapKeys(Object left, Object right) {
+        return ((Comparable<Object>) left).compareTo(right);
     }
 
     /**

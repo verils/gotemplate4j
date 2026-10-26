@@ -134,17 +134,16 @@ public enum Status { ACTIVE, INACTIVE }
 
 ### 映射迭代顺序
 
-- **Java Map 顺序**：迭代遵循映射实现的顺序。
-- **不自动排序**：与 Go 不同，gotemplate4j 不会对映射键进行排序。
-- **确定性顺序**：当输出顺序重要时，请使用 `LinkedHashMap`。
+- **符合条件时排序**：同一基础类型的非 null 键默认排序。
+- **回退顺序**：混合、null 和自定义键类型保留 map 快照的迭代顺序。
+- **不做危险强转**：自定义键不会按 `toString()` 排序，也不会抛出 `ClassCastException`。
 
 ```java
-// Go 行为：键按字母顺序排序
-// gotemplate4j 行为：键遵循插入顺序
+// 两者都会对符合条件的字符串键按字母顺序排序。
 Map<String, String> map = new LinkedHashMap<>();
 map.put("z", "last");
 map.put("a", "first");
-// Range 将产生：z, a（插入顺序）
+// Range 将产生：a, z
 ```
 
 ### 自定义扩展
@@ -247,7 +246,7 @@ template.option("missingkey=error");
 
 | 功能 | Go `text/template` | gotemplate4j | 原因 |
 |---------|-------------------|--------------|--------|
-| 映射迭代顺序 | 键已排序 | 插入顺序 | Java Map 行为 |
+| 映射迭代顺序 | 键已排序 | 基础键排序，否则回退 | 安全的 Java 键处理 |
 | 缺失键 | 可配置（默认：error） | 可配置（默认：null） | 向后兼容 |
 | Null 显示 | `<no value>` | 空字符串 | Java 惯例 |
 | 方法调用 | 任意公有方法 | 仅无参方法 | 安全性 |

@@ -38,6 +38,10 @@ unifies template truthiness.
   and `\U` sequences. Invalid escapes report source line and column information.
 - Character constants now decode to a single Unicode code point, including
   supplementary characters, instead of returning the backslash value.
+- Map iteration no longer coerces maps through `TreeMap`, preventing exceptions
+  for null, mixed-type, custom, and incomparable keys.
+- Map key sorting now requires one concrete basic key type; other maps preserve
+  their snapshot iteration order without partial sorting or `toString()` order.
 
 ### 🧪 Testing
 
@@ -50,6 +54,8 @@ unifies template truthiness.
   enum comparison, and comparison arity coverage.
 - Added literal decoding, raw string, Unicode, invalid escape location, and
   character code point coverage.
+- Added map sorting fallback coverage for mixed numeric types, mixed basic
+  types, null keys, custom objects, custom Comparable keys, and nested maps.
 
 ### 📚 Documentation
 

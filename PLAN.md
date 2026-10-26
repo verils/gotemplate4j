@@ -51,8 +51,8 @@ gotemplate4j 应继续作为一个小型、无运行时外部依赖的 Java 版 
 
 ### 2.1 已验证的基线
 
-- Java 11 下执行 `./mvnw clean test` 成功，930 个测试全部通过。
-- 指令覆盖率约 90.28%，分支覆盖率约 87.01%，达到当前 JaCoCo 阈值。
+- Java 11 下执行 `./mvnw clean test` 成功，936 个测试全部通过。
+- 指令覆盖率约 90.35%，分支覆盖率约 86.70%，达到当前 JaCoCo 阈值。
 - `./mvnw verify "-Dgpg.skip=true"` 成功。
 - JDK 25 下 JaCoCo 0.8.11 会输出 `Unsupported class file major version 69`，覆盖率数据不可信；JDK 11 下无此问题。
 
@@ -208,7 +208,17 @@ gotemplate4j 应继续作为一个小型、无运行时外部依赖的 Java 版 
 - 混合类型键、自定义对象键、空键不会崩溃。
 - 增加 map 排序、禁用排序和嵌套 map 的回归测试。
 
-**状态**：待处理
+**处理说明（2026-10-26）**：
+
+- `range` 先获取 map 条目快照，不再通过 `TreeMap` 强制转换键。
+- 仅当所有键为非 null 且属于同一具体基础类型时执行稳定自然排序；混合类型、null、
+  自定义对象和自定义 `Comparable` 键均保留整张 map 的快照顺序。
+- 嵌套 map 独立决定是否排序；排序不修改原始 map，也不会按 `toString()` 排序。
+- `withMapKeySorting` Javadoc、中英文控制流、迁移、兼容性和模板语法文档已同步。
+- 新增 MapKeySortingTest 回归用例，覆盖混合数值、混合基础类型、null、自定义键和嵌套 map。
+- Java 11 下 `./mvnw clean test`、`./mvnw verify "-Dgpg.skip=true"` 均通过。
+
+**状态**：待复核
 
 #### B2. 修复 `index` 和 `slice` 的多维与边界语义
 
@@ -684,7 +694,8 @@ gotemplate4j 应继续作为一个小型、无运行时外部依赖的 Java 版 
 | A2 `default` 管道 | 待复核 | 人工复核后进入 A3 |
 | A3 比较函数 | 待复核 | 人工复核后进入 A4 |
 | A4 字面量转义 | 待复核 | 人工复核后进入 B1 |
-| B1–B6 运行时与 API | 待处理 | 按顺序逐项处理 |
+| B1 map 排序 | 待复核 | 人工复核后进入 B2 |
+| B2–B6 运行时与 API | 待处理 | 按顺序逐项处理 |
 | C1–C7 契约一致性 | 部分待复核 | C3 已合并到 A2；其余项在 A、B 阶段后处理 |
 | D1–D3 文档、测试、构建 | 待处理 | 随修复同步推进 |
 | D4 错误诊断 | 待复核 | 处理旧计划时复核 |

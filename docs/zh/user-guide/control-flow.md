@@ -241,15 +241,17 @@ data.put("CanModerate", user.hasPermission() && !user.isSuspended());
 
 #### Map 迭代顺序
 
-**默认情况下，map 键会进行排序以提供确定性输出**，与 Go 模板行为一致。
+**默认情况下，符合条件的 map 键会进行排序以提供确定性输出**，与 Go 模板行为一致。
 
 **Go 模板规范**："如果值是 map 且键是定义了顺序的基本类型，则元素将按键的排序顺序访问。"
 
 **排序行为**：
 - **字符串键**：按字母顺序排序（字典序）
-- **整数键**：按数值排序
-- **可比较键**：使用自然顺序
-- **其他类型**：退回到 `toString()` 比较
+- **数值、字符、布尔和枚举键**：所有键为同一具体类型时排序
+- **混合类型键、null 键或自定义对象键**：整张 map 保留当前迭代顺序
+- **自定义 `Comparable` 键**：不会自动排序；请使用基础键或在 Java 中预先排序
+
+键不会按 `toString()` 排序。排序基于稳定快照，不会修改原始 map。
 
 **示例 - 字符串键**：
 
@@ -289,19 +291,13 @@ Template template = new Template("demo")
     .withMapKeySorting(false);  // 禁用排序
 ```
 
-或通过选项字符串：
-
-```java
-Template template = new Template("demo");
-template.option("mapkeysorting=false");
-```
-
 **何时禁用排序**：
 - 依赖 `LinkedHashMap` 的特定插入顺序时
 - 对非常大 map 的性能关键场景
 - 需要与依赖插入顺序的现有模板保持兼容时
 
-**注意**：对于 Go 模板兼容性，建议保持排序启用（默认）。
+**注意**：关闭排序后，迭代顺序遵循 Map 实现。`LinkedHashMap` 保留插入顺序，普通
+`HashMap` 的顺序则不保证。
 
 ### 遍历整数（Go 兼容）
 

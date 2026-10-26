@@ -125,7 +125,8 @@ template.option("missingkey=error");
 
 ## 映射迭代
 
-Go 模板对具有基本有序键类型的映射进行排序。gotemplate4j 则遵循 Java `Map` 的迭代顺序。
+Go 模板对具有基本有序键类型的映射进行排序。gotemplate4j 默认也会排序符合条件的 map；
+当键类型混合、为 null 或为自定义对象时，回退到 Java `Map` 的迭代顺序。
 
 ### Go 行为
 
@@ -140,7 +141,7 @@ Go 模板对具有基本有序键类型的映射进行排序。gotemplate4j 则�
 ### gotemplate4j 行为
 
 ```java
-// Java 保留插入顺序（对于 LinkedHashMap）
+// 符合条件的字符串键默认会排序
 Map<String, String> map = new LinkedHashMap<>();
 map.put("z", "last");
 map.put("a", "first");
@@ -151,10 +152,10 @@ data.put("MyMap", map);
 {{range $key, $value := .MyMap}}
   {{$key}}: {{$value}}
 {{end}}
-// 输出：z: last, a: first（插入顺序）
+// 输出：a: first, z: last
 ```
 
-**建议**：当输出顺序重要时，请使用 `LinkedHashMap`，或在传递给模板之前在 Java 中对键进行排序。
+可使用 `.withMapKeySorting(false)` 保留 Map 迭代顺序，或在 Java 中预先排序自定义键。
 
 ---
 

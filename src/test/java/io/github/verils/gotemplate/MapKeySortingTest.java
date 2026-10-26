@@ -223,4 +223,125 @@ public class MapKeySortingTest {
         assertEquals("alpha:x=2,y=1,;beta:a=4,b=3,;", writer.toString());
     }
 
+    @Test
+    void mixedNumericKeyTypesPreserveSnapshotOrder() throws IOException, TemplateException {
+        Template template = new Template("test").withMapKeySorting(true);
+        template.parse("{{range $k, $v := .Data}}{{$v}},{{end}}");
+
+        Map<Number, String> mapData = new LinkedHashMap<>();
+        mapData.put(2L, "long-two");
+        mapData.put(1, "int-one");
+        mapData.put(3, "int-three");
+
+        assertEquals("long-two,int-one,int-three,",
+                render(template, data("Data", mapData)));
+    }
+
+    @Test
+    void mixedBasicKeyTypesPreserveSnapshotOrder() throws IOException, TemplateException {
+        Template template = new Template("test").withMapKeySorting(true);
+        template.parse("{{range $k, $v := .Data}}{{$v}},{{end}}");
+
+        Map<Object, String> mapData = new LinkedHashMap<>();
+        mapData.put("z", "string-z");
+        mapData.put(1, "number-one");
+        mapData.put("a", "string-a");
+
+        assertEquals("string-z,number-one,string-a,",
+                render(template, data("Data", mapData)));
+    }
+
+    @Test
+    void nullKeysPreserveSnapshotOrder() throws IOException, TemplateException {
+        Template template = new Template("test").withMapKeySorting(true);
+        template.parse("{{range $k, $v := .Data}}{{$v}},{{end}}");
+
+        Map<Object, String> mapData = new LinkedHashMap<>();
+        mapData.put(null, "null-key");
+        mapData.put("z", "string-z");
+
+        assertEquals("null-key,string-z,", render(template, data("Data", mapData)));
+    }
+
+    @Test
+    void customKeysPreserveSnapshotOrderWithoutToStringSorting() throws IOException, TemplateException {
+        Template template = new Template("test").withMapKeySorting(true);
+        template.parse("{{range $k, $v := .Data}}{{$v}},{{end}}");
+
+        Map<Object, String> mapData = new LinkedHashMap<>();
+        mapData.put(new CustomKey("A"), "inserted-first");
+        mapData.put(new CustomKey("Z"), "inserted-second");
+
+        assertEquals("inserted-first,inserted-second,",
+                render(template, data("Data", mapData)));
+    }
+
+    @Test
+    void customComparableKeysAlsoPreserveSnapshotOrder() throws IOException, TemplateException {
+        Template template = new Template("test").withMapKeySorting(true);
+        template.parse("{{range $k, $v := .Data}}{{$v}},{{end}}");
+
+        Map<ComparableKey, String> mapData = new LinkedHashMap<>();
+        mapData.put(new ComparableKey(2), "inserted-two");
+        mapData.put(new ComparableKey(1), "inserted-one");
+
+        assertEquals("inserted-two,inserted-one,",
+                render(template, data("Data", mapData)));
+    }
+
+    @Test
+    void nestedMapsChooseSortingIndependently() throws IOException, TemplateException {
+        Template template = new Template("test").withMapKeySorting(true);
+        template.parse("{{range $k, $v := .Outer}}{{$k}}:{{range $ik, $iv := $v}}{{$iv}},{{end}};{{end}}");
+
+        Map<Number, String> mixedInner = new LinkedHashMap<>();
+        mixedInner.put(2L, "long-two");
+        mixedInner.put(1, "int-one");
+
+        Map<String, Object> outer = new LinkedHashMap<>();
+        outer.put("z", mixedInner);
+        outer.put("a", mixedInner);
+
+        assertEquals("a:long-two,int-one,;z:long-two,int-one,;",
+                render(template, data("Outer", outer)));
+    }
+
+    private String render(Template template, Map<String, Object> data) throws IOException, TemplateException {
+        Writer writer = new StringWriter();
+        template.execute(writer, data);
+        return writer.toString();
+    }
+
+    private Map<String, Object> data(String key, Object value) {
+        Map<String, Object> data = new HashMap<>();
+        data.put(key, value);
+        return data;
+    }
+
+    private static final class CustomKey {
+        private final String sortValue;
+
+        private CustomKey(String sortValue) {
+            this.sortValue = sortValue;
+        }
+
+        @Override
+        public String toString() {
+            return sortValue;
+        }
+    }
+
+    private static final class ComparableKey implements Comparable<ComparableKey> {
+        private final int value;
+
+        private ComparableKey(int value) {
+            this.value = value;
+        }
+
+        @Override
+        public int compareTo(ComparableKey other) {
+            return Integer.compare(value, other.value);
+        }
+    }
+
 }

@@ -137,17 +137,16 @@ public enum Status { ACTIVE, INACTIVE }
 
 ### Map Iteration Order
 
-- **Java Map order**: Iteration follows the map's implementation order.
-- **No automatic sorting**: Unlike Go, gotemplate4j does not sort map keys.
-- **Deterministic order**: Use `LinkedHashMap` when output order matters.
+- **Eligible sorting**: Non-null keys of one basic type are sorted by default.
+- **Fallback order**: Mixed, null, and custom key types preserve the map snapshot's iteration order.
+- **No dangerous coercion**: Custom keys are never sorted by `toString()` and do not cause `ClassCastException`.
 
 ```java
-// Go behavior: keys are sorted alphabetically
-// gotemplate4j behavior: keys follow insertion order
+// Both sort eligible String keys alphabetically.
 Map<String, String> map = new LinkedHashMap<>();
 map.put("z", "last");
 map.put("a", "first");
-// Range will produce: z, a (insertion order)
+// Range will produce: a, z
 ```
 
 ### Custom Extensions
@@ -252,7 +251,7 @@ This table summarizes key differences between Go templates and gotemplate4j:
 
 | Feature | Go `text/template` | gotemplate4j | Reason |
 |---------|-------------------|--------------|--------|
-| Map iteration order | Sorted keys | Insertion order | Java Map behavior |
+| Map iteration order | Sorted keys | Sorted basic keys; fallback otherwise | Safe Java key handling |
 | Missing keys | Configurable (default: error) | Configurable (default: null) | Backward compatibility |
 | Null display | `<no value>` | Empty string | Java convention |
 | Method calls | Any public method | No-argument methods only | Security |

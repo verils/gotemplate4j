@@ -125,7 +125,9 @@ template.option("missingkey=error");
 
 ## Map Iteration
 
-Go templates sort maps with basic ordered key types. gotemplate4j follows Java `Map` iteration order instead.
+Go templates sort maps with basic ordered key types. gotemplate4j also sorts eligible maps by
+default, but falls back to the Java `Map` iteration order when key types are mixed, null, or
+custom.
 
 ### Go Behavior
 
@@ -140,7 +142,7 @@ Go templates sort maps with basic ordered key types. gotemplate4j follows Java `
 ### gotemplate4j Behavior
 
 ```java
-// Java preserves insertion order (for LinkedHashMap)
+// Eligible String keys are sorted by default.
 Map<String, String> map = new LinkedHashMap<>();
 map.put("z", "last");
 map.put("a", "first");
@@ -151,10 +153,10 @@ data.put("MyMap", map);
 {{range $key, $value := .MyMap}}
   {{$key}}: {{$value}}
 {{end}}
-// Output: z: last, a: first (insertion order)
+// Output: a: first, z: last
 ```
 
-**Recommendation**: Use `LinkedHashMap` when output order matters, or sort keys in Java before passing to template.
+Use `.withMapKeySorting(false)` to preserve the Map iteration order, or pre-sort custom keys in Java.
 
 ---
 

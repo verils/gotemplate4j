@@ -276,7 +276,8 @@ Iterate over collections (arrays, lists, maps, channels).
 {{end}}
 ```
 
-Note: Map iteration order is not guaranteed unless you enable map key sorting.
+Note: Eligible keys are sorted by default. Mixed, null, or custom key types preserve the Map
+implementation's iteration order.
 
 ### Range Over Integer (Go-compatible)
 

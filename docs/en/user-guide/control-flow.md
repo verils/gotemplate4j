@@ -241,15 +241,19 @@ Output:
 
 #### Map Iteration Order
 
-**By default, map keys are sorted to provide deterministic output**, matching Go template behavior.
+**By default, eligible map keys are sorted to provide deterministic output**, matching Go
+template behavior.
 
 **Go Template Specification**: "If the value is a map and the keys are of basic type with a defined order, the elements will be visited in sorted key order."
 
 **Sorting Behavior**:
 - **String keys**: Sorted alphabetically (lexicographic order)
-- **Integer keys**: Sorted numerically
-- **Comparable keys**: Use natural ordering
-- **Other types**: Fall back to `toString()` comparison
+- **Numeric, character, boolean, and enum keys**: Sorted when every key has the same concrete type
+- **Mixed types, null keys, or custom objects**: The whole map preserves its current iteration order
+- **Custom `Comparable` keys**: Not sorted automatically; use a basic key or pre-sort the Java map
+
+Keys are never ordered by `toString()`. Sorting uses a stable snapshot and does not modify the
+original map.
 
 **Example - String Keys**:
 
@@ -289,19 +293,13 @@ Template template = new Template("demo")
     .withMapKeySorting(false);  // Disable sorting
 ```
 
-Or via option string:
-
-```java
-Template template = new Template("demo");
-template.option("mapkeysorting=false");
-```
-
 **When to disable sorting**:
 - You rely on specific insertion order from `LinkedHashMap`
 - Performance-critical scenarios with very large maps
 - Maintaining compatibility with existing templates that depend on insertion order
 
-**Note**: For Go template compatibility, it's recommended to keep sorting enabled (default).
+**Note**: With sorting disabled, iteration follows the Map implementation. A `LinkedHashMap`
+preserves insertion order, while a plain `HashMap` has unspecified order.
 
 ### Range Over Integer (Go-compatible)
 
