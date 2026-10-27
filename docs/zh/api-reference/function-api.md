@@ -239,9 +239,9 @@ Template template = new Template("demo", functions);
 
 | 函数 | 描述 | 示例 |
 |----------|-------------|---------|
-| `print` | 将参数转换为字符串 | `{{print .Name .Age}}` |
-| `printf` | Go 风格格式化字符串 | `{{printf "%s 今年 %d 岁" .Name .Age}}` |
-| `println` | 将参数转换为字符串并换行 | `{{println .Message}}` |
+| `print` | 按 Go 的字符串/非字符串空格规则连接参数 | `{{print .Name ":" .Age}}` |
+| `printf` | 使用受支持的 Go 风格动词、flags、宽度和精度格式化 | `{{printf "%s 今年 %d 岁" .Name .Age}}` |
+| `println` | 用空格连接参数并追加换行 | `{{println .Message}}` |
 
 ### 比较运算符
 

@@ -3,8 +3,8 @@ Unreleased
 ========
 
 **Security and compatibility fixes** - This release aligns escaping,
-comparison, and collection functions with Go `text/template`, fixes pipeline
-handling, and unifies template truthiness.
+comparison, collection, and formatting functions with Go `text/template`, fixes
+pipeline handling, and unifies template truthiness.
 
 ### 🐛 Bug Fixes
 
@@ -52,6 +52,13 @@ handling, and unifies template truthiness.
   them.
 - Signed integer literals such as `-1` now preserve their sign instead of being
   interpreted as positive values during execution.
+- `print` now uses Go `Sprint` spacing: spaces are inserted only when adjacent
+  operands are both non-strings. `println` always separates operands with spaces.
+- `printf` now supports `%v`, `%T`, `%t`, `%q`, `%d`, `%s`, `%x`, `%X`, `%f`,
+  common flags, width, precision, and `%%` without relying directly on an
+  unvalidated Java format string.
+- Invalid `printf` verbs, malformed specifications, argument count mismatches,
+  and incompatible value types now produce clear execution errors.
 
 ### 🧪 Testing
 
@@ -68,6 +75,8 @@ handling, and unifies template truthiness.
   types, null keys, custom objects, custom Comparable keys, and nested maps.
 - Added nested indexing, missing-key policy, Optional, strict index type,
   negative literal, and index/slice boundary coverage.
+- Added formatting coverage for Go print spacing, core `printf` verbs, width,
+  precision, flags, quoting, arrays, nulls, pipeline use, and invalid input.
 
 ### 📚 Documentation
 
@@ -75,6 +84,8 @@ handling, and unifies template truthiness.
   documentation with the implemented escaping behavior.
 - Documented multi-dimensional indexing, zero-to-three-index slicing, strict
   bounds, and Java-specific string/list behavior.
+- Documented the supported `printf` subset, Java type/aggregate representations,
+  print spacing, and explicit formatting-error behavior.
 
 v0.10.0 (2026-05-23)
 

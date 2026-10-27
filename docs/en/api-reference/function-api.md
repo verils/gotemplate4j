@@ -239,9 +239,9 @@ The following functions are available by default in all templates:
 
 | Function | Description | Example |
 |----------|-------------|---------|
-| `print` | Convert args to string | `{{print .Name .Age}}` |
-| `printf` | Format string (Go-style) | `{{printf "%s is %d" .Name .Age}}` |
-| `println` | Convert args to string with newline | `{{println .Message}}` |
+| `print` | Join values using Go-style string/non-string spacing | `{{print .Name ":" .Age}}` |
+| `printf` | Format with supported Go-style verbs, flags, width, and precision | `{{printf "%s is %d" .Name .Age}}` |
+| `println` | Join values with spaces and append a newline | `{{println .Message}}` |
 
 ### Comparison Operators
 

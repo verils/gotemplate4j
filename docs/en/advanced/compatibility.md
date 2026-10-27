@@ -73,6 +73,11 @@ strings, and maps. Sequence indexes must be integral Java values, while map keys
 retain their Java object types. `slice` accepts zero to three indexes and
 performs strict bounds checks rather than clamping invalid ranges.
 
+`print` follows Go's string/non-string spacing rule. `println` always separates
+operands with spaces. `printf` supports `%v`, `%T`, `%t`, `%q`, `%d`, `%s`,
+`%x`, `%X`, `%f`, common flags, width, and precision; unsupported syntax and
+incompatible values raise explicit execution errors.
+
 ### Error Handling
 
 - **Parse errors**: Include source context showing where parsing failed.
@@ -242,7 +247,13 @@ Workaround: Convert data to Java arrays, collections, or maps before passing to 
 ### Numeric Formatting
 
 - **Complex number support**: Full Go numeric and complex formatting parity is not implemented.
-- **Format verbs**: Some advanced `printf` format verbs may have limited support compared to Go.
+- **Supported verbs**: Only `%v`, `%T`, `%t`, `%q`, `%d`, `%s`, `%x`, `%X`,
+  `%f`, and `%%` are supported.
+- **Type names**: `%T` returns Java fully qualified class names.
+- **Aggregate values**: `%v` uses Java collection/map/object representations and
+  `deepToString` for arrays rather than Go's recursive syntax.
+- **Errors**: Unsupported syntax, missing or extra arguments, and incompatible
+  value types raise errors instead of Go's `%!` diagnostic text.
 
 ### String and Character Literals
 

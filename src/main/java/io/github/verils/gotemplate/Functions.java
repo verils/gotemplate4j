@@ -2,6 +2,7 @@ package io.github.verils.gotemplate;
 
 import io.github.verils.gotemplate.internal.lang.ComparisonUtils;
 import io.github.verils.gotemplate.internal.lang.CollectionAccessUtils;
+import io.github.verils.gotemplate.internal.lang.PrintFormatUtils;
 import io.github.verils.gotemplate.internal.lang.Truthiness;
 
 import java.lang.reflect.Array;
@@ -49,39 +50,15 @@ public class Functions {
     }
 
     private static Function print() {
-        return args -> {
-            StringBuilder stringBuilder = new StringBuilder();
-            for (int i = 0; i < args.length; i++) {
-                stringBuilder.append(args[i]);
-                if (i < args.length - 1) {
-                    stringBuilder.append(' ');
-                }
-            }
-            return stringBuilder.toString();
-        };
+        return PrintFormatUtils::print;
     }
 
     private static Function printf() {
-        return args -> {
-            int realArgsLength = args.length - 1;
-            Object[] realArgs = new Object[realArgsLength];
-            System.arraycopy(args, 1, realArgs, 0, realArgsLength);
-            return String.format(String.valueOf(args[0]), realArgs);
-        };
+        return PrintFormatUtils::printf;
     }
 
     private static Function println() {
-        return args -> {
-            StringBuilder stringBuilder = new StringBuilder();
-            for (int i = 0; i < args.length; i++) {
-                stringBuilder.append(args[i]);
-                if (i < args.length - 1) {
-                    stringBuilder.append(' ');
-                }
-            }
-            stringBuilder.append("\n");
-            return stringBuilder.toString();
-        };
+        return PrintFormatUtils::println;
     }
 
     // Comparison operators

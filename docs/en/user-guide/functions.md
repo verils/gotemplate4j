@@ -344,7 +344,7 @@ Logical NOT.
 
 #### printf
 
-Format string using Go-style format specifiers.
+Format a string using the supported Go-style format verbs.
 
 ```gotemplate
 {{printf "Hello, %s!" "World"}}
@@ -356,35 +356,60 @@ Format string using Go-style format specifiers.
 {{printf "%.2f" 3.14159}}
 <!-- Output: 3.14 -->
 
-{{printf "%s is %d years old" .Name .Age}}
+{{printf "%05d" 42}}
+<!-- Output: 00042 -->
+
+{{printf "%#x %q %T" 255 "hello" .Age}}
 ```
 
-Common format specifiers:
-- `%s` - String
-- `%d` - Integer
-- `%f` - Float
-- `%.2f` - Float with 2 decimal places
+Supported verbs:
+- `%v` - Default value representation; arrays use `deepToString`
+- `%T` - Java fully qualified class name, or `<nil>` for null
 - `%t` - Boolean
-- `%v` - Any value
+- `%q` - Quoted and escaped string or Character
+- `%d` - Integer
+- `%s` - String or Character
+- `%x`, `%X` - Lowercase or uppercase hexadecimal integer
+- `%f` - Floating-point value
+- `%%` - Literal percent sign
+
+The `-`, `+`, space, `0`, and `#` flags, decimal width, and `.precision` are
+supported where Java formatting defines them. Dynamic width/precision (`*`) and
+argument indexes such as `%[1]s` are not supported.
+
+Collections, maps, and ordinary objects use their Java text representation;
+Go's recursive aggregate formatting is not emulated. Unsupported verbs,
+malformed specifications, argument count mismatches, and incompatible value
+types raise a template execution error.
 
 #### print
 
-Convert arguments to strings and concatenate.
+Convert arguments using the default `%v` representation. A space is inserted
+only when neither the current nor the previous operand is a string.
 
 ```gotemplate
 {{print "Hello" " " "World"}}
 <!-- Output: Hello World -->
+
+{{print "hello" "world"}}
+<!-- Output: helloworld -->
+
+{{print 1 2}}
+<!-- Output: 1 2 -->
 
 {{print .Name " (" .Age ")"}}
 ```
 
 #### println
 
-Like print but adds newline at end.
+Like print, but always places one space between operands and appends a newline.
 
 ```gotemplate
 {{println "Hello" "World"}}
 <!-- Output: Hello World\n -->
+
+{{println}}
+<!-- Output: a single newline -->
 ```
 
 ### Type Functions
