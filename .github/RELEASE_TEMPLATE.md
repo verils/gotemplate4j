@@ -2,6 +2,8 @@
 
 **{{DATE}}**
 
+[中文](#中文) | [English](#english)
+
 ## 中文
 
 {{SUMMARY_ZH}}
@@ -26,7 +28,7 @@
 
 {{TESTING_ZH}}
 
-**总计：{{TOTAL_TESTS}}+ 个测试，零失败**
+**总计：{{TOTAL_TESTS}} 个测试，零失败**
 
 ### 📦 升级说明
 
@@ -38,7 +40,8 @@
 
 ---
 
-<details>
+<!-- 首个双语过渡版本保留 open；后续版本可移除 open 以折叠英文区。 -->
+<details open id="english">
 <summary><strong>English</strong></summary>
 
 ## English
@@ -65,7 +68,7 @@
 
 {{TESTING_EN}}
 
-**Total: {{TOTAL_TESTS}}+ tests, zero failures**
+**Total: {{TOTAL_TESTS}} tests, zero failures**
 
 ### 📦 Upgrade Notes
 
@@ -79,4 +82,4 @@ Thanks to all contributors and early adopters who helped shape this release!
 
 ---
 
-[完整中文变更日志](https://github.com/verils/gotemplate4j/blob/master/CHANGELOG.md) · [Full English changelog](https://github.com/verils/gotemplate4j/blob/master/CHANGELOG_en.md) · [报告问题 / Report an issue](https://github.com/verils/gotemplate4j/issues)
+[完整中文变更日志](https://github.com/verils/gotemplate4j/blob/v{{VERSION}}/CHANGELOG.md) · [Full English changelog](https://github.com/verils/gotemplate4j/blob/v{{VERSION}}/CHANGELOG_en.md) · [报告问题 / Report an issue](https://github.com/verils/gotemplate4j/issues)
