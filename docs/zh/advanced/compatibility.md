@@ -211,7 +211,7 @@ template.option("missingkey=error");
   // 替代 ParseFS 的做法：
   template.parseFile(Paths.get("template.tmpl"));
   template.parseFiles(Paths.get("file1.tmpl"), Paths.get("file2.tmpl"));
-  template.parseGlob(Paths.get("templates/*.tmpl"));
+  template.parseGlob(Paths.get("templates"), "**/*.tmpl");
   ```
 
 ### Range 限制
@@ -293,15 +293,15 @@ template.option("missingkey=error");
 Template template = new Template("mytemplate");
 template.parseFile(Paths.get("templates/mytemplate.tmpl"));
 
-// 从多个文件加载
+// 从多个文件加载；根模板按完整文件名注册
 template.parseFiles(
     Paths.get("base.tmpl"),
     Paths.get("partials/header.tmpl"),
     Paths.get("partials/footer.tmpl")
 );
 
-// 从 glob 模式加载
-template.parseGlob(Paths.get("templates/*.tmpl"));
+// 使用完整 glob 模式加载
+template.parseGlob(Paths.get("templates"), "pages/**/*.tmpl");
 
 // 从 InputStream 或 Reader 加载（调用者管理的 IO）
 try (InputStream is = getClass().getResourceAsStream("/template.tmpl")) {

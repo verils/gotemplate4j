@@ -305,13 +305,13 @@ template.parseFiles(
 
 ```java
 Template template = new Template("base");
-template.parseGlob("templates/*.tmpl");
+template.parseGlob(Paths.get("templates"), "*.tmpl");
 ```
 
 或使用模式：
 
 ```java
-template.parseGlob("templates/pages/*.tmpl");
+template.parseGlob(Paths.get("templates"), "pages/*.tmpl");
 ```
 
 ## 模板查找

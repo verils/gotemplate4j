@@ -707,7 +707,7 @@ String result = w.toString();
 
 ## 文件加载示例（v0.9.0+）
 
-用于从各种来源加载模板的新静态方法。
+从文件、目录和 classpath 资源加载模板。
 
 ### 从 Classpath 加载
 
@@ -720,7 +720,7 @@ import java.util.Map;
 public class ClasspathExample {
     public static void main(String[] args) throws Exception {
         // 从 classpath 加载模板
-        Template template = Template.parseFromClasspath("/templates/email.tmpl");
+        Template template = Template.fromClasspath("templates/email.tmpl");
         
         Map<String, Object> data = new HashMap<>();
         data.put("subject", "Welcome!");
@@ -744,12 +744,12 @@ import java.util.Map;
 public class DirectoryExample {
     public static void main(String[] args) throws Exception {
         // 从目录加载所有 .tmpl 文件
-        Map<String, Template> templates = Template.parseDirectory(Paths.get("templates"));
+        Map<String, Template> templates = Template.fromDirectory(Paths.get("templates"));
         
-        // 按名称访问单个模板（不含扩展名的文件名）
-        Template header = templates.get("header");
-        Template footer = templates.get("footer");
-        Template body = templates.get("body");
+        // 按完整文件名访问单个模板
+        Template header = templates.get("header.tmpl");
+        Template footer = templates.get("footer.tmpl");
+        Template body = templates.get("body.tmpl");
         
         // 使用它们...
     }
@@ -763,17 +763,18 @@ import io.github.verils.gotemplate.Template;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Paths;
 import java.io.StringWriter;
+import java.util.HashMap;
 
 public class EncodingExample {
     public static void main(String[] args) throws Exception {
         // 使用 UTF-8 编码加载
-        Template template = Template.parseFile(
+        Template template = Template.fromFile(
             Paths.get("templates/chinese.tmpl"), 
             StandardCharsets.UTF_8
         );
         
         StringWriter writer = new StringWriter();
-        template.execute(writer, data);
+        template.execute(writer, new HashMap<String, Object>());
         
         System.out.println(writer.toString());
     }
@@ -789,7 +790,7 @@ import java.util.List;
 public class BatchClasspathExample {
     public static void main(String[] args) throws Exception {
         // 加载匹配模式的所有模板
-        List<Template> templates = Template.parseClasspathResources("/templates/*.tmpl");
+        List<Template> templates = Template.fromClasspathResources("templates/**/*.tmpl");
         
         // 处理每个模板
         for (Template tmpl : templates) {

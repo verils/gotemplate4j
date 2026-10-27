@@ -132,17 +132,19 @@ public class User {
 
 ```java
 // 解析单个文件
-Template tmpl = Template.parseFile("path/to/template.tmpl");
+Template tmpl = Template.fromFile(Paths.get("path/to/template.tmpl"));
 
-// 解析多个文件
-Template tmpl = Template.parseFiles(
-    "header.tmpl",
-    "footer.tmpl", 
-    "content.tmpl"
+// 将多个文件解析到一个模板集合
+Template set = new Template("pages");
+set.parseFiles(
+    Paths.get("header.tmpl"),
+    Paths.get("footer.tmpl"),
+    Paths.get("content.tmpl")
 );
 
-// 使用 glob 模式解析
-Template tmpl = Template.parseGlob("templates/*.tmpl");
+// 解析目录中所有匹配文件
+Template set = new Template("pages");
+set.parseGlob(Paths.get("templates"), "**/*.tmpl");
 ```
 
 ---
@@ -442,8 +444,8 @@ ConcurrentHashMap<String, Template> cache = new ConcurrentHashMap<>();
 public Template getTemplate(String name) {
     return cache.computeIfAbsent(name, n -> {
         try {
-            return Template.parseFile(n + ".tmpl");
-        } catch (IOException e) {
+            return Template.fromFile(Paths.get(n + ".tmpl"));
+        } catch (Exception e) {
             throw new RuntimeException(e);
         }
     });
@@ -600,7 +602,7 @@ public class TemplateService {
     
     @PostConstruct
     public void init() throws IOException {
-        templates.put("email", Template.parseFile("templates/email.tmpl"));
+        templates.put("email", Template.fromFile(Paths.get("templates/email.tmpl")));
     }
     
     public String render(String name, Object data) {
@@ -646,10 +648,10 @@ v0.9.1 需要 **Java 8 或更高版本**。v0.9.x 系列是最后一个支持 Ja
 
 ### 如何从 classpath 加载模板？
 
-使用新的静态方法：
+使用静态 classpath 工厂方法：
 
 ```java
-Template template = Template.parseFromClasspath("/templates/email.tmpl");
+Template template = Template.fromClasspath("templates/email.tmpl");
 ```
 
 这在 Web 应用和 JAR 部署（模板打包在应用内部）中特别有用。
@@ -659,10 +661,10 @@ Template template = Template.parseFromClasspath("/templates/email.tmpl");
 使用 `parseDirectory()` 一次性加载所有 `.tmpl` 文件：
 
 ```java
-Map<String, Template> templates = Template.parseDirectory(Paths.get("templates"));
+Map<String, Template> templates = Template.fromDirectory(Paths.get("templates"));
 
-// 通过文件名（不含扩展名）访问
-Template header = templates.get("header");
+// 通过完整文件名访问
+Template header = templates.get("header.tmpl");
 ```
 
 ### 加载模板时可以指定文件编码吗？
@@ -670,7 +672,7 @@ Template header = templates.get("header");
 可以！使用带 Charset 参数的 `parseFile()`：
 
 ```java
-Template template = Template.parseFile(
+Template template = Template.fromFile(
     Paths.get("template.tmpl"), 
     StandardCharsets.UTF_8
 );

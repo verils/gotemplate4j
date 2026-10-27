@@ -371,7 +371,7 @@ tmpl, err := template.ParseFS(os.DirFS("templates"), "*.tmpl")
 Template template = new Template("demo");
 template.parseFile(Paths.get("templates/demo.tmpl"));
 template.parseFiles(Paths.get("templates/base.tmpl"), Paths.get("templates/page.tmpl"));
-template.parseGlob(Paths.get("templates/*.tmpl"));
+template.parseGlob(Paths.get("templates"), "*.tmpl");
 ```
 
 ### Channels and Iterators

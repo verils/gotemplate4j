@@ -72,22 +72,22 @@ template.execute(writer, user);
 System.out.print(writer.toString());  // "Hello Bob!"
 ```
 
-### 增强的文件加载 (v0.9.0+)
+### 文件和 Classpath 加载
 
 从 classpath、目录或指定编码加载模板：
 
 ```java
 // 从 classpath 加载
-Template tmpl = Template.parseFromClasspath("templates/email.tmpl");
+Template tmpl = Template.fromClasspath("templates/email.tmpl");
 
 // 从目录加载（所有 .tmpl 文件）
-Map<String, Template> templates = Template.parseDirectory(Paths.get("templates"));
+Map<String, Template> templates = Template.fromDirectory(Paths.get("templates"));
 
 // 使用指定编码加载
-Template tmpl = Template.parseFile(Paths.get("template.tmpl"), StandardCharsets.UTF_8);
+Template tmpl = Template.fromFile(Paths.get("template.tmpl"), StandardCharsets.UTF_8);
 
 // 批量从 classpath 加载（支持模式匹配）
-List<Template> templates = Template.parseClasspathResources("templates/*.tmpl");
+List<Template> templates = Template.fromClasspathResources("templates/*.tmpl");
 ```
 
 更多示例，请参阅 [基础示例](./docs/zh/examples/basic-examples.md)。

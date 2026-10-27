@@ -219,7 +219,7 @@ These Go template features are not currently supported in gotemplate4j.
   // Instead of ParseFS, use:
   template.parseFile(Paths.get("template.tmpl"));
   template.parseFiles(Paths.get("file1.tmpl"), Paths.get("file2.tmpl"));
-  template.parseGlob(Paths.get("templates/*.tmpl"));
+  template.parseGlob(Paths.get("templates"), "**/*.tmpl");
   ```
 
 ### Range Limitations
@@ -302,15 +302,15 @@ Instead of Go's filesystem abstractions, use Java IO:
 Template template = new Template("mytemplate");
 template.parseFile(Paths.get("templates/mytemplate.tmpl"));
 
-// Load from multiple files
+// Load multiple files; roots are named by complete file name
 template.parseFiles(
     Paths.get("base.tmpl"),
     Paths.get("partials/header.tmpl"),
     Paths.get("partials/footer.tmpl")
 );
 
-// Load from glob pattern
-template.parseGlob(Paths.get("templates/*.tmpl"));
+// Load from a full glob pattern
+template.parseGlob(Paths.get("templates"), "pages/**/*.tmpl");
 
 // Load from InputStream or Reader (caller-managed IO)
 try (InputStream is = getClass().getResourceAsStream("/template.tmpl")) {

@@ -4,6 +4,8 @@ import io.github.verils.gotemplate.internal.ClassMetadata;
 import io.github.verils.gotemplate.internal.Executor;
 import io.github.verils.gotemplate.internal.IOUtils;
 import io.github.verils.gotemplate.internal.Parser;
+import io.github.verils.gotemplate.internal.TemplateResourceLoader;
+import io.github.verils.gotemplate.internal.TemplateResourceLoader.Resource;
 import io.github.verils.gotemplate.internal.ast.ListNode;
 import io.github.verils.gotemplate.internal.ast.Node;
 import io.github.verils.gotemplate.internal.ast.TextNode;
@@ -456,8 +458,12 @@ public class Template {
      * @see #parse(Reader)
      */
     public void parse(String template) throws TemplateParseException {
+        parseAs(name, template);
+    }
+
+    private void parseAs(String templateName, String template) throws TemplateParseException {
         Parser parser = new Parser(functions, leftDelimiter, rightDelimiter, leftComment, rightComment);
-        Map<String, Node> nodes = parser.parse(name, template);
+        Map<String, Node> nodes = parser.parse(templateName, template);
         nodes.forEach((name, node) -> {
             if (!this.nodes.containsKey(name)) {
                 this.nodes.put(name, node);
@@ -468,6 +474,12 @@ public class Template {
                 this.nodes.put(name, node);
             }
         });
+    }
+
+    private void parseResources(List<Resource> resources) throws TemplateParseException {
+        for (Resource resource : resources) {
+            parseAs(resource.name(), resource.content());
+        }
     }
 
     private boolean isNotEmpty(Node currentNode) {
@@ -541,9 +553,10 @@ public class Template {
     /**
      * Parses template content from a file.
      * <p>
-     * The file is read using UTF-8 encoding. The template name for definitions inside
-     * the file will default to the file's base name (without extension) unless explicitly
-     * defined within the template text.
+     * The file is read using UTF-8 encoding and merged into this template set. The root
+     * template keeps this instance's {@link #name() name}; explicit definitions use their
+     * declared names. Use {@link #fromFile(Path)} when the file name should become the root
+     * template name.
      *
      * @param path the path to the file
      * @throws TemplateParseException if the template contains syntax errors or parsing issues
@@ -566,6 +579,13 @@ public class Template {
      * @since 0.9.0
      */
     public void parseFile(Path path, Charset charset) throws TemplateParseException, IOException {
+        parse(readTemplateFile(path, charset));
+    }
+
+    private String readTemplateFile(Path path, Charset charset) throws IOException {
+        if (path == null) {
+            throw new IllegalArgumentException("Template file path cannot be null");
+        }
         if (!Files.exists(path)) {
             throw new IOException(String.format(
                     "Template file not found: %s\n" +
@@ -573,16 +593,17 @@ public class Template {
                             "Tip: Check if the file exists and the path is correct.",
                     path, path.toAbsolutePath()));
         }
-        try (InputStream in = Files.newInputStream(path)) {
-            parse(in, charset);
+        if (!Files.isRegularFile(path)) {
+            throw new IOException("Template path is not a regular file: " + path.toAbsolutePath());
         }
+        return Files.readString(path, charset);
     }
 
     /**
      * Parses template content from multiple files.
      * <p>
-     * Each file is processed as if by {@link #parseFile(Path)}. If multiple files define
-     * the same template name, the last one parsed wins (unless it is empty).
+     * Each file is registered under its complete file name, including the extension.
+     * Explicit definitions are also added to this template set.
      *
      * @param paths the paths to the files
      * @throws TemplateParseException if any template contains syntax errors or parsing issues
@@ -590,16 +611,31 @@ public class Template {
      * @since 0.6.0
      */
     public void parseFiles(Path... paths) throws TemplateParseException, IOException {
+        if (paths == null) {
+            throw new IllegalArgumentException("Template file paths cannot be null");
+        }
+        Set<String> names = new HashSet<>();
         for (Path path : paths) {
-            parseFile(path);
+            if (path == null) {
+                throw new IllegalArgumentException("Template file path cannot be null");
+            }
+            Path fileName = path.getFileName();
+            if (fileName == null) {
+                throw new IllegalArgumentException("Template file path has no file name: " + path);
+            }
+            String templateName = fileName.toString();
+            if (!names.add(templateName)) {
+                throw new IOException("Duplicate template file name in parseFiles: " + templateName);
+            }
+            parseAs(templateName, readTemplateFile(path, StandardCharsets.UTF_8));
         }
     }
 
     /**
      * Parses all template files (.tmpl) in the specified directory.
      * <p>
-     * This is a convenience method that parses all files with the .tmpl extension
-     * in the given directory. Files are parsed in the order returned by the file system.
+     * This is a convenience method that parses top-level files with the {@code .tmpl}
+     * extension. Each root template is named using its complete file name.
      *
      * @param directory the directory containing template files
      * @throws TemplateParseException if any template contains syntax errors or parsing issues
@@ -607,28 +643,15 @@ public class Template {
      * @since 0.9.0
      */
     public void parseDirectory(Path directory) throws TemplateParseException, IOException {
-        if (!Files.exists(directory)) {
-            throw new IOException(String.format(
-                    "Template directory not found: %s\n" +
-                            "Absolute path: %s\n" +
-                            "Tip: Check if the directory exists and the path is correct.",
-                    directory, directory.toAbsolutePath()));
-        }
-        if (!Files.isDirectory(directory)) {
-            throw new IOException(String.format(
-                    "Path is not a directory: %s\n" +
-                            "Tip: Provide a valid directory path.",
-                    directory));
-        }
         parseGlob(directory, "*.tmpl");
     }
 
     /**
      * Parses template files matching a glob pattern in a directory.
      * <p>
-     * This method searches the given directory for files matching the glob pattern
-     * (e.g., "*.tmpl") and parses them. The order of parsing is determined by the
-     * underlying file system iteration.
+     * This method searches the directory tree for regular files matching the glob
+     * pattern and parses them in stable path order. {@code **} can match nested
+     * directories. Each root template uses its complete file name.
      *
      * @param directory the directory to search
      * @param glob      the glob pattern (e.g., "*.tmpl", "*.html")
@@ -637,20 +660,13 @@ public class Template {
      * @since 0.6.0
      */
     public void parseGlob(Path directory, String glob) throws TemplateParseException, IOException {
-        final PathMatcher matcher = FileSystems.getDefault().getPathMatcher("glob:" + glob);
-        try (DirectoryStream<Path> stream = Files.newDirectoryStream(directory, entry -> matcher.matches(entry.getFileName()))) {
-            for (Path path : stream) {
-                if (Files.isRegularFile(path)) {
-                    parseFile(path);
-                }
-            }
-        }
+        parseResources(TemplateResourceLoader.loadFiles(directory, glob));
     }
 
     /**
      * Parses template content from a classpath resource.
      * <p>
-     * The resource is loaded using the current thread's context class loader.
+     * The resource is loaded using the context, library, and system class loaders.
      * The resource path can be absolute (starting with '/') or relative.
      * <p>
      * Example usage:
@@ -669,66 +685,7 @@ public class Template {
      * @since 0.9.0
      */
     public void parseFromClasspath(String resourcePath) throws TemplateParseException, IOException {
-        if (resourcePath == null || resourcePath.isEmpty()) {
-            throw new IllegalArgumentException("Resource path cannot be null or empty");
-        }
-
-        // For ClassLoader.getResourceAsStream(), remove leading '/' as it expects relative paths
-        String normalizedPath = resourcePath.startsWith("/") ? resourcePath.substring(1) : resourcePath;
-
-        // Try multiple class loaders for better compatibility
-        InputStream in = null;
-        ClassLoader classLoader = null;
-
-        // First try: Thread context class loader
-        try {
-            classLoader = Thread.currentThread().getContextClassLoader();
-            if (classLoader != null) {
-                in = classLoader.getResourceAsStream(normalizedPath);
-            }
-        } catch (Exception e) {
-            // Ignore and try next approach
-        }
-
-        // Second try: This class's class loader
-        if (in == null) {
-            try {
-                classLoader = Template.class.getClassLoader();
-                if (classLoader != null) {
-                    in = classLoader.getResourceAsStream(normalizedPath);
-                }
-            } catch (Exception e) {
-                // Ignore and try next approach
-            }
-        }
-
-        // Third try: System class loader
-        if (in == null) {
-            try {
-                classLoader = ClassLoader.getSystemClassLoader();
-                if (classLoader != null) {
-                    in = classLoader.getResourceAsStream(normalizedPath);
-                }
-            } catch (Exception e) {
-                // Ignore
-            }
-        }
-
-        if (in == null) {
-            throw new IOException(String.format(
-                    "Template resource not found: %s\n" +
-                            "Searched in classpath using ClassLoader: %s\n" +
-                            "Tip: Ensure the resource exists and the path is correct (case-sensitive).\n" +
-                            "Note: Resource paths should not start with '/'.",
-                    resourcePath,
-                    classLoader != null ? classLoader.getClass().getName() : "null"));
-        }
-
-        try {
-            parse(in);
-        } finally {
-            in.close();
-        }
+        parse(TemplateResourceLoader.loadClasspathResource(resourcePath).content());
     }
 
     /**
@@ -741,84 +698,112 @@ public class Template {
      * depending on the environment (standalone JVM vs application servers).
      *
      * @param pattern the glob pattern to match resources (e.g., "/templates/*.tmpl")
-     * @return a new Template instance containing all parsed templates
+     * @return a new template set containing every matched root and definition
      * @throws TemplateParseException   if any template contains syntax errors or parsing issues
      * @throws IOException              if any resource cannot be found or read
      * @throws IllegalArgumentException if pattern is null or empty
      * @since 0.9.0
      */
     public static Template parseClasspathResources(String pattern) throws TemplateParseException, IOException {
-        if (pattern == null || pattern.isEmpty()) {
-            throw new IllegalArgumentException("Pattern cannot be null or empty");
+        return templateSet(TemplateResourceLoader.loadClasspath(pattern));
+    }
+
+    /**
+     * Creates a template named after the complete file name and parses the file as UTF-8.
+     *
+     * @param path template file
+     * @return parsed template
+     * @throws TemplateParseException if parsing fails
+     * @throws IOException            if the file cannot be read
+     * @since 0.11.0
+     */
+    public static Template fromFile(Path path) throws TemplateParseException, IOException {
+        return fromFile(path, StandardCharsets.UTF_8);
+    }
+
+    /**
+     * Creates a template named after the complete file name and parses the file.
+     *
+     * @param path    template file
+     * @param charset file encoding
+     * @return parsed template
+     * @throws TemplateParseException if parsing fails
+     * @throws IOException            if the file cannot be read
+     * @since 0.11.0
+     */
+    public static Template fromFile(Path path, Charset charset) throws TemplateParseException, IOException {
+        if (path == null) {
+            throw new IllegalArgumentException("Template file path cannot be null");
         }
-
-        // Extract base path and pattern for matching
-        String basePath = pattern;
-        String globPattern;
-
-        int lastSlash = pattern.lastIndexOf('/');
-        if (lastSlash > 0) {
-            String fileNamePattern = pattern.substring(lastSlash + 1);
-            // Handle simple wildcards
-            if (fileNamePattern.contains("*")) {
-                globPattern = fileNamePattern;
-            } else {
-                globPattern = fileNamePattern;
-            }
-        } else {
-            globPattern = "*.tmpl";
+        Path fileName = path.getFileName();
+        if (fileName == null) {
+            throw new IllegalArgumentException("Template file path has no file name: " + path);
         }
+        Template template = new Template(fileName.toString());
+        template.parseFile(path, charset);
+        return template;
+    }
 
-        ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
-        if (classLoader == null) {
-            classLoader = Template.class.getClassLoader();
+    /**
+     * Creates a template named after the complete classpath file name and parses it as UTF-8.
+     *
+     * @param resourcePath exact classpath resource path
+     * @return parsed template
+     * @throws TemplateParseException if parsing fails
+     * @throws IOException            if the resource cannot be read
+     * @since 0.11.0
+     */
+    public static Template fromClasspath(String resourcePath) throws TemplateParseException, IOException {
+        Resource resource = TemplateResourceLoader.loadClasspathResource(resourcePath);
+        Template template = new Template(resource.name());
+        template.parse(resource.content());
+        return template;
+    }
+
+    /**
+     * Loads all matching files below a directory as independent templates.
+     *
+     * @param directory root directory
+     * @return immutable map keyed by complete file name, in stable path order
+     * @throws TemplateParseException if parsing fails
+     * @throws IOException            if no files match or a file cannot be read
+     * @since 0.11.0
+     */
+    public static Map<String, Template> fromDirectory(Path directory) throws TemplateParseException, IOException {
+        List<Resource> resources = TemplateResourceLoader.loadFiles(directory, "*.tmpl");
+        Template set = templateSet(resources);
+        Map<String, Template> templates = new LinkedHashMap<>();
+        for (Resource resource : resources) {
+            templates.put(resource.name(), set.lookup(resource.name()));
         }
+        return Collections.unmodifiableMap(templates);
+    }
 
-        // Create a temporary template to hold all parsed content
-        Template template = new Template("classpath-resources");
-
-        // Attempt to get resources from classpath using the classloader
-        java.net.URL baseUrl = classLoader.getResource(basePath.startsWith("/") ? basePath.substring(1) : basePath);
-        if (baseUrl != null && baseUrl.getProtocol().equals("file")) {
-            // If it's a file URL, we can scan the directory
-            java.io.File baseDir = new java.io.File(baseUrl.getPath());
-            if (baseDir.isDirectory()) {
-                java.io.File[] files = baseDir.listFiles((dir, name) -> {
-                    java.nio.file.PathMatcher matcher = java.nio.file.FileSystems.getDefault().getPathMatcher("glob:" + globPattern);
-                    return matcher.matches(java.nio.file.Paths.get(name));
-                });
-
-                if (files != null) {
-                    for (java.io.File file : files) {
-                        if (file.isFile()) {
-                            template.parseFile(java.nio.file.Paths.get(file.getAbsolutePath()));
-                        }
-                    }
-                }
-            }
-        } else {
-            // Fallback: try to load specific resources if pattern is not a directory
-            // This is a simplified approach for JAR resources
-            // We'll try to load resources based on common naming conventions
-            java.util.Enumeration<java.net.URL> resources = classLoader.getResources(
-                    pattern.startsWith("/") ? pattern.substring(1) : pattern);
-
-            java.io.ByteArrayOutputStream buffer = new java.io.ByteArrayOutputStream();
-            byte[] data = new byte[1024];
-            while (resources.hasMoreElements()) {
-                java.net.URL url = resources.nextElement();
-                try (java.io.InputStream inputStream = url.openStream()) {
-                    int n;
-                    while ((n = inputStream.read(data, 0, data.length)) != -1) {
-                        buffer.write(data, 0, n);
-                    }
-                    String content = buffer.toString("UTF-8");
-                    template.parse(content);
-                    buffer.reset(); // Reset for next resource
-                }
-            }
+    /**
+     * Loads all matching classpath resources as independent templates.
+     *
+     * @param pattern exact path or complete glob pattern
+     * @return immutable templates in stable resource path order
+     * @throws TemplateParseException if parsing fails
+     * @throws IOException            if no resource matches or a resource cannot be read
+     * @since 0.11.0
+     */
+    public static List<Template> fromClasspathResources(String pattern)
+            throws TemplateParseException, IOException {
+        List<Resource> resources = TemplateResourceLoader.loadClasspath(pattern);
+        Template set = templateSet(resources);
+        List<Template> templates = new ArrayList<>();
+        for (Resource resource : resources) {
+            templates.add(set.lookup(resource.name()));
         }
+        return Collections.unmodifiableList(templates);
+    }
 
+    private static Template templateSet(List<Resource> resources) throws TemplateParseException {
+        Template template = new Template(resources.get(0).name());
+        for (Resource resource : resources) {
+            template.parseAs(resource.name(), resource.content());
+        }
         return template;
     }
 

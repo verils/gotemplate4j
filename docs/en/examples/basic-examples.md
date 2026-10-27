@@ -707,7 +707,7 @@ All examples in this document have been tested and verified to work correctly wi
 
 ## File Loading Examples (v0.9.0+)
 
-New static methods for loading templates from various sources.
+Load templates from files, directories, and classpath resources.
 
 ### Load from Classpath
 
@@ -720,7 +720,7 @@ import java.util.Map;
 public class ClasspathExample {
     public static void main(String[] args) throws Exception {
         // Load template from classpath
-        Template template = Template.parseFromClasspath("/templates/email.tmpl");
+        Template template = Template.fromClasspath("templates/email.tmpl");
         
         Map<String, Object> data = new HashMap<>();
         data.put("subject", "Welcome!");
@@ -744,12 +744,12 @@ import java.util.Map;
 public class DirectoryExample {
     public static void main(String[] args) throws Exception {
         // Load all .tmpl files from directory
-        Map<String, Template> templates = Template.parseDirectory(Paths.get("templates"));
+        Map<String, Template> templates = Template.fromDirectory(Paths.get("templates"));
         
-        // Access individual templates by name (filename without extension)
-        Template header = templates.get("header");
-        Template footer = templates.get("footer");
-        Template body = templates.get("body");
+        // Access individual templates by complete file name
+        Template header = templates.get("header.tmpl");
+        Template footer = templates.get("footer.tmpl");
+        Template body = templates.get("body.tmpl");
         
         // Use them...
     }
@@ -763,17 +763,18 @@ import io.github.verils.gotemplate.Template;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Paths;
 import java.io.StringWriter;
+import java.util.HashMap;
 
 public class EncodingExample {
     public static void main(String[] args) throws Exception {
         // Load with UTF-8 encoding
-        Template template = Template.parseFile(
+        Template template = Template.fromFile(
             Paths.get("templates/chinese.tmpl"), 
             StandardCharsets.UTF_8
         );
         
         StringWriter writer = new StringWriter();
-        template.execute(writer, data);
+        template.execute(writer, new HashMap<String, Object>());
         
         System.out.println(writer.toString());
     }
@@ -789,7 +790,7 @@ import java.util.List;
 public class BatchClasspathExample {
     public static void main(String[] args) throws Exception {
         // Load all templates matching pattern
-        List<Template> templates = Template.parseClasspathResources("/templates/*.tmpl");
+        List<Template> templates = Template.fromClasspathResources("templates/**/*.tmpl");
         
         // Process each template
         for (Template tmpl : templates) {

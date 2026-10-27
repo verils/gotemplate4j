@@ -305,13 +305,13 @@ Parse all matching files:
 
 ```java
 Template template = new Template("base");
-template.parseGlob("templates/*.tmpl");
+template.parseGlob(Paths.get("templates"), "*.tmpl");
 ```
 
 Or with pattern:
 
 ```java
-template.parseGlob("templates/pages/*.tmpl");
+template.parseGlob(Paths.get("templates"), "pages/*.tmpl");
 ```
 
 ## Template Lookup

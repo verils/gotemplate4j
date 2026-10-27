@@ -346,7 +346,23 @@ gotemplate4j 应继续作为一个小型、无运行时外部依赖的 Java 版 
 - 普通目录、JAR 资源、glob、缺失资源、空目录均有测试。
 - `parseDirectory` 能分别执行多个独立模板。
 
-**状态**：待处理
+**处理说明（2026-10-27）**：
+
+- 保留现有实例方法签名：`parseFile` 和 `parseFromClasspath` 继续写入当前根模板；
+  `parseFiles`、`parseDirectory` 和 `parseGlob` 改为按完整文件名注册独立根模板。
+- 新增静态接口 `fromFile`、`fromClasspath`、`fromDirectory` 和
+  `fromClasspathResources`；`fromDirectory` 返回稳定顺序的不可变映射，
+  `fromClasspathResources` 返回排序后的独立模板列表。
+- 新增内部资源扫描器，统一文件目录、classpath 文件根和 JAR 条目扫描；JAR 扫描不依赖
+  显式目录条目，也不会解压资源。
+- Glob 使用完整 `*`、`?`、字符类和 `**` 语义，`**/` 额外支持零层目录；扫描结果稳定排序。
+- 空目录、无匹配资源、重复文件名和路径穿越均明确报错，不再返回空模板。
+- `TemplateFileHelperTest` 已覆盖单文件、批量文件、目录、完整 glob、静态工厂、空匹配、
+  重名和临时 JAR；README、FAQ、API 参考、示例、兼容性文档和 `CHANGELOG` 已同步。
+- Java 11 下 `./mvnw clean verify "-Dgpg.skip=true"` 通过，981 个测试全部成功；
+  JaCoCo 指令覆盖率 91.35%，分支覆盖率 87.73%。
+
+**状态**：已完成
 
 #### B6. 修复模板定义和根模板语义
 
@@ -734,7 +750,7 @@ gotemplate4j 应继续作为一个小型、无运行时外部依赖的 Java 版 
 ## 八、当前状态快照
 
 > 2026-10-27 状态同步：A1–A4、由 A2 合并处理的 C3、以及 B1 均已完成人工复核并提交；
-> B2、B3、B4 已完成人工复核并提交；下一项为 B5。
+> B2、B3、B4、B5 已完成人工复核并提交；下一项为 B6。
 
 | 工作项 | 状态 | 下一步 |
 | --- | --- | --- |
@@ -747,7 +763,8 @@ gotemplate4j 应继续作为一个小型、无运行时外部依赖的 Java 版 
 | B2 `index`/`slice` 多维与边界 | 已完成 | 无 |
 | B3 `printf`/`print`/`println` | 已完成 | 无 |
 | B4 动作内 `/*` 注释误判 | 已完成 | 无 |
-| B5–B6 运行时与 API | 待处理 | 从 B5 开始按顺序处理 |
+| B5 文件与 classpath 加载 API | 已完成 | 无 |
+| B6 模板定义与根模板语义 | 待处理 | 下一步开始 |
 | C1–C7 契约一致性 | 部分完成 | C3 已完成；其余项在 A、B 阶段后处理 |
 | D1–D3 文档、测试、构建 | 待处理 | 随修复同步推进 |
 | D4 错误诊断 | 待复核 | 处理旧计划时复核 |

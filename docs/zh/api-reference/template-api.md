@@ -483,177 +483,151 @@ System.out.println("当前策略: " + policy);
 
 ### `void parseFile(Path path)`
 
-从文件解析模板内容，使用 UTF-8 编码。
+使用 UTF-8 解析文件并合并到当前模板集合；根模板保持当前 Template 名称。
 
 ```java
-Path templatePath = Paths.get("templates/greeting.tmpl");
-template.parseFile(templatePath);
+template.parseFile(Paths.get("templates/greeting.tmpl"));
 ```
-
-**参数：**
-- `path` - 文件路径
-
-**抛出异常：**
-- 如果解析失败，抛出 `TemplateParseException`
-- 如果无法读取文件，抛出 `IOException`
 
 **Since:** 0.6.0
 
 ---
 
-### `static Template parseFile(Path path, Charset charset)`
+### `void parseFile(Path path, Charset charset)`
 
-🆕 **v0.9.0+**：使用指定编码从文件解析模板内容，并返回一个新的 Template 实例。
+使用指定编码解析文件并合并到当前模板集合。
 
 ```java
-// 使用 UTF-8 编码解析
-Template template = Template.parseFile(Paths.get("template.tmpl"), StandardCharsets.UTF_8);
-
-// 使用 ISO-8859-1 编码解析
-Template template = Template.parseFile(Paths.get("template.tmpl"), StandardCharsets.ISO_8859_1);
+template.parseFile(Paths.get("template.tmpl"), StandardCharsets.ISO_8859_1);
 ```
-
-**参数：**
-- `path` - 文件路径
-- `charset` - 要使用的字符编码
-
-**返回：** 一个新的已解析 Template 实例
-
-**抛出异常：**
-- 如果解析失败，抛出 `TemplateParseException`
-- 如果无法读取文件，抛出 `IOException`
 
 **Since:** 0.9.0
 
 ---
 
-### `static Template parseFromClasspath(String resourcePath)`
+### `static Template fromFile(Path path)` / `fromFile(Path path, Charset charset)`
 
-🆕 **v0.9.0+**：从 classpath 资源解析模板内容，并返回一个新的 Template 实例。
+创建以完整文件名（含扩展名）为根模板名的 Template。
 
 ```java
-// 从 classpath 根目录加载
-Template template = Template.parseFromClasspath("/templates/email.tmpl");
-
-// 从包中加载
-Template template = Template.parseFromClasspath("/com/example/templates/greeting.tmpl");
+Template email = Template.fromFile(Paths.get("templates/email.tmpl"));
+Template localized = Template.fromFile(
+    Paths.get("templates/email.tmpl"),
+    StandardCharsets.ISO_8859_1
+);
 ```
 
-**参数：**
-- `resourcePath` - classpath 资源路径（以 `/` 开头）
+**返回：** 新的已解析 Template
 
-**返回：** 一个新的已解析 Template 实例
+**Since:** 0.11.0
 
-**抛出异常：**
-- 如果解析失败，抛出 `TemplateParseException`
-- 如果找不到资源，抛出 `TemplateNotFoundException`
-- 如果无法读取资源，抛出 `IOException`
+---
+
+### `void parseFromClasspath(String resourcePath)`
+
+解析一个精确的 classpath 资源并合并到当前模板集合；根模板保持当前名称。
+
+```java
+template.parseFromClasspath("templates/email.tmpl");
+```
 
 **Since:** 0.9.0
 
 ---
 
-### `static Map<String, Template> parseDirectory(Path directory)`
+### `static Template fromClasspath(String resourcePath)`
 
-🆕 **v0.9.0+**：解析目录中所有 `.tmpl` 文件，并返回模板名称到 Template 实例的映射。
-
-```java
-// 解析目录中所有 .tmpl 文件
-Map<String, Template> templates = Template.parseDirectory(Paths.get("templates"));
-
-// 访问单个模板
-Template header = templates.get("header");
-Template footer = templates.get("footer");
-```
-
-**参数：**
-- `directory` - 包含模板文件的目录
-
-**返回：** 一个映射，键为模板名称（不含扩展名的文件名），值为已解析的 Template 实例
-
-**抛出异常：**
-- 如果任何模板解析失败，抛出 `TemplateParseException`
-- 如果无法访问目录，抛出 `IOException`
-
-**注意：** 仅处理扩展名为 `.tmpl` 的文件，不递归处理子目录。
-
-**Since:** 0.9.0
-
----
-
-### `static List<Template> parseClasspathResources(String pattern)`
-
-🆕 **v0.9.0+**：解析匹配模式的所有 classpath 资源，并返回 Template 实例列表。
+创建以完整 classpath 文件名为根模板名的 Template。
 
 ```java
-// 从包中加载所有模板
-List<Template> templates = Template.parseClasspathResources("/templates/*.tmpl");
-
-// 处理每个模板
-for (Template tmpl : templates) {
-    System.out.println("已加载: " + tmpl.name());
-}
+Template email = Template.fromClasspath("templates/email.tmpl");
 ```
 
-**参数：**
-- `pattern` - classpath 模式（支持 `*` 通配符）
-
-**返回：** 已解析的 Template 实例列表
-
-**抛出异常：**
-- 如果任何模板解析失败，抛出 `TemplateParseException`
-- 如果无法访问资源，抛出 `IOException`
-
-**Since:** 0.9.0
+**Since:** 0.11.0
 
 ---
 
 ### `void parseFiles(Path... paths)`
 
-从多个文件解析模板内容。
+将每个文件以完整文件名注册；一次调用中的重复文件名会报错。
 
 ```java
 template.parseFiles(
     Paths.get("templates/header.tmpl"),
-    Paths.get("templates/footer.tmpl"),
-    Paths.get("templates/body.tmpl")
+    Paths.get("templates/footer.tmpl")
 );
 ```
-
-**参数：**
-- `paths` - 文件路径列表
-
-**抛出异常：**
-- 如果任何模板解析失败，抛出 `TemplateParseException`
-- 如果任何文件无法读取，抛出 `IOException`
-
-**注意：** 如果多个文件定义了相同的模板名称，最后解析的那个会生效（除非为空）。
 
 **Since:** 0.6.0
 
 ---
 
-### `void parseGlob(Path directory, String glob)`
+### `void parseDirectory(Path directory)`
 
-解析目录中匹配 glob 模式的模板文件。
+解析目录顶层的 `.tmpl` 文件，并以完整文件名注册每个根模板。
 
 ```java
-// 解析 templates 目录中所有 .tmpl 文件
-template.parseGlob(Paths.get("templates"), "*.tmpl");
-
-// 解析所有 .html 文件
-template.parseGlob(Paths.get("views"), "*.html");
+template.parseDirectory(Paths.get("templates"));
+template.executeTemplate(writer, "header.tmpl", data);
 ```
 
-**参数：**
-- `directory` - 要搜索的目录
-- `glob` - glob 模式（例如 "*.tmpl"、"*.html"）
+**Since:** 0.9.0
 
-**抛出异常：**
-- 如果任何模板解析失败，抛出 `TemplateParseException`
-- 如果无法访问目录，抛出 `IOException`
+---
+
+### `static Map<String, Template> fromDirectory(Path directory)`
+
+将目录顶层 `.tmpl` 文件加载为独立模板，key 为完整文件名。
+
+```java
+Map<String, Template> templates = Template.fromDirectory(Paths.get("templates"));
+Template header = templates.get("header.tmpl");
+```
+
+**返回：** 按稳定文件路径顺序排列的不可变映射
+
+**Since:** 0.11.0
+
+---
+
+### `void parseGlob(Path directory, String glob)`
+
+按稳定路径顺序加载匹配文件，并以完整文件名注册根模板。支持 `*`、`?`、字符类和跨目录 `**`。
+
+```java
+template.parseGlob(Paths.get("templates"), "pages/**/page[0-9].tmpl");
+```
 
 **Since:** 0.6.0
+
+---
+
+### `static Template parseClasspathResources(String pattern)`
+
+将匹配资源加载到一个模板集合。第一个匹配文件名作为根模板，所有显式 `define` 会合并。
+
+```java
+Template set = Template.parseClasspathResources("templates/**/*.tmpl");
+set.executeTemplate(writer, "header.tmpl", data);
+```
+
+**Since:** 0.9.0
+
+---
+
+### `static List<Template> fromClasspathResources(String pattern)`
+
+将匹配资源加载为独立模板副本，并按稳定资源路径顺序返回。
+
+```java
+List<Template> templates = Template.fromClasspathResources("templates/**/*.tmpl");
+```
+
+**返回：** 不可变的独立模板列表
+
+**注意：** `**/` 也可匹配零层目录；重复文件名和 `..` 路径穿越会被拒绝。
+
+**Since:** 0.11.0
 
 ---
 

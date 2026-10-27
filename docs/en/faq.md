@@ -132,17 +132,19 @@ Use the file parsing helpers:
 
 ```java
 // Parse single file
-Template tmpl = Template.parseFile("path/to/template.tmpl");
+Template tmpl = Template.fromFile(Paths.get("path/to/template.tmpl"));
 
-// Parse multiple files
-Template tmpl = Template.parseFiles(
-    "header.tmpl",
-    "footer.tmpl", 
-    "content.tmpl"
+// Parse multiple files into one template set
+Template set = new Template("pages");
+set.parseFiles(
+    Paths.get("header.tmpl"),
+    Paths.get("footer.tmpl"),
+    Paths.get("content.tmpl")
 );
 
-// Parse using glob pattern
-Template tmpl = Template.parseGlob("templates/*.tmpl");
+// Parse all matching files under a directory
+Template set = new Template("pages");
+set.parseGlob(Paths.get("templates"), "**/*.tmpl");
 ```
 
 ---
@@ -442,8 +444,8 @@ ConcurrentHashMap<String, Template> cache = new ConcurrentHashMap<>();
 public Template getTemplate(String name) {
     return cache.computeIfAbsent(name, n -> {
         try {
-            return Template.parseFile(n + ".tmpl");
-        } catch (IOException e) {
+            return Template.fromFile(Paths.get(n + ".tmpl"));
+        } catch (Exception e) {
             throw new RuntimeException(e);
         }
     });
@@ -600,7 +602,7 @@ public class TemplateService {
     
     @PostConstruct
     public void init() throws IOException {
-        templates.put("email", Template.parseFile("templates/email.tmpl"));
+        templates.put("email", Template.fromFile(Paths.get("templates/email.tmpl")));
     }
     
     public String render(String name, Object data) {
@@ -646,10 +648,10 @@ See the [CHANGELOG](../../CHANGELOG) for complete details.
 
 ### How do I load templates from classpath?
 
-Use the new static method:
+Use the static classpath factory:
 
 ```java
-Template template = Template.parseFromClasspath("/templates/email.tmpl");
+Template template = Template.fromClasspath("templates/email.tmpl");
 ```
 
 This is especially useful in web applications and JAR deployments where templates are bundled inside the application.
@@ -659,10 +661,10 @@ This is especially useful in web applications and JAR deployments where template
 Use `parseDirectory()` to load all `.tmpl` files at once:
 
 ```java
-Map<String, Template> templates = Template.parseDirectory(Paths.get("templates"));
+Map<String, Template> templates = Template.fromDirectory(Paths.get("templates"));
 
-// Access by filename (without extension)
-Template header = templates.get("header");
+// Access by complete file name
+Template header = templates.get("header.tmpl");
 ```
 
 ### Can I specify file encoding when loading templates?
@@ -670,7 +672,7 @@ Template header = templates.get("header");
 Yes! Use `parseFile()` with a Charset parameter:
 
 ```java
-Template template = Template.parseFile(
+Template template = Template.fromFile(
     Paths.get("template.tmpl"), 
     StandardCharsets.UTF_8
 );

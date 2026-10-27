@@ -501,23 +501,17 @@ template.parseFile(templatePath);
 
 ---
 
-### `static Template parseFile(Path path, Charset charset)`
+### `void parseFile(Path path, Charset charset)`
 
-🆕 **v0.9.0+**: Parses template content from a file with specified encoding and returns a new Template instance.
+Parses a file with the specified encoding and merges it into the current template set. The root keeps the current template name.
 
 ```java
-// Parse with UTF-8 encoding
-Template template = Template.parseFile(Paths.get("template.tmpl"), StandardCharsets.UTF_8);
-
-// Parse with ISO-8859-1 encoding
-Template template = Template.parseFile(Paths.get("template.tmpl"), StandardCharsets.ISO_8859_1);
+template.parseFile(Paths.get("template.tmpl"), StandardCharsets.ISO_8859_1);
 ```
 
 **Parameters:**
 - `path` - The path to the file
 - `charset` - The character encoding to use
-
-**Returns:** A new parsed Template instance
 
 **Throws:**
 - `TemplateParseException` if parsing fails
@@ -527,133 +521,151 @@ Template template = Template.parseFile(Paths.get("template.tmpl"), StandardChars
 
 ---
 
-### `static Template parseFromClasspath(String resourcePath)`
+### `static Template fromFile(Path path)` / `fromFile(Path path, Charset charset)`
 
-🆕 **v0.9.0+**: Parses template content from a classpath resource and returns a new Template instance.
+Creates a template whose root name is the complete file name with its extension.
 
 ```java
-// Load from classpath root
-Template template = Template.parseFromClasspath("/templates/email.tmpl");
+Template email = Template.fromFile(Paths.get("templates/email.tmpl"));
+Template localized = Template.fromFile(
+    Paths.get("templates/email.tmpl"),
+    StandardCharsets.ISO_8859_1
+);
+```
 
-// Load from package
-Template template = Template.parseFromClasspath("/com/example/templates/greeting.tmpl");
+**Returns:** A new parsed `Template`
+
+**Since:** 0.11.0
+
+---
+
+### `void parseFromClasspath(String resourcePath)`
+
+Parses one exact classpath resource and merges it into the current template set. The root keeps the current template name.
+
+```java
+template.parseFromClasspath("templates/email.tmpl");
 ```
 
 **Parameters:**
-- `resourcePath` - The classpath resource path (starts with `/`)
-
-**Returns:** A new parsed Template instance
+- `resourcePath` - Exact classpath resource path; leading `/` is optional
 
 **Throws:**
 - `TemplateParseException` if parsing fails
-- `TemplateNotFoundException` if the resource is not found
-- `IOException` if the resource cannot be read
+- `IOException` if the resource is missing or cannot be read
 
 **Since:** 0.9.0
 
 ---
 
-### `static Map<String, Template> parseDirectory(Path directory)`
+### `static Template fromClasspath(String resourcePath)`
 
-🆕 **v0.9.0+**: Parses all `.tmpl` files in a directory and returns a map of template name to Template instance.
-
-```java
-// Parse all .tmpl files in directory
-Map<String, Template> templates = Template.parseDirectory(Paths.get("templates"));
-
-// Access individual templates
-Template header = templates.get("header");
-Template footer = templates.get("footer");
-```
-
-**Parameters:**
-- `directory` - The directory containing template files
-
-**Returns:** A map where keys are template names (filename without extension) and values are parsed Template instances
-
-**Throws:**
-- `TemplateParseException` if any template fails to parse
-- `IOException` if the directory cannot be accessed
-
-**Note:** Only files with `.tmpl` extension are processed. Subdirectories are not recursed.
-
-**Since:** 0.9.0
-
----
-
-### `static List<Template> parseClasspathResources(String pattern)`
-
-🆕 **v0.9.0+**: Parses multiple classpath resources matching a pattern and returns a list of Template instances.
+Creates a template whose root name is the complete classpath file name.
 
 ```java
-// Load all templates from a package
-List<Template> templates = Template.parseClasspathResources("/templates/*.tmpl");
-
-// Process each template
-for (Template tmpl : templates) {
-    System.out.println("Loaded: " + tmpl.name());
-}
+Template email = Template.fromClasspath("templates/email.tmpl");
 ```
 
-**Parameters:**
-- `pattern` - The classpath pattern (supports `*` wildcard)
-
-**Returns:** A list of parsed Template instances
-
-**Throws:**
-- `TemplateParseException` if any template fails to parse
-- `IOException` if resources cannot be accessed
-
-**Since:** 0.9.0
+**Since:** 0.11.0
 
 ---
 
 ### `void parseFiles(Path... paths)`
 
-Parses template content from multiple files.
+Registers each input file under its complete file name. Duplicate names in one call are rejected.
 
 ```java
 template.parseFiles(
     Paths.get("templates/header.tmpl"),
-    Paths.get("templates/footer.tmpl"),
-    Paths.get("templates/body.tmpl")
+    Paths.get("templates/footer.tmpl")
 );
 ```
-
-**Parameters:**
-- `paths` - The paths to the files
-
-**Throws:**
-- `TemplateParseException` if any template fails to parse
-- `IOException` if any file cannot be read
-
-**Note:** If multiple files define the same template name, the last one parsed wins (unless it is empty).
 
 **Since:** 0.6.0
 
 ---
 
-### `void parseGlob(Path directory, String glob)`
+### `void parseDirectory(Path directory)`
 
-Parses template files matching a glob pattern in a directory.
+Parses top-level `.tmpl` files and registers each root under its complete file name.
 
 ```java
-// Parse all .tmpl files in the templates directory
-template.parseGlob(Paths.get("templates"), "*.tmpl");
+template.parseDirectory(Paths.get("templates"));
+template.executeTemplate(writer, "header.tmpl", data);
+```
 
-// Parse all .html files
-template.parseGlob(Paths.get("views"), "*.html");
+**Throws:**
+- `IOException` if the directory is invalid, empty, or contains duplicate file names
+
+**Since:** 0.9.0
+
+---
+
+### `static Map<String, Template> fromDirectory(Path directory)`
+
+Loads top-level `.tmpl` files as independent templates keyed by complete file name.
+
+```java
+Map<String, Template> templates = Template.fromDirectory(Paths.get("templates"));
+Template header = templates.get("header.tmpl");
 ```
 
 **Parameters:**
-- `directory` - The directory to search
-- `glob` - The glob pattern (e.g., "*.tmpl", "*.html")
+- `directory` - The directory containing template files
+
+**Returns:** Immutable map in stable file path order
 
 **Throws:**
 - `TemplateParseException` if any template fails to parse
-- `IOException` if the directory cannot be accessed
+- `IOException` if the directory is invalid, empty, or contains duplicate file names
+
+**Note:** Only top-level files with the `.tmpl` extension are processed.
+
+**Since:** 0.11.0
+
+---
+
+### `void parseGlob(Path directory, String glob)`
+
+Loads matching files in stable path order and registers each root under its complete file name. Glob supports `*`, `?`, character classes, and `**` across directories.
+
+```java
+template.parseGlob(Paths.get("templates"), "pages/**/page[0-9].tmpl");
+```
 
 **Since:** 0.6.0
+
+---
+
+### `static Template parseClasspathResources(String pattern)`
+
+Loads all matching classpath resources into one template set and returns that set. The first matched file name is the root template; explicit definitions from all files are merged.
+
+```java
+Template set = Template.parseClasspathResources("templates/**/*.tmpl");
+set.executeTemplate(writer, "header.tmpl", data);
+```
+
+**Throws:**
+- `IOException` if no resource matches, duplicate file names are found, or a resource cannot be read
+
+**Since:** 0.9.0
+
+---
+
+### `static List<Template> fromClasspathResources(String pattern)`
+
+Loads matching classpath resources as independent template copies in stable resource path order.
+
+```java
+List<Template> templates = Template.fromClasspathResources("templates/**/*.tmpl");
+```
+
+**Returns:** Immutable list of independent templates
+
+**Note:** `**/` also matches zero directories. Duplicate file names and `..` path traversal are rejected.
+
+**Since:** 0.11.0
 
 ---
 
