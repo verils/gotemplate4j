@@ -164,10 +164,9 @@ public class Lexer {
         pos += leftDelimiter.length();
 
         int parseStart = atLeftTrimMarker ? pos + 2 : pos;
-        int n = input.indexOf(leftComment, parseStart);
-        boolean hasComment = n >= 0;
+        boolean hasComment = input.startsWith(leftComment, parseStart);
         if (hasComment) {
-            pos = n;
+            pos = parseStart;
             moveStartToPos();
 
             return this::parseComment;

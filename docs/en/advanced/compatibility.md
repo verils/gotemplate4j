@@ -78,6 +78,10 @@ operands with spaces. `printf` supports `%v`, `%T`, `%t`, `%q`, `%d`, `%s`,
 `%x`, `%X`, `%f`, common flags, width, and precision; unsupported syntax and
 incompatible values raise explicit execution errors.
 
+Comments are recognized only when their left marker appears immediately at the
+start of an action, after the optional left trim marker. Comment markers inside
+quoted or raw text are ordinary content.
+
 ### Error Handling
 
 - **Parse errors**: Include source context showing where parsing failed.

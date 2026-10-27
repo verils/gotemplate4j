@@ -109,4 +109,49 @@ class LexerTextAndActionTest {
                 token(TokenType.COMMENT, "/* this is a comment */", 2, 1, 0),
                 token(TokenType.EOF, "", 27, 1, 0));
     }
+
+    @Test
+    void commentMarkersInsideStringAreRegularContent() {
+        assertDefaultTokens("{{printf \"/*\"}}",
+                token(TokenType.LEFT_DELIM, "{{", 0, 1, 1),
+                token(TokenType.IDENTIFIER, "printf", 2, 1, 3),
+                token(TokenType.SPACE, " ", 8, 1, 9),
+                token(TokenType.STRING, "\"/*\"", 9, 1, 10),
+                token(TokenType.RIGHT_DELIM, "}}", 13, 1, 14),
+                token(TokenType.EOF, "", 15, 1, 16));
+    }
+
+    @Test
+    void commentMarkersInsideUrlStringAreRegularContent() {
+        assertDefaultTokens("{{printf \"/api/*\"}}",
+                token(TokenType.LEFT_DELIM, "{{", 0, 1, 1),
+                token(TokenType.IDENTIFIER, "printf", 2, 1, 3),
+                token(TokenType.SPACE, " ", 8, 1, 9),
+                token(TokenType.STRING, "\"/api/*\"", 9, 1, 10),
+                token(TokenType.RIGHT_DELIM, "}}", 17, 1, 18),
+                token(TokenType.EOF, "", 19, 1, 20));
+    }
+
+    @Test
+    void commentMarkersInsideRawStringAreRegularContent() {
+        assertDefaultTokens("{{printf `/*`}}",
+                token(TokenType.LEFT_DELIM, "{{", 0, 1, 1),
+                token(TokenType.IDENTIFIER, "printf", 2, 1, 3),
+                token(TokenType.SPACE, " ", 8, 1, 9),
+                token(TokenType.RAW_STRING, "`/*`", 9, 1, 10),
+                token(TokenType.RIGHT_DELIM, "}}", 13, 1, 14),
+                token(TokenType.EOF, "", 15, 1, 16));
+    }
+
+    @Test
+    void realCommentAfterStringActionIsStillRecognized() {
+        assertDefaultTokens("{{printf \"/*\"}}{{/* real */}}",
+                token(TokenType.LEFT_DELIM, "{{", 0, 1, 1),
+                token(TokenType.IDENTIFIER, "printf", 2, 1, 3),
+                token(TokenType.SPACE, " ", 8, 1, 9),
+                token(TokenType.STRING, "\"/*\"", 9, 1, 10),
+                token(TokenType.RIGHT_DELIM, "}}", 13, 1, 14),
+                token(TokenType.COMMENT, "/* real */", 17, 1, 18),
+                token(TokenType.EOF, "", 29, 1, 30));
+    }
 }

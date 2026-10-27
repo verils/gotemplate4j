@@ -60,6 +60,19 @@ Comments don't appear in output:
 {{/* This is a comment */}}
 ```
 
+The comment marker must appear immediately at the start of the action. With a
+left trim marker, use `{{- /* ... */}}`; `{{ /* ... */ }}` is parsed as a normal
+action and is invalid.
+
+Comment markers inside strings, raw strings, and the middle of actions are
+ordinary content and do not start a comment:
+
+```gotemplate
+{{printf "/*"}}
+{{printf "/api/*"}}
+{{printf `/*`}}
+```
+
 Multi-line comments:
 
 ```gotemplate
@@ -74,6 +87,8 @@ Inline comments:
 ```gotemplate
 Hello {{.Name}} {{/* display name */}}
 ```
+
+Custom comment delimiters follow the same positional rule.
 
 ## Variables
 

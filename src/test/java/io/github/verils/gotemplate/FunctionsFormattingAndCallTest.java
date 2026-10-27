@@ -79,6 +79,22 @@ class FunctionsFormattingAndCallTest {
     }
 
     @Test
+    void commentMarkersInFormatArgumentsRemainLiteralText() throws IOException, TemplateException {
+        assertEquals("/*", render("{{printf \"/*\"}}"));
+        assertEquals("/api/*", render("{{printf \"/api/*\"}}"));
+        assertEquals("/*", render("{{printf `/*`}}"));
+        assertEquals("/*/api/*", render("{{printf \"/*/api/*\"}}"));
+    }
+
+    @Test
+    void ordinaryCommentWithLeadingWhitespaceIsRejected() {
+        TemplateParseException exception = assertThrows(TemplateParseException.class,
+                () -> new Template("test").parse("{{ /* comment */ }}"));
+
+        assertTrue(exception.getMessage().contains("unexpected"));
+    }
+
+    @Test
     void printRendersAllPrimitiveArrayTypes() {
         assertEquals("[true, false]", TemplateTestSupport.invoke("print", (Object) new boolean[]{true, false}));
         assertEquals("[1, 2]", TemplateTestSupport.invoke("print", (Object) new byte[]{1, 2}));

@@ -154,6 +154,28 @@ public class TemplateInputValidationTest {
         assertEquals("Hello World", writer.toString());
     }
 
+    @Test
+    void customCommentMarkerInsideStringRemainsLiteral() throws Exception {
+        Template template = new Template("test", "{{", "}}", "<!--", "-->");
+        template.parse("{{printf \"<!--\"}}");
+
+        java.io.StringWriter writer = new java.io.StringWriter();
+        template.execute(writer, null);
+
+        assertEquals("<!--", writer.toString());
+    }
+
+    @Test
+    void customCommentDelimitersPreserveTrimMarkers() throws Exception {
+        Template template = new Template("test", "[[", "]]", "<!--", "-->");
+        template.parse("Hello   [[- <!-- comment --> -]]   World");
+
+        java.io.StringWriter writer = new java.io.StringWriter();
+        template.execute(writer, null);
+
+        assertEquals("HelloWorld", writer.toString());
+    }
+
     // Test validation in copy constructor doesn't break
     
     @Test

@@ -59,6 +59,9 @@ pipeline handling, and unifies template truthiness.
   unvalidated Java format string.
 - Invalid `printf` verbs, malformed specifications, argument count mismatches,
   and incompatible value types now produce clear execution errors.
+- Comment markers inside strings, raw strings, URLs, and the middle of actions
+  are no longer misclassified as comments. Comments are recognized only at the
+  start of an action, including the optional trim-marker position.
 
 ### 🧪 Testing
 
@@ -77,6 +80,9 @@ pipeline handling, and unifies template truthiness.
   negative literal, and index/slice boundary coverage.
 - Added formatting coverage for Go print spacing, core `printf` verbs, width,
   precision, flags, quoting, arrays, nulls, pipeline use, and invalid input.
+- Added lexer and execution coverage for comment-like text inside quoted and raw
+  strings, real trailing comments, custom comment delimiters, and strict
+  comment-start whitespace behavior.
 
 ### 📚 Documentation
 
@@ -86,6 +92,8 @@ pipeline handling, and unifies template truthiness.
   bounds, and Java-specific string/list behavior.
 - Documented the supported `printf` subset, Java type/aggregate representations,
   print spacing, and explicit formatting-error behavior.
+- Documented the required comment position and the treatment of comment markers
+  inside string content.
 
 v0.10.0 (2026-05-23)
 
