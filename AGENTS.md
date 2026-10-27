@@ -2,7 +2,7 @@
 
 ## Project Overview
 - This is a Go template engine implementation for Java
-- Targets Java 8 compatibility with no external dependencies
+- Targets Java 11 compatibility with no runtime dependencies
 
 ### File Structure Awareness
 - Main source: `src/main/java/io/github/verils/gotemplate/`
@@ -11,47 +11,47 @@
 - Core components: Lexer, Parser, Executor, AST nodes
 
 ## Development Environment
-- Java Version: 1.8 (Project targets Java 8 compatibility)
+- Java Version: 11 (Project baseline; use JDK 11 for compilation, tests, and coverage)
 - Build Tool: Maven (ALWAYS use `./mvnw` wrapper, NOT `mvn` directly)
 - No additional dependencies except Vanilla Java
 - IMPORTANT: Use `./mvnw` to avoid JAVA_HOME configuration issues
 
 ### Java Version Management
-**CRITICAL**: The project requires Java 8 for compilation and testing. If your default Java version is not 8:
+**CRITICAL**: The project requires Java 11 for compilation and authoritative test/coverage runs. If your default Java version is not 11:
 
 1. **Check current Java version:**
    ```bash
    java -version
    ```
 
-2. **Find available Java 8 installation:**
+2. **Find an available Java 11 installation:**
    - Windows: Check `C:\Program Files\Eclipse Adoptium\` or `C:\Program Files\Java\`
-   - Look for directories like `jdk-8.0.xxx.x-hotspot` or `jdk1.8.0_xxx`
+   - Look for directories like `jdk-11.0.xxx.x-hotspot`
 
 3. **Set JAVA_HOME temporarily for this project:**
    ```bash
-   # Windows PowerShell (Adjust path to your installed JDK 8)
-   $env:JAVA_HOME="C:\Program Files\Eclipse Adoptium\jdk-8.0.xxx.x-hotspot"
+   # Windows PowerShell (Adjust path to your installed JDK 11)
+   $env:JAVA_HOME="C:\Program Files\Eclipse Adoptium\jdk-11.0.xxx.x-hotspot"
    $env:PATH="$env:JAVA_HOME\bin;$env:PATH"
    
    # Windows CMD
-   set JAVA_HOME=C:\Program Files\Eclipse Adoptium\jdk-8.0.xxx.x-hotspot
+   set JAVA_HOME=C:\Program Files\Eclipse Adoptium\jdk-11.0.xxx.x-hotspot
    set PATH=%JAVA_HOME%\bin;%PATH%
    
    # Linux/Mac
-   export JAVA_HOME=/usr/lib/jvm/java-8-openjdk
+   export JAVA_HOME=/usr/lib/jvm/java-11-openjdk
    export PATH=$JAVA_HOME/bin:$PATH
    ```
 
-4. **Verify Java 8 is active:**
+4. **Verify Java 11 is active:**
    ```bash
    java -version
-   # Should show: openjdk version "1.8.x" or "8.x.x"
+   # Should show: openjdk version "11.x.x"
    ```
 
 5. **Alternative: Configure Maven toolchains** (recommended for multi-JDK environments)
-   - Create `.mvn/toolchains.xml` to specify JDK 8 for this project
-   - This allows Maven to use Java 8 even when your system default is different
+   - Create `.mvn/toolchains.xml` to specify JDK 11 for this project
+   - Java 11 is required for authoritative JaCoCo coverage; newer JDKs are not a substitute
 
 ## Development Principles
 

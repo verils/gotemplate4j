@@ -661,11 +661,11 @@ template.parse("Name: '{{.Name}}'");
 Configure how missing/null keys are handled:
 
 ```java
-// Option 1: DEFAULT - Render as empty string
+// Option 1: INVALID - Missing values render as <no value>
 Template template = new Template("demo")
-    .withMissingKeyPolicy(MissingKeyPolicy.DEFAULT);
+    .withMissingKeyPolicy(MissingKeyPolicy.INVALID);
 
-// Option 2: ZERO - Render as zero value
+// Option 2: ZERO - Request zero value (Java map keys still resolve to null)
 Template template = new Template("demo")
     .withMissingKeyPolicy(MissingKeyPolicy.ZERO);
 
@@ -901,9 +901,9 @@ functions.put("default", args -> {
 ### Pattern 3: Loop with Alternating Styles
 
 ```gotemplate
-{{range $index, $item := .Items}}
-  <div class="{{if mod $index 2 | eq 0}}even{{else}}odd{{end}}">
-    {{$item}}
+{{range .Items}}
+  <div class="{{if .Even}}even{{else}}odd{{end}}">
+    {{.Name}}
   </div>
 {{end}}
 ```

@@ -324,8 +324,8 @@ Useful for generating repeated elements:
 
 ```gotemplate
 <select name="year">
-{{range $i := 10}}
-  <option value="{{add 2020 $i}}">{{add 2020 $i}}</option>
+{{range .Years}}
+  <option value="{{.}}">{{.}}</option>
 {{end}}
 </select>
 ```
@@ -498,7 +498,7 @@ Real templates often combine multiple constructs.
 {{end}}
 
 {{if gt (len .Items) .EndIndex}}
-  <a href="?page={{add .Page 1}}">Next Page</a>
+  <a href="?page={{.NextPage}}">Next Page</a>
 {{end}}
 ```
 
@@ -545,9 +545,9 @@ Or using pipeline:
 ### Pattern 2: Alternating Styles
 
 ```gotemplate
-{{range $i, $item := .Items}}
-  <div class="{{if mod $i 2 | eq 0}}even{{else}}odd{{end}}">
-    {{$item}}
+{{range .Items}}
+  <div class="{{if .Even}}even{{else}}odd{{end}}">
+    {{.Name}}
   </div>
 {{end}}
 ```
@@ -568,7 +568,7 @@ Output: `item1, item2, item3`
 {{range $i, $item := .Items}}
   {{if eq $i 0}}First: {{end}}
   {{$item}}
-  {{if eq $i (sub (len $.Items) 1)}} (Last){{end}}
+  {{if eq $i $.LastIndex}} (Last){{end}}
 {{end}}
 ```
 

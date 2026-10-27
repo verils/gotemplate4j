@@ -344,7 +344,7 @@ public TemplateNotFoundException(String message, Throwable cause)
 ### 错误消息格式
 
 ```
-TemplateNotFoundException: Template 'undefined-template' not found.
+TemplateNotFoundException: template 'undefined-template' not found
 ```
 
 ### 处理未找到错误
@@ -412,7 +412,8 @@ template.execute(writer, new HashMap<>());
 
 #### `ZERO`
 
-返回映射类型元素的零值。
+请求 map 元素类型的零值。Java map 不保留编译期元素类型，因此 gotemplate4j 会把缺失键
+解析为 `null`，并渲染为 `<no value>`。
 
 ```java
 Template template = new Template("demo")
@@ -479,7 +480,7 @@ System.out.println("当前策略: " + policy);
 | 策略 | 行为 | 用例 |
 |--------|----------|----------|
 | `INVALID` | 静默，无输出 | 生产环境，可选字段 |
-| `ZERO` | 返回零值 | 可预测的默认值 |
+| `ZERO` | Java map 元素类型不可知时返回 `null` | 保留 Go 风格策略且不进行隐藏推断 |
 | `ERROR` | 抛出异常 | 开发环境，必需字段 |
 
 ### 最佳实践

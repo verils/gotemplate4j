@@ -7,8 +7,11 @@ import org.junit.jupiter.params.provider.MethodSource;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Stream;
 
 import static io.github.verils.gotemplate.TemplateTestSupport.data;
@@ -58,11 +61,14 @@ class FunctionsIntrospectionTest {
     }
 
     private static Stream<org.junit.jupiter.params.provider.Arguments> deepEqualCases() {
-        Map<String, String> map1 = new HashMap<>();
-        map1.put("key", "value");
-        Map<String, String> map2 = new HashMap<>();
-        map2.put("key", "value");
+        Map<String, Object> map1 = new HashMap<>();
+        map1.put("key", new int[]{1, 2});
+        Map<String, Object> map2 = new HashMap<>();
+        map2.put("key", new int[]{1, 2});
         List<String> sameList = Arrays.asList("a", "b");
+        List<String> linkedList = new LinkedList<>(sameList);
+        Set<String> firstSet = new HashSet<>(Arrays.asList("a", "b"));
+        Set<String> secondSet = new HashSet<>(Arrays.asList("b", "a"));
 
         return Stream.of(
                 arguments(new int[]{1, 2, 3}, new int[]{1, 2, 3}, "yes"),
@@ -74,8 +80,28 @@ class FunctionsIntrospectionTest {
                 arguments(new int[]{1, 2}, null, "no"),
                 arguments("string", 42, "no"),
                 arguments(new Object[]{new int[]{1, 2}, new int[]{3, 4}},
-                        new Object[]{new int[]{1, 2}, new int[]{3, 4}}, "yes")
+                        new Object[]{new int[]{1, 2}, new int[]{3, 4}}, "yes"),
+                arguments(firstSet, secondSet, "yes"),
+                arguments(sameList, linkedList, "no"),
+                arguments(1, 1L, "no")
         );
+    }
+
+    @Test
+    void deepEqualHandlesCyclicContainers() throws Exception {
+        List<Object> first = new java.util.ArrayList<>();
+        first.add(first);
+        List<Object> second = new java.util.ArrayList<>();
+        second.add(second);
+
+        assertEquals("yes", render(
+                "{{if deepEqual .A .B}}yes{{else}}no{{end}}",
+                data("A", first, "B", second)));
+
+        second.add("different");
+        assertEquals("no", render(
+                "{{if deepEqual .A .B}}yes{{else}}no{{end}}",
+                data("A", first, "B", second)));
     }
 
     @Test

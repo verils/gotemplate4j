@@ -171,7 +171,7 @@ Wrap them in a Map or a custom object:
 Map<String, Object> data = new HashMap<>();
 data.put("name", "John");
 data.put("age", 30);
-template.execute(data, writer);
+template.execute(writer, data);
 ```
 
 **Using Object:**
@@ -183,7 +183,7 @@ public class UserData {
 }
 
 UserData data = new UserData("John", 30);
-template.execute(data, writer);
+template.execute(writer, data);
 ```
 
 ### How do I handle null values?
@@ -198,7 +198,7 @@ template.withMissingKeyPolicy(MissingKeyPolicy.ERROR);
 template.withMissingKeyPolicy(MissingKeyPolicy.ZERO);
 
 // Default: show empty string
-template.withMissingKeyPolicy(MissingKeyPolicy.DEFAULT);
+template.withMissingKeyPolicy(MissingKeyPolicy.INVALID);
 ```
 
 ### Can I use Java 8 Optional?
@@ -237,13 +237,15 @@ public class Customer {
 
 ### What built-in functions are available?
 
-Gotemplate4j provides 18+ built-in functions:
+Gotemplate4j provides these built-in functions:
 
-**Comparison:** `eq`, `ne`, `lt`, `le`, `gt`, `ge`  
-**Logical:** `and`, `or`, `not`  
-**String:** `len`, `print`, `printf`, `println`  
-**Type conversion:** `js`, `html`, `urlquery`  
-**Introspection:** `index`, `call`
+- **Comparison:** `eq`, `ne`, `lt`, `le`, `gt`, `ge`
+- **Logical:** `and`, `or`, `not`
+- **Collections:** `len`, `index`, `slice`
+- **Formatting:** `print`, `printf`, `println`
+- **Escaping:** `js`, `html`, `urlquery`
+- **Invocation:** `call`
+- **Extensions:** `deepEqual`, `typeof`, `kindOf`, `default`
 
 See the [Functions Guide](user-guide/functions.md) for complete documentation.
 
@@ -252,24 +254,17 @@ See the [Functions Guide](user-guide/functions.md) for complete documentation.
 Implement the `Function` interface:
 
 ```java
-public class UpperCaseFunction implements Function {
-    @Override
-    public String name() {
-        return "upper";
+Function upper = args -> {
+    if (args.length != 1) {
+        throw new IllegalArgumentException("upper expects 1 argument");
     }
-    
-    @Override
-    public Object apply(Object... args) throws Exception {
-        if (args.length != 1) {
-            throw new IllegalArgumentException("upper expects 1 argument");
-        }
-        return args[0].toString().toUpperCase();
-    }
-}
+    return args[0].toString().toUpperCase();
+};
 
-// Register function
-Template template = new Template("demo")
-    .func(new UpperCaseFunction());
+Map<String, Function> functions = new HashMap<>();
+functions.put("upper", upper);
+Template template = new Template("demo", functions);
+template.parse("{{upper \"hello\"}}");
 ```
 
 Usage in template:
@@ -279,10 +274,12 @@ Usage in template:
 
 ### Can I override built-in functions?
 
-Yes, register a custom function with the same name:
+Yes, supply a custom function with the same name to the constructor:
 
 ```java
-template.func(new CustomPrintFunction()); // Overrides "print"
+Map<String, Function> functions = new HashMap<>();
+functions.put("print", args -> "custom");
+Template template = new Template("demo", functions);
 ```
 
 ⚠️ **Warning:** Overriding built-in functions may break template compatibility.
@@ -299,7 +296,7 @@ Functions accept variable arguments:
 In custom functions, access via `args` array:
 ```java
 @Override
-public Object apply(Object... args) {
+public Object invoke(Object... args) {
     // args[0], args[1], etc.
 }
 ```
@@ -313,7 +310,7 @@ public Object apply(Object... args) {
 Three main exception types:
 
 1. **TemplateParseException** - Syntax errors during parsing
-2. **TemplateNotFoundException** - Template file not found
+2. **TemplateNotFoundException** - Named template not found
 3. **TemplateExecutionException** - Runtime errors during execution
 
 All extend `TemplateException`.
@@ -337,7 +334,7 @@ Catch exceptions during template execution:
 
 ```java
 try {
-    template.execute(data, writer);
+    template.execute(writer, data);
 } catch (TemplateExecutionException e) {
     System.err.println("Execution error: " + e.getMessage());
 }
@@ -350,8 +347,11 @@ Exceptions include context:
 ```java
 catch (TemplateException e) {
     System.err.println("Error: " + e.getMessage());
-    System.err.println("Template: " + e.getTemplateName());
-    System.err.println("Line: " + e.getLineNumber());
+    if (e instanceof TemplateParseException) {
+        TemplateParseException parseError = (TemplateParseException) e;
+        System.err.println("Line: " + parseError.getLine());
+        System.err.println("Column: " + parseError.getColumn());
+    }
     e.printStackTrace();
 }
 ```
@@ -365,7 +365,7 @@ It depends:
 - Data completeness is critical
 - You want fail-fast behavior
 
-**Use DEFAULT or ZERO when:**
+**Use INVALID or ZERO when:**
 - Some fields are genuinely optional
 - You prefer graceful degradation
 - Templates handle missing values with `if` checks
@@ -380,7 +380,7 @@ Gotemplate4j is optimized for typical use cases:
 - **Parsing**: ~1-5ms for medium templates
 - **Execution**: ~0.1-1ms per execution (depends on data complexity)
 
-See [TemplateBenchmark.java](../../src/test/java/io/github/verils/gotemplate/TemplateBenchmark.java) for detailed benchmarks.
+See [TemplateJmhBenchmark.java](../../src/test/java/io/github/verils/gotemplate/TemplateJmhBenchmark.java) for detailed benchmarks.
 
 ### How can I improve performance?
 
@@ -388,16 +388,18 @@ See [TemplateBenchmark.java](../../src/test/java/io/github/verils/gotemplate/Tem
 
 1. **Reuse parsed templates** - Parse once, execute many times
    ```java
-   Template template = new Template("demo").parse("{{.name}}");
+   Template template = new Template("demo");
+   template.parse("{{.name}}");
    // Reuse 'template' for multiple executions
    ```
 
 2. **Clone templates for thread safety**
    ```java
-   Template shared = new Template("demo").parse("{{.name}}");
+   Template shared = new Template("demo");
+   shared.parse("{{.name}}");
    // In each thread:
-   Template clone = shared.clone();
-   clone.execute(data, writer);
+   Template clone = new Template(shared);
+   clone.execute(writer, data);
    ```
 
 3. **Avoid complex expressions in loops**
@@ -414,7 +416,7 @@ See [TemplateBenchmark.java](../../src/test/java/io/github/verils/gotemplate/Tem
 4. **Use StringBuilder for large outputs**
    ```java
    StringWriter writer = new StringWriter();
-   template.execute(data, writer);
+   template.execute(writer, data);
    String result = writer.toString();
    ```
 
@@ -425,13 +427,14 @@ See [TemplateBenchmark.java](../../src/test/java/io/github/verils/gotemplate/Tem
 **Recommended pattern:**
 ```java
 // Create and configure once (during startup)
-Template baseTemplate = new Template("demo")
-    .parse("{{.name}}")
-    .func(myFunction);
+Map<String, Function> functions = new HashMap<>();
+functions.put("myFunction", myFunction);
+Template baseTemplate = new Template("demo", functions);
+baseTemplate.parse("{{.name}}");
 
 // Clone for each thread/request
-Template threadSafe = baseTemplate.clone();
-threadSafe.execute(data, writer);
+Template threadSafe = new Template(baseTemplate);
+threadSafe.execute(writer, data);
 ```
 
 ### Does gotemplate4j support template caching?
@@ -523,7 +526,7 @@ Common causes:
 Debug:
 ```java
 System.out.println("Data: " + data);
-template.execute(data, new PrintWriter(System.out));
+template.execute(new PrintWriter(System.out), data);
 ```
 
 ### I get "unexpected EOF" error. What does it mean?
@@ -573,14 +576,14 @@ Or print the entire data structure:
 ### My custom function isn't being called. Why?
 
 Check:
-1. Function is registered: `.func(myFunction)`
-2. Function name matches: `name()` returns correct name
+1. Function is registered in the constructor's function map
+2. Function map key matches the name used in the template
 3. Argument count is correct
 4. No exceptions thrown in `apply()`
 
 Debug:
 ```java
-System.out.println("Registered functions: " + template.functions());
+System.out.println("Registered functions: " + functions.keySet());
 ```
 
 ### Template execution is slow. How do I optimize?
@@ -606,9 +609,9 @@ public class TemplateService {
     }
     
     public String render(String name, Object data) {
-        Template template = templates.get(name).clone();
+        Template template = new Template(templates.get(name));
         StringWriter writer = new StringWriter();
-        template.execute(data, writer);
+        template.execute(writer, data);
         return writer.toString();
     }
 }

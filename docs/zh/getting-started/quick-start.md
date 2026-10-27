@@ -99,7 +99,7 @@ gotemplate4j 包含许多实用的函数：
 ```java
 Template template = new Template("functions");
 template.parse(
-    "大写：{{upper .Text}}\n" +
+    "转义：{{html .Text}}\n" +
     "长度：{{len .Items}}\n" +
     "格式化：{{printf \"%.2f\" .Price}}"
 );
@@ -113,7 +113,7 @@ StringWriter writer = new StringWriter();
 template.execute(writer, data);
 System.out.println(writer.toString());
 // 输出：
-// 大写：HELLO
+// 转义：hello
 // 长度：3
 // 格式化：19.99
 ```
@@ -170,7 +170,7 @@ public class CompleteExample {
             "{{end}}" +
             "项目（共 {{len .Items}} 项）：\n" +
             "{{range $index, $item := .Items}}" +
-            "{{add $index 1}}. {{upper $item}}\n" +
+            "{{printf \"%d. %s\" $index $item}}\n" +
             "{{end}}" +
             "\n" +
             "生成时间：{{.Timestamp}}";

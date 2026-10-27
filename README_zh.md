@@ -6,7 +6,7 @@
 
 一个用于 Java 的 Go 模板引擎实现，用于评估 Go 模板并生成文本输出。
 
-> ✅ **生产就绪**：核心功能稳定，代码覆盖率 90%+，内置函数支持完善，文档齐全。
+> ✅ **兼容性优先**：核心行为有 90%+ 测试覆盖，并明确记录 Go 差异。生产使用前请审阅兼容性指南。
 
 > ⚠️ **核心定位**：本项目**不是**为了替代 Go 原生的 `text/template`，也**不追求**在性能或功能上超越它。它的存在仅仅是为了帮助**必须处理 Go 模板的 Java 开发者**在与 Go 系统协作或从 Go 迁移到 Java 时满足基本的工作需求。
 
@@ -78,16 +78,16 @@ System.out.print(writer.toString());  // "Hello Bob!"
 
 ```java
 // 从 classpath 加载
-Template tmpl = Template.fromClasspath("templates/email.tmpl");
+Template emailTemplate = Template.fromClasspath("templates/email.tmpl");
 
 // 从目录加载（所有 .tmpl 文件）
-Map<String, Template> templates = Template.fromDirectory(Paths.get("templates"));
+Map<String, Template> directoryTemplates = Template.fromDirectory(Paths.get("templates"));
 
 // 使用指定编码加载
-Template tmpl = Template.fromFile(Paths.get("template.tmpl"), StandardCharsets.UTF_8);
+Template encodedTemplate = Template.fromFile(Paths.get("template.tmpl"), StandardCharsets.UTF_8);
 
 // 批量从 classpath 加载（支持模式匹配）
-List<Template> templates = Template.fromClasspathResources("templates/*.tmpl");
+List<Template> classpathTemplates = Template.fromClasspathResources("templates/*.tmpl");
 ```
 
 更多示例，请参阅 [基础示例](./docs/zh/examples/basic-examples.md)。

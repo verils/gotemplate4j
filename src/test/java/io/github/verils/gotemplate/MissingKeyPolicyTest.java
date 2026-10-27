@@ -64,6 +64,28 @@ class MissingKeyPolicyTest {
     }
 
     @Test
+    void mapKeySortingOptionUpdatesConfiguration() {
+        Template template = new Template("test");
+
+        assertSame(template, template.option("mapkeysorting=false"));
+        assertEquals(false, template.mapKeySorting());
+        assertSame(template, template.option("mapkeysorting=true"));
+        assertEquals(true, template.mapKeySorting());
+    }
+
+    @Test
+    void invalidOptionsAreRejected() {
+        Template template = new Template("test");
+
+        for (String option : Arrays.asList(
+                null, "", "missingkey", "=error", "missingkey=", "unknown=value",
+                "missingkey=unknown", "mapkeysorting=maybe")) {
+            assertThrows(IllegalArgumentException.class, () -> template.option(option),
+                    "option should be rejected: " + option);
+        }
+    }
+
+    @Test
     void errorPolicyFailsForMissingMapKey() throws Exception {
         Template template = new Template("test").withMissingKeyPolicy(MissingKeyPolicy.ERROR);
         template.parse("Hello, {{.Name}}!");

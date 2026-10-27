@@ -618,7 +618,7 @@ Note: You may need a `dict` function to create maps in templates.
 Clone a template set for thread-safe execution:
 
 ```java
-Template clone = template.clone();
+Template clone = new Template(template);
 clone.execute(writer, data);
 ```
 
@@ -663,7 +663,7 @@ Templates can call themselves (use with caution):
 
 ### Problem: Template Not Found
 
-**Error:** `template "xyz" not defined`
+**Error:** `template 'xyz' not found`
 
 **Solution:**
 1. Verify template is defined before use

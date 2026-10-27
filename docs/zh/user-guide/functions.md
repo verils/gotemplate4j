@@ -1,944 +1,198 @@
 # 函数指南
 
-本指南涵盖 gotemplate4j 中的所有内置函数以及如何创建自定义函数。
+gotemplate4j 提供 Go 兼容的模板函数，并支持自定义 Java 函数。函数名称区分大小写。
 
-## 概述
-
-函数在模板中对数据执行操作。gotemplate4j 包含许多内置函数，并允许你注册自定义函数。
-
-### 函数调用语法
+## 函数调用语法
 
 ```gotemplate
-{{functionName arg1 arg2 arg3}}
+{{functionName arg1 arg2}}
+{{value | functionName arg}}
 ```
 
-或使用管道：
+管道结果作为最后一个参数传入。内置 `default` 是例外：管道值是被检查的值。
+
+## 内置函数注册表
+
+默认注册表只包含以下函数：
+
+| 类别 | 函数 |
+| --- | --- |
+| 比较 | `eq`、`ne`、`lt`、`le`、`gt`、`ge` |
+| 逻辑 | `and`、`or`、`not` |
+| 集合 | `len`、`index`、`slice` |
+| 格式化 | `print`、`printf`、`println` |
+| 转义 | `html`、`js`、`urlquery` |
+| 调用 | `call` |
+| gotemplate4j 扩展 | `deepEqual`、`typeof`、`kindOf`、`default` |
+
+`Functions.BUILTIN` 以不可修改 map 暴露该注册表。向 `Template` 构造函数传入同名自定义
+函数时，仅覆盖该模板实例中的内置函数。
+
+## 比较函数
+
+`eq` 至少接收两个参数，第一个值等于后续任意值时返回 true。`ne`、`lt`、`le`、`gt`、
+`ge` 必须恰好接收两个参数。
 
 ```gotemplate
-{{arg1 | functionName}}
-{{arg1 | functionName arg2}}
-```
-
-## 内置函数
-
-### 字符串函数
-
-#### upper
-
-将字符串转换为大写。
-
-```gotemplate
-{{upper "hello"}}
-<!-- 输出: HELLO -->
-
-{{.Name | upper}}
-```
-
-#### lower
-
-将字符串转换为小写。
-
-```gotemplate
-{{lower "HELLO"}}
-<!-- 输出: hello -->
-
-{{.Name | lower}}
-```
-
-#### title
-
-将字符串转换为标题大小写（每个单词首字母大写）。
-
-```gotemplate
-{{title "hello world"}}
-<!-- 输出: Hello World -->
-```
-
-#### trim
-
-移除前导和尾部空白。
-
-```gotemplate
-{{trim "  hello  "}}
-<!-- 输出: hello -->
-
-{{.Text | trim}}
-```
-
-#### trimLeft
-
-移除前导空白。
-
-```gotemplate
-{{trimLeft "  hello  "}}
-<!-- 输出: hello   -->
-```
-
-#### trimRight
-
-移除尾部空白。
-
-```gotemplate
-{{trimRight "  hello  "}}
-<!-- 输出:   hello -->
-```
-
-#### trimPrefix
-
-从字符串中移除前缀。
-
-```gotemplate
-{{trimPrefix "Hello" "He"}}
-<!-- 输出: llo -->
-```
-
-#### trimSuffix
-
-从字符串中移除后缀。
-
-```gotemplate
-{{trimSuffix "Hello" "lo"}}
-<!-- 输出: Hel -->
-```
-
-#### replace
-
-替换子字符串的所有出现。
-
-```gotemplate
-{{replace "hello world" "world" "go"}}
-<!-- 输出: hello go -->
-
-{{.Text | replace "old" "new"}}
-```
-
-#### repeat
-
-将字符串重复 n 次。
-
-```gotemplate
-{{repeat "ab" 3}}
-<!-- 输出: ababab -->
-```
-
-#### len
-
-获取字符串、数组、列表、map 或信道的长度。
-
-```gotemplate
-{{len "hello"}}
-<!-- 输出: 5 -->
-
-{{len .Items}}
-<!-- 输出: 项目数量 -->
-```
-
-#### substr
-
-提取子字符串（Go 兼容）。
-
-```gotemplate
-{{substr "hello" 1 4}}
-<!-- 输出: ell -->
-```
-
-### 数学函数
-
-#### add
-
-数字相加。
-
-```gotemplate
-{{add 1 2}}
-<!-- 输出: 3 -->
-
-{{add 1 2 3 4}}
-<!-- 输出: 10 -->
-
-{{add .Count 1}}
-```
-
-#### sub
-
-数字相减。
-
-```gotemplate
-{{sub 10 3}}
-<!-- 输出: 7 -->
-
-{{sub .Total .Used}}
-```
-
-#### mul
-
-数字相乘。
-
-```gotemplate
-{{mul 3 4}}
-<!-- 输出: 12 -->
-
-{{mul .Price .Quantity}}
-```
-
-#### div
-
-数字相除。
-
-```gotemplate
-{{div 10 2}}
-<!-- 输出: 5 -->
-
-{{div .Total .Count}}
-```
-
-注意：整数除法会截断。使用浮点数获得小数结果。
-
-#### mod
-
-取模（求余）操作。
-
-```gotemplate
-{{mod 10 3}}
-<!-- 输出: 1 -->
-
-{{if mod .Index 2 | eq 0}}偶数{{else}}奇数{{end}}
-```
-
-#### pow
-
-幂函数（如果可用）。
-
-```gotemplate
-{{pow 2 3}}
-<!-- 输出: 8 -->
-```
-
-### 比较函数
-
-#### eq
-
-相等比较。`eq` 至少需要两个参数，第一个值等于后续任意一个值时返回 true。
-
-```gotemplate
-{{eq 1 1}}
-<!-- 输出: true -->
-
 {{eq .Status "active" "pending"}}
-<!-- .Status 为 active 或 pending 时返回 true。 -->
-
-{{eq .Status "active"}}
-{{if eq .Age 18}}正好18岁{{end}}
+{{if lt .Age 18}}未成年人{{else}}成年人{{end}}
 ```
 
-#### ne
+整数与整数、小数与小数、字符串与字符串可以比较。布尔值支持 `eq` 和 `ne`。混用不兼容
+类型会抛出模板执行异常。数组、集合和 map 不能直接比较，应使用 `deepEqual`。
 
-不等于比较。必须提供恰好两个参数。
+## 逻辑函数
+
+`and` 和 `or` 与 Go 一样短路并返回操作数，`not` 返回布尔值。
 
 ```gotemplate
-{{ne 1 2}}
-<!-- 输出: true -->
-
-{{if ne .Status "inactive"}}非不活跃{{end}}
+{{and .Active .Verified}}
+{{or .Admin .Moderator}}
+{{not .Deleted}}
 ```
 
-#### lt
+`if`、`with`、`and`、`or`、`not` 和 `default` 共享同一真值规则：`null`、`false`、
+数值零、空字符串、空数组、空集合、空 map 和空 `Optional` 为假；其他值为真。
 
-小于。必须提供恰好两个参数。
+## 集合函数
+
+### len
+
+返回字符串、数组、集合或 map 的长度。
 
 ```gotemplate
-{{lt 1 2}}
-<!-- 输出: true -->
-
-{{if lt .Age 18}}未成年人{{end}}
+{{len .Items}}
+{{len "hello"}}
 ```
 
-#### le
+### index
 
-小于等于。必须提供恰好两个参数。
+索引数组、列表、有序集合、字符串和 map。后续参数继续索引嵌套容器。
 
 ```gotemplate
-{{le 2 2}}
-<!-- 输出: true -->
-
-{{if le .Score 100}}有效分数{{end}}
+{{index .Items 0}}
+{{index .Matrix 1 2}}
+{{index .Users 0 "Name"}}
 ```
 
-#### gt
+序列下标必须是整型且不能越界。map 缺键遵循当前 `MissingKeyPolicy`。
 
-大于。必须提供恰好两个参数。
+### slice
+
+支持数组、列表和字符串的零到三个下标。
 
 ```gotemplate
-{{gt 2 1}}
-<!-- 输出: true -->
-
-{{if gt .Age 18}}成年人{{end}}
+{{slice .Items}}
+{{slice .Items 1}}
+{{slice "hello" 1 4}}
+{{slice .Items 1 4 5}}
 ```
 
-#### ge
+负数、反向和越界区间会抛错。字符串不支持三下标形式。
 
-大于等于。必须提供恰好两个参数。
+## 格式化
 
-```gotemplate
-{{ge 2 2}}
-<!-- 输出: true -->
-
-{{if ge .Score 60}}及格{{end}}
-```
-
-比较遵循 Go 风格的类型分组：整数类型之间可以比较，小数类型之间可以比较，但整数和小数不能
-混用。布尔值只支持 `eq/ne`。数组、集合和 map 应使用 `deepEqual`；不兼容类型会抛出模板执行错误。
-
-### 逻辑函数
-
-#### and
-
-逻辑与，带短路求值。
+`print` 使用 Go `Sprint` 的空格规则。`println` 始终用空格分隔参数并追加换行。
+`printf` 支持 `%v`、`%T`、`%t`、`%q`、`%d`、`%s`、`%x`、`%X`、`%f` 和 `%%`，
+以及常用 flags、十进制宽度和精度。
 
 ```gotemplate
-{{and true true}}
-<!-- 输出: true -->
-
-{{and true false}}
-<!-- 输出: false -->
-
-{{if and .IsActive .IsVerified}}已激活且已验证{{end}}
-```
-
-返回第一个假值，如果全部为真则返回最后一个值。
-
-#### or
-
-逻辑或，带短路求值。
-
-```gotemplate
-{{or true false}}
-<!-- 输出: true -->
-
-{{or false false}}
-<!-- 输出: false -->
-
-{{if or .IsAdmin .IsModerator}}有权限{{end}}
-```
-
-返回第一个真值，如果全部为假则返回最后一个值。
-
-#### not
-
-逻辑非。
-
-```gotemplate
-{{not true}}
-<!-- 输出: false -->
-
-{{not false}}
-<!-- 输出: true -->
-
-{{if not .IsDeleted}}未删除{{end}}
-```
-
-### 格式化函数
-
-#### printf
-
-使用受支持的 Go 风格格式化动词格式化字符串。
-
-```gotemplate
-{{printf "Hello, %s!" "World"}}
-<!-- 输出: Hello, World! -->
-
-{{printf "%d 个项目" 5}}
-<!-- 输出: 5 个项目 -->
-
-{{printf "%.2f" 3.14159}}
-<!-- 输出: 3.14 -->
-
-{{printf "%05d" 42}}
-<!-- 输出: 00042 -->
-
-{{printf "%#x %q %T" 255 "hello" .Age}}
-```
-
-支持的动词：
-- `%v` - 默认值表示；数组使用 `deepToString`
-- `%T` - Java 完全限定类名，null 输出 `<nil>`
-- `%t` - 布尔值
-- `%q` - 带引号并转义的字符串或 Character
-- `%d` - 整数
-- `%s` - 字符串或 Character
-- `%x`、`%X` - 小写或大写十六进制整数
-- `%f` - 浮点数
-- `%%` - 百分号字面量
-
-在 Java 格式化定义允许时，支持 `-`、`+`、空格、`0`、`#` flags、十进制宽度和
-`.precision`。不支持动态宽度/精度（`*`）以及 `%[1]s` 之类的参数重排。
-
-集合、map 和普通对象使用 Java 文本表示，不递归模拟 Go 的聚合值格式。
-未知动词、畸形格式、参数数量不匹配或值类型不兼容都会产生模板执行异常。
-
-#### print
-
-使用默认 `%v` 表示转换参数。仅当当前操作数和前一个操作数都不是字符串时插入空格。
-
-```gotemplate
-{{print "Hello" " " "World"}}
-<!-- 输出: Hello World -->
-
 {{print "hello" "world"}}
-<!-- 输出: helloworld -->
-
-{{print 1 2}}
-<!-- 输出: 1 2 -->
-
-{{print .Name " (" .Age ")"}}
+{{println 1 2 3}}
+{{printf "%.2f" .Price}}
+{{printf "%05d" 42}}
 ```
 
-#### println
+`%T` 输出 Java 完全限定类名，这是有意的 Java 差异。动态宽度/精度和参数重排不受支持，
+会抛出明确执行异常。
 
-类似 print，但始终在操作数之间添加一个空格，并在末尾添加换行符。
+## 转义
+
+`html`、`js` 和 `urlquery` 接受零个或多个参数，并使用 Go `Sprint` 空格规则拼接。
 
 ```gotemplate
-{{println "Hello" "World"}}
-<!-- 输出: Hello World\n -->
-
-{{println}}
-<!-- 输出: 单个换行符 -->
+{{html "<b>"}}
+{{js "</script>"}}
+{{urlquery "a b"}}
 ```
 
-### 类型函数
+`js` 是字符串转义函数，不是上下文感知的 JavaScript 自动转义。应确保结果位于正确
+引用的 JavaScript 字符串中。
 
-#### typeof
+## 自省与扩展函数
 
-获取值的类型名。
+### deepEqual
+
+递归比较数组、map、集合和嵌套容器。每一层都要求相同的具体运行时类型。List 和数组保持
+顺序，Set 按元素匹配，Map 比较键和值，并支持循环容器。普通非容器对象使用 `equals`。
 
 ```gotemplate
-{{typeof .Name}}
-<!-- 输出: java.lang.String（或类似） -->
+{{if deepEqual .Expected .Actual}}相等{{else}}不同{{end}}
 ```
 
-#### kindof
+### typeof 和 kindOf
 
-获取值的种类（Go 兼容）。
+`typeof` 返回 Java 类名或 `nil`。`kindOf` 返回 `array`、`slice`、`map`、`struct`、
+`bool`、`int`、`string` 或 `invalid` 等宽泛类型。
 
 ```gotemplate
-{{kindof .Name}}
-<!-- 输出: String -->
-
-{{kindof .Items}}
-<!-- 输出: Slice, Map 等 -->
+{{typeof .Value}}
+{{kindOf .Value}}
 ```
 
-### 默认值和验证函数
+### default
 
-#### default
-
-当输入是 Go template 意义上的零值时返回回退值。假值包括 `null`、`false`、数值零、
-空字符串或字符序列、空数组、空集合、空 map 和空 `Optional`。仅包含空白的字符串及其他
-非 null 对象为真值。
+被检查值按模板真值规则为假时返回回退值。
 
 ```gotemplate
 {{default .Name "匿名"}}
 {{.Name | default "匿名"}}
-<!-- 当 .Name 为 null 或空值时，两种形式都输出“匿名”。 -->
-
-{{if eq (.Name | default "") ""}}无姓名{{end}}
 ```
 
-直接调用和管道调用的概念顺序一致：前者指定待检查值，后者使用管道上游值，
-显式参数都提供回退值。
+### call
 
-#### index
-
-按索引访问数组、列表、集合、字符串或 map 中的元素。后续参数会继续索引上一级结果，
-因此可以在一个表达式中访问嵌套容器。
+调用模板数据中提供的 `Function` 值。
 
 ```gotemplate
-{{index .Items 0}}
-<!-- 第一个项目 -->
-
-{{index .MapData "key"}}
-<!-- Map 值 -->
-
-{{index .Matrix 1 2}}
-<!-- 多维索引 -->
-
-{{index .Users 0 "Name"}}
-<!-- 先索引列表，再索引得到的 map -->
-```
-
-序列索引必须是 Java 整数类型。字符串、浮点数、`null`、负下标和越界下标都会导致
-模板执行异常。map 缺键继续遵循 `MissingKeyPolicy`。
-
-#### slice
-
-从数组、列表或字符串中提取切片。函数接受零到三个下标：
-
-```gotemplate
-{{slice .Items}}
-<!-- 完整序列 -->
-
-{{slice .Items 1}}
-<!-- 从下标 1 到末尾 -->
-
-{{slice "hello" 1 4}}
-<!-- 输出: ell -->
-
-{{slice .Items 1 4 5}}
-<!-- 带容量上限的切片：start=1、end=4、max=5 -->
-```
-
-下标必须是整型且非负，并且不能超过序列长度。反向区间或越界区间会报错；
-字符串不允许使用第三个下标。
-
-### URL 和 HTML 函数
-
-#### urlquery
-
-按照 Go `text/template` 的查询字符串转义语义进行 URL 编码。该函数接受零个或多个参数，
-并使用 Go `Sprint` 的空格规则拼接参数。
-
-```gotemplate
-{{urlquery "hello world"}}
-<!-- 输出: hello+world -->
-
-{{urlquery "a~*"}}
-<!-- 输出: a~%2A -->
-
-<a href="/search?q={{urlquery .Query}}">搜索</a>
-```
-
-#### html
-
-按照 Go `text/template` 语义进行 HTML 转义。该函数接受零个或多个参数，保留可打印 Unicode，
-并把 NUL 替换为 Unicode 替换字符。
-
-```gotemplate
-{{html "<script>alert('xss')</script>"}}
-<!-- 输出: &lt;script&gt;alert(&#39;xss&#39;)&lt;/script&gt; -->
-
-{{html "\"quoted\""}}
-<!-- 输出: &#34;quoted&#34; -->
-```
-
-#### js
-
-按照 Go `JSEscapeString` 语义进行 JavaScript 转义。HTML 敏感字符和 ASCII 控制字符会转换为
-Unicode 转义，可打印 Unicode 字符则原样保留。该函数接受零个或多个参数。
-
-```gotemplate
-{{js "hello\nworld"}}
-<!-- 输出: hello\u000Aworld -->
-
-{{js "</script>"}}
-<!-- 输出: \u003C/script\u003E -->
-```
-
-`js` 是 Go `text/template` 提供的字符串转义函数，并不等同于 Go `html/template`
-的上下文自动转义。请确保转义值位于带引号的 JavaScript 字符串中，并针对其他 JavaScript
-上下文采用相应的校验和编码策略。
-
-### 日期和时间函数
-
-#### now
-
-获取当前时间。
-
-```gotemplate
-{{now}}
-<!-- 输出: 当前时间戳 -->
-```
-
-#### date
-
-格式化日期/时间（如果可用）。
-
-```gotemplate
-{{date "2006-01-02" .Timestamp}}
-<!-- 输出: 格式化后的日期 -->
-```
-
-注意：日期格式化使用 Go 的参考时间：`Mon Jan 2 15:04:05 MST 2006`
-
-### JSON 函数
-
-#### json
-
-将值编码为 JSON。
-
-```gotemplate
-{{json .Data}}
-<!-- 输出: JSON 表示 -->
-
-<script>
-var data = {{json .Data}};
-</script>
-```
-
-#### jsonify
-
-json 的别名（Go 兼容）。
-
-```gotemplate
-{{jsonify .Data}}
+{{call .Formatter .Value}}
 ```
 
 ## 自定义函数
 
-在创建模板时注册自定义函数。
-
-### 基本自定义函数
+通过 `Template` 构造函数注册函数。函数接收已求值参数组成的 `Object[]`，可返回任意对象。
 
 ```java
 import io.github.verils.gotemplate.Function;
 import io.github.verils.gotemplate.Template;
+
+import java.io.StringWriter;
 import java.util.HashMap;
 import java.util.Map;
 
-// 创建函数 map
 Map<String, Function> functions = new HashMap<>();
+functions.put("double", args -> ((Number) args[0]).longValue() * 2);
+functions.put("greet", args -> "你好, " + args[0] + "!");
 
-// 注册自定义函数
-functions.put("double", args -> {
-    int value = (Integer) args[0];
-    return value * 2;
-});
-
-// 使用自定义函数创建模板
 Template template = new Template("demo", functions);
-template.parse("5 的两倍是 {{double 5}}");
+template.parse("{{greet (.Name | default \"world\")}}; double={{double 5}}");
 
 StringWriter writer = new StringWriter();
-template.execute(writer, new HashMap<>());
-System.out.println(writer.toString());
-// 输出: 5 的两倍是 10
+template.execute(writer, new HashMap<String, Object>());
 ```
 
-### 多参数函数
+自定义函数可以覆盖当前模板的内置函数：
 
 ```java
-functions.put("multiply", args -> {
-    int a = (Integer) args[0];
-    int b = (Integer) args[1];
-    return a * b;
-});
-
-template.parse("{{multiply 3 4}}");
-// 输出: 12
+Map<String, Function> functions = new HashMap<>();
+functions.put("len", args -> 42);
+Template template = new Template("custom-len", functions);
 ```
 
-### 可变参数函数
-
-```java
-functions.put("sum", args -> {
-    int total = 0;
-    for (Object arg : args) {
-        total += ((Number) arg).intValue();
-    }
-    return total;
-});
-
-template.parse("{{sum 1 2 3 4 5}}");
-// 输出: 15
-```
-
-### 返回复杂类型的函数
-
-```java
-functions.put("createUser", args -> {
-    String name = (String) args[0];
-    int age = (Integer) args[1];
-    
-    Map<String, Object> user = new HashMap<>();
-    user.put("Name", name);
-    user.put("Age", age);
-    return user;
-});
-
-template.parse(
-    "{{with createUser \"Alice\" 30}}" +
-    "{{.Name}} 今年 {{.Age}} 岁" +
-    "{{end}}"
-);
-// 输出: Alice 今年 30 岁
-```
-
-### 管道中的函数
-
-```java
-functions.put("greet", args -> {
-    String name = (String) args[0];
-    return "你好, " + name + "!";
-});
-
-template.parse("{{.Name | greet}}");
-// 数据: {"Name": "Alice"}
-// 输出: 你好, Alice!
-```
-
-### 访问上下文的函数
-
-函数不能直接访问模板上下文，但可以传递它：
-
-```java
-functions.put("fullName", args -> {
-    Map<String, Object> user = (Map<String, Object>) args[0];
-    String first = (String) user.get("FirstName");
-    String last = (String) user.get("LastName");
-    return first + " " + last;
-});
-
-template.parse("{{fullName .User}}");
-```
-
-## 常见模式
-
-### 模式 1：条件显示
-
-```gotemplate
-{{if .Name}}{{.Name | upper}}{{else}}匿名{{end}}
-```
-
-### 模式 2：默认值
-
-```gotemplate
-{{.Title | default "无标题"}}
-```
-
-### 模式 3：格式化数字
-
-```gotemplate
-价格: ¥{{printf "%.2f" .Price}}
-```
-
-### 模式 4：字符串操作
-
-```gotemplate
-{{.Text | trim | lower | replace " " "-"}}
-```
-
-### 模式 5：数学运算
-
-```gotemplate
-总计: ¥{{mul .Price .Quantity | printf "%.2f"}}
-折扣: {{mul .Price .Quantity .Discount | div 100 | printf "%.2f"}}
-```
-
-### 模式 6：列表操作
-
-```gotemplate
-{{range $i, $item := .Items}}
-  {{if gt $i 0}}, {{end}}{{$item}}
-{{end}}
-```
-
-输出：`item1, item2, item3`
-
-### 模式 7：交替样式
-
-```gotemplate
-{{range $i, $item := .Items}}
-  <div class="{{if mod $i 2 | eq 0}}even{{else}}odd{{end}}">
-    {{$item}}
-  </div>
-{{end}}
-```
-
-## 最佳实践
-
-### 1. 尽可能使用内置函数
-
-内置函数经过优化且经过了充分测试。
-
-✅ **好：**
-```gotemplate
-{{upper .Name}}
-```
-
-❌ **不好：** 为简单操作创建自定义函数
-
-### 2. 保持函数简单
-
-函数应该做好一件事。
-
-✅ **好：**
-```java
-functions.put("double", args -> {
-    return ((Number) args[0]).intValue() * 2;
-});
-```
-
-❌ **不好：** 函数中有复杂逻辑
-
-### 3. 优雅地处理错误
-
-```java
-functions.put("safeDivide", args -> {
-    double a = ((Number) args[0]).doubleValue();
-    double b = ((Number) args[1]).doubleValue();
-    if (b == 0) {
-        return 0;  // 或抛出 TemplateException
-    }
-    return a / b;
-});
-```
-
-### 4. 文档化自定义函数
-
-```java
-/**
- * 格式化电话号码。
- * 期望: (String) 电话号码数字
- * 返回: 格式化的电话号码 (xxx) xxx-xxxx
- */
-functions.put("formatPhone", args -> {
-    // 实现...
-});
-```
-
-### 5. 充分测试函数
-
-```java
-@Test
-public void testDoubleFunction() throws Exception {
-    Map<String, Function> functions = new HashMap<>();
-    functions.put("double", args -> ((Number) args[0]).intValue() * 2);
-    
-    Template template = new Template("test", functions);
-    template.parse("{{double 5}}");
-    
-    StringWriter writer = new StringWriter();
-    template.execute(writer, new HashMap<>());
-    
-    assertEquals("10", writer.toString().trim());
-}
-```
-
-## 性能注意事项
-
-### 1. 避免昂贵的操作
-
-不要在循环中调用的函数中进行大量计算。
-
-❌ **不好：**
-```gotemplate
-{{range .Items}}
-  {{expensiveOperation .}}
-{{end}}
-```
-
-✅ **好：** 在 Java 代码中预先计算
-
-### 2. 缓存结果
-
-如果函数使用相同参数被多次调用，缓存结果。
-
-### 3. 减少函数调用
-
-高效地串联操作：
-
-❌ **不好：**
-```gotemplate
-{{upper (trim .Text)}}
-```
-
-✅ **好：**
-```gotemplate
-{{.Text | trim | upper}}
-```
+自定义函数应校验参数数量和类型，错误信息应可操作，并避免在异常消息中返回敏感值。
 
 ## 问题排查
 
-### 问题：函数未找到
-
-**错误：** `function "xyz" not defined`
-
-**解决方案：** 
-1. 检查函数名拼写
-2. 验证函数是否已注册
-3. 确保正确的函数 map 已传递给模板
-
-### 问题：参数数量错误
-
-**错误：** `wrong number of args for xyz`
-
-**解决方案：** 检查函数签名和调用
-
-### 问题：类型不匹配
-
-**错误：** `can't handle type X for function Y`
-
-**解决方案：** 将参数转换为期望的类型
-
-```java
-functions.put("myFunc", args -> {
-    // 安全转换
-    if (!(args[0] instanceof String)) {
-        throw new IllegalArgumentException("期望 String 类型");
-    }
-    String value = (String) args[0];
-    // ...
-});
-```
-
-## 完整示例
-
-```java
-import io.github.verils.gotemplate.*;
-import java.util.*;
-
-public class FunctionExample {
-    public static void main(String[] args) throws Exception {
-        // 创建自定义函数
-        Map<String, Function> functions = new HashMap<>();
-        
-        // 问候函数
-        functions.put("greet", args -> {
-            String name = (String) args[0];
-            return "你好, " + name + "!";
-        });
-        
-        // 格式化货币
-        functions.put("currency", args -> {
-            double amount = ((Number) args[0]).doubleValue();
-            return String.format("¥%.2f", amount);
-        });
-        
-        // 创建模板
-        String templateText = 
-            "{{greet .Name}}\n" +
-            "项目数: {{len .Items}}\n" +
-            "总计: {{mul .Price .Quantity | currency}}\n" +
-            "折后: {{mul .Price .Quantity .Discount | div 100 | currency}}";
-        
-        Template template = new Template("invoice", functions);
-        template.parse(templateText);
-        
-        // 准备数据
-        Map<String, Object> data = new HashMap<>();
-        data.put("Name", "Alice");
-        data.put("Items", Arrays.asList("Widget", "Gadget"));
-        data.put("Price", 19.99);
-        data.put("Quantity", 5);
-        data.put("Discount", 10);  // 10% 折扣
-        
-        // 执行
-        StringWriter writer = new StringWriter();
-        template.execute(writer, data);
-        System.out.println(writer.toString());
-    }
-}
-```
-
-**输出：**
-```
-你好, Alice!
-项目数: 2
-总计: ¥99.95
-折后: ¥10.00
-```
-
----
-
-**下一步：**
-- 🎯 了解[控制流](control-flow.md)以进行条件和循环处理
-- 📊 理解[数据模型](data-models.md)以使用 Java 对象
-- 📚 查阅[模板语法](template-syntax.md)获取完整参考
+- `undefined function` 表示函数名拼写错误，或没有传入模板构造函数。
+- 参数数量和类型错误包装为 `TemplateExecutionException`，并包含紧凑的参数类型摘要。
+- 缺失命名模板使用 `TemplateNotFoundException`。
+- 复杂数字面量暂不支持，会在解析阶段报错。

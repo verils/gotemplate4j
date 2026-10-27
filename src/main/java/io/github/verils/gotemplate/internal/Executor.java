@@ -342,7 +342,7 @@ public class Executor {
 
         ListNode listNode = (ListNode) rootNodes.get(name);
         if (listNode == null) {
-            throw new TemplateExecutionException(String.format("template %s not defined", name));
+            throw new TemplateNotFoundException(String.format("template '%s' not found", name));
         }
 
         BeanInfo beanInfo = data != null ? getBeanInfo(data) : null;
@@ -1059,6 +1059,20 @@ public class Executor {
 
         // Add argument count information
         message.append(String.format(" with %d argument(s)", args.length));
+        if (args.length > 0) {
+            message.append(" (types: ");
+            int displayed = Math.min(args.length, 8);
+            for (int i = 0; i < displayed; i++) {
+                if (i > 0) {
+                    message.append(", ");
+                }
+                message.append(argumentType(args[i]));
+            }
+            if (args.length > displayed) {
+                message.append(", ...");
+            }
+            message.append(')');
+        }
 
         // Include the original error message if it's informative
         String causeMessage = cause.getMessage();
@@ -1070,6 +1084,14 @@ public class Executor {
         }
 
         return message.toString();
+    }
+
+    private static String argumentType(Object argument) {
+        if (argument == null) {
+            return "null";
+        }
+        Class<?> type = argument.getClass();
+        return type.isArray() ? type.getComponentType().getSimpleName() + "[]" : type.getSimpleName();
     }
 
     private static class BreakException extends RuntimeException {

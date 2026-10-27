@@ -2,6 +2,10 @@ package io.github.verils.gotemplate;
 
 import org.junit.jupiter.api.Test;
 
+import java.io.ByteArrayInputStream;
+import java.io.FilterInputStream;
+import java.io.InputStream;
+import java.io.StringReader;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -188,5 +192,50 @@ public class TemplateInputValidationTest {
         assertEquals("original", copy.name());
     }
 
+    @Test
+    void parsingDoesNotCloseCallerOwnedInputStream() throws Exception {
+        TrackingInputStream input = new TrackingInputStream(
+                new ByteArrayInputStream("stream".getBytes(java.nio.charset.StandardCharsets.UTF_8)));
 
+        new Template("test").parse(input);
+
+        assertFalse(input.closed);
+    }
+
+    @Test
+    void parsingDoesNotCloseCallerOwnedReader() throws Exception {
+        TrackingReader reader = new TrackingReader("reader");
+
+        new Template("test").parse(reader);
+
+        assertFalse(reader.closed);
+    }
+
+    private static final class TrackingInputStream extends FilterInputStream {
+        private boolean closed;
+
+        private TrackingInputStream(InputStream input) {
+            super(input);
+        }
+
+        @Override
+        public void close() throws java.io.IOException {
+            closed = true;
+            super.close();
+        }
+    }
+
+    private static final class TrackingReader extends StringReader {
+        private boolean closed;
+
+        private TrackingReader(String text) {
+            super(text);
+        }
+
+        @Override
+        public void close() {
+            closed = true;
+            super.close();
+        }
+    }
 }

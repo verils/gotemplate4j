@@ -205,14 +205,14 @@ template.option("missingkey=error");
 
 ### Supported Policies
 
-- **`DEFAULT`**: Missing map keys evaluate to `null`. This is the default behavior.
-- **`ZERO`**: Returns a Java zero-like value when the target type is knowable. For missing map keys without a knowable type, falls back to `null`.
+- **`INVALID`**: Missing map keys evaluate to `null`. This is the default behavior.
+- **`ZERO`**: Requests a zero value. Java maps do not retain element types, so missing map keys resolve to `null` and render as `<no value>`.
 - **`ERROR`**: Throws `TemplateExecutionException` for missing map keys and missing field-chain segments after a `null` value.
 
 ### Use Cases
 
 - **Development**: Use `ERROR` policy to catch issues early during development.
-- **Production**: Use `DEFAULT` or `ZERO` for graceful degradation in production.
+- **Production**: Use `INVALID` or `ZERO` for graceful degradation in production.
 - **Strict validation**: Use `ERROR` when all required fields must be present.
 
 ## Unsupported or Deferred Go APIs
@@ -231,11 +231,11 @@ These Go template features are not currently supported in gotemplate4j.
 
 ### Range Limitations
 
-- **Integer range**: `range $i := 5` (iterating over integers) is not yet supported.
 - **Channels**: Go channels cannot be used from Java.
 - **Iterators**: `iter.Seq` and `iter.Seq2` are Go-specific and not available.
 
-Workaround: Convert data to Java arrays, collections, or maps before passing to templates.
+Integer ranges are supported. Convert other unsupported values to Java arrays, collections, or maps
+before passing them to templates.
 
 ### Method Invocation
 
@@ -245,8 +245,9 @@ Workaround: Convert data to Java arrays, collections, or maps before passing to 
   // {{.object.method "arg1" "arg2"}}
   
   // Instead, use custom functions:
-  Function myFunc = args -> { /* logic */ };
-  template.addFunction("myFunc", myFunc);
+  Map<String, Function> functions = new HashMap<>();
+  functions.put("myFunc", args -> { /* logic */ });
+  Template template = new Template("demo", functions);
   // Template: {{myFunc .object "arg1" "arg2"}}
   ```
 
@@ -257,7 +258,7 @@ Workaround: Convert data to Java arrays, collections, or maps before passing to 
 
 ### Numeric Formatting
 
-- **Complex number support**: Full Go numeric and complex formatting parity is not implemented.
+- **Complex number support**: Complex number literals are rejected during parsing; no silent numeric fallback is produced.
 - **Supported verbs**: Only `%v`, `%T`, `%t`, `%q`, `%d`, `%s`, `%x`, `%X`,
   `%f`, and `%%` are supported.
 - **Type names**: `%T` returns Java fully qualified class names.
@@ -287,7 +288,7 @@ This table summarizes key differences between Go templates and gotemplate4j:
 | Missing keys | Configurable (default: error) | Configurable (default: null) | Backward compatibility |
 | Null display | `<no value>` | Empty string | Java convention |
 | Method calls | Any public method | No-argument methods only | Security |
-| Integer range | Supported | Not yet supported | Implementation priority |
+| Integer range | Supported | Supported | Go-compatible |
 | Channels | Supported | Not applicable | Java doesn't have channels |
 | Optional | N/A | Auto-unwrapped | Java-specific feature |
 | Enums | N/A | toString() + methods | Java-specific feature |

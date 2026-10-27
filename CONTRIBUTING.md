@@ -200,7 +200,7 @@ All pull requests undergo review:
 1. **Automated Checks** (CI):
    - All tests must pass
    - Code coverage must remain above the JaCoCo thresholds
-   - Build must succeed on Java 8
+   - Build must succeed on Java 11
 
 2. **Manual Review**:
    - Code quality and style

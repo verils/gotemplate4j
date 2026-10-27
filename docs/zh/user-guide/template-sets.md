@@ -617,7 +617,7 @@ templates/
 克隆模板集以进行线程安全执行：
 
 ```java
-Template clone = template.clone();
+Template clone = new Template(template);
 clone.execute(writer, data);
 ```
 
@@ -662,7 +662,7 @@ clone.execute(writer, data);
 
 ### 问题：模板未找到
 
-**错误：** `template "xyz" not defined`
+**错误：** `template 'xyz' not found`
 
 **解决方案：**
 1. 验证模板在使用前已定义

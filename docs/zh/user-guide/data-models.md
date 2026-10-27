@@ -660,11 +660,11 @@ template.parse("姓名: '{{.Name}}'");
 配置缺失/null 键的处理方式：
 
 ```java
-// 选项 1: DEFAULT - 渲染为空字符串
+// 选项 1: INVALID - 缺失值渲染为 <no value>
 Template template = new Template("demo")
-    .withMissingKeyPolicy(MissingKeyPolicy.DEFAULT);
+    .withMissingKeyPolicy(MissingKeyPolicy.INVALID);
 
-// 选项 2: ZERO - 渲染为零值
+// 选项 2: ZERO - 请求零值（Java map 缺键仍解析为 null）
 Template template = new Template("demo")
     .withMissingKeyPolicy(MissingKeyPolicy.ZERO);
 
@@ -899,9 +899,9 @@ functions.put("default", args -> {
 ### 模式 3：带交替样式的循环
 
 ```gotemplate
-{{range $index, $item := .Items}}
-  <div class="{{if mod $index 2 | eq 0}}even{{else}}odd{{end}}">
-    {{$item}}
+{{range .Items}}
+  <div class="{{if .Even}}even{{else}}odd{{end}}">
+    {{.Name}}
   </div>
 {{end}}
 ```

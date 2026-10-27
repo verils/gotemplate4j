@@ -155,6 +155,40 @@ public class TemplateCloningTest {
     }
 
     @Test
+    void parsedTemplateCanExecuteConcurrentlyWithIndependentWriters() throws Exception {
+        Template template = new Template("test");
+        template.parse("{{.message}}");
+
+        int threadCount = 8;
+        ExecutorService executor = Executors.newFixedThreadPool(threadCount);
+        CountDownLatch latch = new CountDownLatch(threadCount);
+        String[] results = new String[threadCount];
+
+        for (int i = 0; i < threadCount; i++) {
+            final int threadId = i;
+            executor.submit(() -> {
+                try {
+                    StringWriter writer = new StringWriter();
+                    Map<String, Object> data = new HashMap<>();
+                    data.put("message", "thread-" + threadId);
+                    template.execute(writer, data);
+                    results[threadId] = writer.toString();
+                } catch (Exception e) {
+                    results[threadId] = e.getClass().getSimpleName();
+                } finally {
+                    latch.countDown();
+                }
+            });
+        }
+
+        assertTrue(latch.await(10, TimeUnit.SECONDS));
+        executor.shutdownNow();
+        for (int i = 0; i < threadCount; i++) {
+            assertEquals("thread-" + i, results[i]);
+        }
+    }
+
+    @Test
     void testConcurrentParsingAndExecution() throws InterruptedException {
         // Test that parsing in one thread doesn't affect execution in another
         final Template template1 = new Template("t1");

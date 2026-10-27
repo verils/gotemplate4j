@@ -12,7 +12,12 @@ public enum MissingKeyPolicy {
     INVALID,
 
     /**
-     * The operation returns the zero value for the map type's element.
+     * Requests the element type's zero value for a missing map key.
+     * <p>
+     * Java maps do not retain the compile-time element type. gotemplate4j therefore cannot
+     * infer a meaningful zero value and resolves a missing map key to {@code null}; direct
+     * rendering consequently produces {@code <no value>}. This differs from Go only where the
+     * map element type would provide a concrete zero value.
      */
     ZERO,
 

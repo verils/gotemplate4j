@@ -5,7 +5,6 @@ import io.github.verils.gotemplate.Functions;
 import io.github.verils.gotemplate.TemplateParseException;
 import io.github.verils.gotemplate.internal.ast.*;
 import io.github.verils.gotemplate.internal.lang.CharUtils;
-import io.github.verils.gotemplate.internal.lang.Complex;
 import io.github.verils.gotemplate.internal.lang.StringUtils;
 
 import java.util.ArrayList;
@@ -742,27 +741,11 @@ public class Parser {
             return;
         }
 
-        if (type == TokenType.COMPLEX) {
-            try {
-                Complex complex = parseComplexValue(text);
-                numberNode.setIsComplex(true);
-                numberNode.setComplex(complex);
-                simplifyComplex(numberNode, complex);
-                return;
-            } catch (NumberFormatException ignored) {
-            }
-        }
-
-        int length = text.length();
-        if (length > 0 && text.charAt(length - 1) == 'i') {
-            try {
-                Complex complex = parseComplexValue(text);
-                numberNode.setIsComplex(true);
-                numberNode.setComplex(complex);
-                simplifyComplex(numberNode, complex);
-                return;
-            } catch (NumberFormatException ignored) {
-            }
+        if (type == TokenType.COMPLEX
+                || (text.length() > 0 && text.charAt(text.length() - 1) == 'i')) {
+            throw new TemplateParseException(
+                    "complex number literals are not supported: " + text,
+                    token.line(), token.column());
         }
 
         try {
@@ -829,20 +812,6 @@ public class Parser {
 
     private double parseFloatValue(String text) {
         return Double.parseDouble(trimUnderscore(text));
-    }
-
-    private Complex parseComplexValue(String text) {
-        return Complex.parseComplex(text);
-    }
-
-    private void simplifyComplex(NumberNode numberNode, Complex complex) {
-        if (complex.getImaginary() == 0) {
-            double floatValue = complex.getReal();
-            numberNode.setIsFloat(true);
-            numberNode.setFloatValue(floatValue);
-
-            simplifyFloat(numberNode, floatValue);
-        }
     }
 
     private void simplifyFloat(NumberNode numberNode, double floatValue) {

@@ -425,7 +425,8 @@ Template template = new Template("demo")
 
 **Available Policies:**
 - `INVALID` (default) - Do nothing and continue execution
-- `ZERO` - Return zero value for the map type's element
+- `ZERO` - Request a zero value; Java maps do not retain element types, so missing
+  map keys resolve to `null` and render as `<no value>`
 - `ERROR` - Stop execution with TemplateExecutionException
 
 **Parameters:**
@@ -449,12 +450,14 @@ Applies Go-style string options.
 template.option("missingkey=error");
 template.option("missingkey=zero");
 template.option("missingkey=default");
+template.option("mapkeysorting=false");
 ```
 
 **Supported Options:**
 - `missingkey=default` or `missingkey=invalid` - Sets policy to INVALID
 - `missingkey=zero` - Sets policy to ZERO
 - `missingkey=error` - Sets policy to ERROR
+- `mapkeysorting=true` or `mapkeysorting=false` - Enables or disables eligible map-key sorting
 
 **Parameters:**
 - `option` - Option string in format "key=value"
@@ -677,11 +680,14 @@ List<Template> templates = Template.fromClasspathResources("templates/**/*.tmpl"
 
 The `Template` class has specific thread safety characteristics:
 
-### During Parsing
-**NOT thread-safe.** Parsing modifies internal state and should only be done by a single thread.
+### During Parsing and Configuration
+**NOT thread-safe.** Parsing and configuration methods modify internal state and must not
+overlap with other parsing, configuration, or execution on the same template.
 
-### After Parsing
-**Thread-safe for execution** if different `Writer` instances are used for each execution. Multiple threads can safely call `execute()` concurrently on the same parsed template.
+### After Parsing and Configuration
+**Thread-safe for execution** if configuration has completed and different `Writer` instances
+are used for each execution. Multiple threads can safely call `execute()` concurrently on the
+same parsed template.
 
 ### For Concurrent Modification
 If you need to modify a template (add definitions, change configuration) while other threads are executing it, use the copy constructor:

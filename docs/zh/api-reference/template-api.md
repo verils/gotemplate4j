@@ -424,7 +424,8 @@ Template template = new Template("demo")
 
 **可用策略：**
 - `INVALID`（默认） - 不执行任何操作，继续执行
-- `ZERO` - 返回映射类型元素的零值
+- `ZERO` - 请求零值；Java map 不保留元素类型，因此缺失 map 键会得到 `null`，
+  并渲染为 `<no value>`
 - `ERROR` - 停止执行并抛出 TemplateExecutionException
 
 **参数：**
@@ -448,12 +449,14 @@ Template template = new Template("demo")
 template.option("missingkey=error");
 template.option("missingkey=zero");
 template.option("missingkey=default");
+template.option("mapkeysorting=false");
 ```
 
 **支持的选项：**
 - `missingkey=default` 或 `missingkey=invalid` - 设置策略为 INVALID
 - `missingkey=zero` - 设置策略为 ZERO
 - `missingkey=error` - 设置策略为 ERROR
+- `mapkeysorting=true` 或 `mapkeysorting=false` - 启用或关闭符合条件的 map 键排序
 
 **参数：**
 - `option` - 格式为 "key=value" 的选项字符串
@@ -638,11 +641,12 @@ List<Template> templates = Template.fromClasspathResources("templates/**/*.tmpl"
 
 `Template` 类具有特定的线程安全特征：
 
-### 解析期间
-**非线程安全。** 解析会修改内部状态，应仅由单个线程执行。
+### 解析和配置期间
+**非线程安全。** 解析和配置方法会修改内部状态，不得与同一模板的其他解析、配置或执行并发。
 
-### 解析完成后
-**执行是线程安全的**，条件是为每次执行使用不同的 `Writer` 实例。多个线程可以安全地对同一个已解析模板并发调用 `execute()`。
+### 解析和配置完成后
+**执行是线程安全的**，条件是配置已经完成，并为每次执行使用不同的 `Writer` 实例。
+多个线程可以安全地对同一个已解析模板并发调用 `execute()`。
 
 ### 并发修改时
 如果需要在其他线程执行模板时修改模板（添加定义、更改配置），请使用复制构造函数：

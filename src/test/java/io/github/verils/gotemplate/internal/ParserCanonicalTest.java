@@ -177,7 +177,7 @@ class ParserCanonicalTest {
 
     @Test
     void testConstants() throws TemplateParseException {
-        assertOK("constants", "{{range .SI 1 -3.2i true false 'a' nil}}{{end}}", "{{range .SI 1 -3.2i true false 'a' nil}}{{end}}");
+        assertOK("constants", "{{range .SI 1 -3.2 true false 'a' nil}}{{end}}", "{{range .SI 1 -3.2 true false 'a' nil}}{{end}}");
     }
 
 

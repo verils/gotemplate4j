@@ -6,7 +6,7 @@
 
 A Go template engine implementation for Java that evaluates Go templates and generates textual output.
 
-> ✅ **Production Ready**: Stable core functionality with 90%+ code coverage, comprehensive built-in functions, and complete documentation.
+> ✅ **Compatibility Focus**: Core behavior is covered by 90%+ tests and documented Go differences. Review the compatibility guide before production use.
 
 > ⚠️ **Core Purpose**: This project is **NOT** a replacement for Go's native `text/template` and does **NOT** aim to surpass it in performance or features. It exists solely to help **Java developers who must work with Go templates** meet basic operational needs when dealing with Go-based systems or migrating from Go to Java.
 
@@ -78,16 +78,16 @@ Load templates from classpath, directories, or with specific encoding:
 
 ```java
 // Load from classpath
-Template tmpl = Template.fromClasspath("templates/email.tmpl");
+Template emailTemplate = Template.fromClasspath("templates/email.tmpl");
 
 // Load from directory (all .tmpl files)
-Map<String, Template> templates = Template.fromDirectory(Paths.get("templates"));
+Map<String, Template> directoryTemplates = Template.fromDirectory(Paths.get("templates"));
 
 // Load with specific encoding
-Template tmpl = Template.fromFile(Paths.get("template.tmpl"), StandardCharsets.UTF_8);
+Template encodedTemplate = Template.fromFile(Paths.get("template.tmpl"), StandardCharsets.UTF_8);
 
 // Batch load from classpath with pattern
-List<Template> templates = Template.fromClasspathResources("templates/*.tmpl");
+List<Template> classpathTemplates = Template.fromClasspathResources("templates/*.tmpl");
 ```
 
 For more examples, see [Basic Examples](./docs/en/examples/basic-examples.md).

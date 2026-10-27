@@ -194,14 +194,15 @@ template.option("missingkey=error");
 
 ### 支持的策略
 
-- **`DEFAULT`**：缺失的映射键求值为 `null`。这是默认行为。
-- **`ZERO`**：当目标类型可知时，返回 Java 的零值。对于不可知类型的缺失映射键，回退为 `null`。
+- **`INVALID`**：缺失的映射键求值为 `null`。这是默认行为。
+- **`ZERO`**：请求零值。Java map 不保留元素类型，因此缺失 map 键会解析为 `null`
+  并渲染为 `<no value>`。
 - **`ERROR`**：对于缺失的映射键和 `null` 值之后的缺失字段链段落，抛出 `TemplateExecutionException`。
 
 ### 使用场景
 
 - **开发环境**：使用 `ERROR` 策略在开发过程中尽早发现问题。
-- **生产环境**：使用 `DEFAULT` 或 `ZERO` 在生产环境中进行优雅降级。
+- **生产环境**：使用 `INVALID` 或 `ZERO` 在生产环境中进行优雅降级。
 - **严格验证**：当所有必填字段必须存在时，使用 `ERROR`。
 
 ## 不支持或暂缓的 Go API
@@ -220,11 +221,10 @@ template.option("missingkey=error");
 
 ### Range 限制
 
-- **整数 range**：`range $i := 5`（遍历整数）尚未支持。
 - **通道**：Go 通道无法从 Java 中使用。
 - **迭代器**：`iter.Seq` 和 `iter.Seq2` 是 Go 特有的，不可用。
 
-解决方案：在传递给模板之前将数据转换为 Java 数组、集合或映射。
+整数 range 已支持。其他不支持的值应在传递给模板之前转换为 Java 数组、集合或映射。
 
 ### 方法调用
 
@@ -234,8 +234,9 @@ template.option("missingkey=error");
   // {{.object.method "arg1" "arg2"}}
 
   // 应改用自定义函数：
-  Function myFunc = args -> { /* 逻辑 */ };
-  template.addFunction("myFunc", myFunc);
+  Map<String, Function> functions = new HashMap<>();
+  functions.put("myFunc", args -> { /* 逻辑 */ });
+  Template template = new Template("demo", functions);
   // 模板：{{myFunc .object "arg1" "arg2"}}
   ```
 
@@ -246,7 +247,7 @@ template.option("missingkey=error");
 
 ### 数字格式化
 
-- **复数支持**：未实现完整的 Go 数字和复数格式化兼容。
+- **复数支持**：复杂数字面量在解析阶段明确报错，不再静默产生错误数值。
 - **支持的动词**：仅支持 `%v`、`%T`、`%t`、`%q`、`%d`、`%s`、`%x`、`%X`、
   `%f` 和 `%%`。
 - **类型名称**：`%T` 返回 Java 完全限定类名。
@@ -275,7 +276,7 @@ template.option("missingkey=error");
 | 缺失键 | 可配置（默认：error） | 可配置（默认：null） | 向后兼容 |
 | Null 显示 | `<no value>` | 空字符串 | Java 惯例 |
 | 方法调用 | 任意公有方法 | 仅无参方法 | 安全性 |
-| 整数 range | 支持 | 尚未支持 | 实现优先级 |
+| 整数 range | 支持 | 支持 | 与 Go 兼容 |
 | 通道 | 支持 | 不适用 | Java 没有通道 |
 | Optional | 不适用 | 自动解包 | Java 特有功能 |
 | 枚举 | 不适用 | toString() + 方法 | Java 特有功能 |

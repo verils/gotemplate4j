@@ -7,46 +7,59 @@ import io.github.verils.gotemplate.internal.lang.Truthiness;
 
 import java.lang.reflect.Array;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class Functions {
 
-    public static final Map<String, Function> BUILTIN = new LinkedHashMap<>();
+    private static final Map<String, Function> BUILTIN_FUNCTIONS = createBuiltinFunctions();
 
-    static {
-        BUILTIN.put("call", call());
-        BUILTIN.put("html", html());
-        BUILTIN.put("index", index());
-        BUILTIN.put("slice", slice());
-        BUILTIN.put("js", js());
-        BUILTIN.put("len", len());
-        BUILTIN.put("print", print());
-        BUILTIN.put("printf", printf());
-        BUILTIN.put("println", println());
-        BUILTIN.put("urlquery", urlquery());
+    /**
+     * Immutable view of the default function registry.
+     */
+    public static final Map<String, Function> BUILTIN =
+            Collections.unmodifiableMap(BUILTIN_FUNCTIONS);
+
+    private static Map<String, Function> createBuiltinFunctions() {
+        Map<String, Function> functions = new LinkedHashMap<>();
+        functions.put("call", call());
+        functions.put("html", html());
+        functions.put("index", index());
+        functions.put("slice", slice());
+        functions.put("js", js());
+        functions.put("len", len());
+        functions.put("print", print());
+        functions.put("printf", printf());
+        functions.put("println", println());
+        functions.put("urlquery", urlquery());
 
         // Logical operations
-        BUILTIN.put("and", Functions::and);
-        BUILTIN.put("or", Functions::or);
-        BUILTIN.put("not", Functions::not);
+        functions.put("and", Functions::and);
+        functions.put("or", Functions::or);
+        functions.put("not", Functions::not);
 
         // Comparisons
-        BUILTIN.put("eq", eq());
-        BUILTIN.put("ge", ge());
-        BUILTIN.put("gt", gt());
-        BUILTIN.put("le", le());
-        BUILTIN.put("lt", lt());
-        BUILTIN.put("ne", ne());
+        functions.put("eq", eq());
+        functions.put("ge", ge());
+        functions.put("gt", gt());
+        functions.put("le", le());
+        functions.put("lt", lt());
+        functions.put("ne", ne());
 
         // Additional functions (Phase 2.3)
-        BUILTIN.put("deepEqual", deepEqual());
-        BUILTIN.put("typeof", typeof());
-        BUILTIN.put("kindOf", kindOf());
+        functions.put("deepEqual", deepEqual());
+        functions.put("typeof", typeof());
+        functions.put("kindOf", kindOf());
 
         // Null-safety functions (Phase 2.2.4)
-        BUILTIN.put("default", defaultValue());
+        functions.put("default", defaultValue());
+        return functions;
     }
 
     private static Function print() {
@@ -438,6 +451,11 @@ public class Functions {
     }
 
     private static boolean deepEquals(Object a, Object b) {
+        return deepEquals(a, b, new IdentityHashMap<>());
+    }
+
+    private static boolean deepEquals(Object a, Object b,
+                                      IdentityHashMap<Object, IdentityHashMap<Object, Boolean>> visited) {
         if (a == b) {
             return true;
         }
@@ -448,18 +466,123 @@ public class Functions {
             return false;
         }
         if (a.getClass().isArray()) {
+            if (wasVisited(a, b, visited)) {
+                return true;
+            }
             int len = Array.getLength(a);
             if (len != Array.getLength(b)) {
                 return false;
             }
             for (int i = 0; i < len; i++) {
-                if (!deepEquals(Array.get(a, i), Array.get(b, i))) {
+                if (!deepEquals(Array.get(a, i), Array.get(b, i), visited)) {
                     return false;
                 }
             }
             return true;
         }
+        if (a instanceof Map) {
+            if (wasVisited(a, b, visited)) {
+                return true;
+            }
+            Map<?, ?> mapA = (Map<?, ?>) a;
+            Map<?, ?> mapB = (Map<?, ?>) b;
+            if (mapA.size() != mapB.size()) {
+                return false;
+            }
+
+            List<Map.Entry<?, ?>> remainingEntries = new ArrayList<>(mapB.entrySet());
+            for (Map.Entry<?, ?> entryA : mapA.entrySet()) {
+                boolean matched = false;
+                for (int i = 0; i < remainingEntries.size(); i++) {
+                    Map.Entry<?, ?> entryB = remainingEntries.get(i);
+                    IdentityHashMap<Object, IdentityHashMap<Object, Boolean>> branch =
+                            copyVisited(visited);
+                    if (deepEquals(entryA.getKey(), entryB.getKey(), branch)
+                            && deepEquals(entryA.getValue(), entryB.getValue(), branch)) {
+                        visited = branch;
+                        remainingEntries.remove(i);
+                        matched = true;
+                        break;
+                    }
+                }
+                if (!matched) {
+                    return false;
+                }
+            }
+            return true;
+        }
+        if (a instanceof Set) {
+            if (wasVisited(a, b, visited)) {
+                return true;
+            }
+            Collection<?> setA = (Collection<?>) a;
+            Collection<?> setB = (Collection<?>) b;
+            if (setA.size() != setB.size()) {
+                return false;
+            }
+
+            List<Object> remaining = new ArrayList<>(setB);
+            for (Object valueA : setA) {
+                boolean matched = false;
+                for (int i = 0; i < remaining.size(); i++) {
+                    IdentityHashMap<Object, IdentityHashMap<Object, Boolean>> branch =
+                            copyVisited(visited);
+                    if (deepEquals(valueA, remaining.get(i), branch)) {
+                        visited = branch;
+                        remaining.remove(i);
+                        matched = true;
+                        break;
+                    }
+                }
+                if (!matched) {
+                    return false;
+                }
+            }
+            return true;
+        }
+        if (a instanceof Collection) {
+            if (wasVisited(a, b, visited)) {
+                return true;
+            }
+            Collection<?> collectionA = (Collection<?>) a;
+            Collection<?> collectionB = (Collection<?>) b;
+            if (collectionA.size() != collectionB.size()) {
+                return false;
+            }
+
+            java.util.Iterator<?> iteratorA = collectionA.iterator();
+            java.util.Iterator<?> iteratorB = collectionB.iterator();
+            while (iteratorA.hasNext() && iteratorB.hasNext()) {
+                if (!deepEquals(iteratorA.next(), iteratorB.next(), visited)) {
+                    return false;
+                }
+            }
+            return !iteratorA.hasNext() && !iteratorB.hasNext();
+        }
         return a.equals(b);
+    }
+
+    private static boolean wasVisited(Object a, Object b,
+                                      IdentityHashMap<Object, IdentityHashMap<Object, Boolean>> visited) {
+        IdentityHashMap<Object, Boolean> compared = visited.get(a);
+        if (compared != null && compared.containsKey(b)) {
+            return true;
+        }
+        if (compared == null) {
+            compared = new IdentityHashMap<>();
+            visited.put(a, compared);
+        }
+        compared.put(b, Boolean.TRUE);
+        return false;
+    }
+
+    private static IdentityHashMap<Object, IdentityHashMap<Object, Boolean>> copyVisited(
+            IdentityHashMap<Object, IdentityHashMap<Object, Boolean>> visited) {
+        IdentityHashMap<Object, IdentityHashMap<Object, Boolean>> copy = new IdentityHashMap<>();
+        for (Map.Entry<Object, IdentityHashMap<Object, Boolean>> entry : visited.entrySet()) {
+            copy.put(entry.getKey(), new IdentityHashMap<>(entry.getValue()));
+        }
+        return copy;
     }
 
     private static String getKind(Object obj) {

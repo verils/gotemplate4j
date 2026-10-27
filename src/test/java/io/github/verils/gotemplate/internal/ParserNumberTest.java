@@ -3,7 +3,6 @@ package io.github.verils.gotemplate.internal;
 import io.github.verils.gotemplate.TemplateParseException;
 import io.github.verils.gotemplate.internal.ast.Node;
 import io.github.verils.gotemplate.internal.ast.NumberNode;
-import io.github.verils.gotemplate.internal.lang.Complex;
 import org.junit.jupiter.api.Test;
 
 import java.util.Map;
@@ -77,13 +76,6 @@ class ParserNumberTest {
                 new NumberTest("0x_1p4", true, true, false),
                 new NumberTest("0X_1P4", true, true, false),
                 new NumberTest("0x_1p-4", false, true, false),
-                new NumberTest("4i", false, false, true),
-                new NumberTest("-1.2+4.2i", false, false, true),
-                new NumberTest("073i", false, false, true),
-                new NumberTest("0i", true, true, true),
-                new NumberTest("-1.2+0i", false, true, true),
-                new NumberTest("-12+0i", true, true, true),
-                new NumberTest("13+0i", true, true, true),
                 new NumberTest("0123", true, true, false),
                 new NumberTest("-0x0", true, true, false),
                 new NumberTest("0xdeadbeef", true, true, false),
@@ -118,13 +110,6 @@ class ParserNumberTest {
             }
 
             try {
-                Complex.parseComplex(text);
-                type = TokenType.COMPLEX;
-            } catch (NumberFormatException ignored) {
-            }
-
-
-            try {
                 NumberNode numberNode = parser.parseNumber(new Token(type, text, 0, 0, 0));
                 assertEquals(test.isInt, numberNode.isInt(), String.format("invalid number: %s", test.text));
                 assertEquals(test.isFloat, numberNode.isFloat(), String.format("invalid number: %s", test.text));
@@ -137,62 +122,16 @@ class ParserNumberTest {
 
 
     @Test
-    void testComplexNumberWithZeroImaginary() throws TemplateParseException {
+    void complexNumberLiteralsAreRejected() {
         Parser parser = createParser2();
-        // Complex number with zero imaginary part should simplify to float/int
-        Map<String, Node> nodes = parser.parse("test", "{{3+0i}}");
-        assertNotNull(nodes.get("test"));
-    }
 
-
-    @Test
-    void testComplexNumberPureImaginary() throws TemplateParseException {
-        Parser parser = createParser2();
-        Map<String, Node> nodes = parser.parse("test", "{{5i}}");
-        assertNotNull(nodes.get("test"));
-    }
-
-
-    @Test
-    void testComplexNumberFullForm() throws TemplateParseException {
-        Parser parser = createParser2();
-        Map<String, Node> nodes = parser.parse("test", "{{1.5+2.5i}}");
-        assertNotNull(nodes.get("test"));
-    }
-
-
-    @Test
-    void testComplexNumberNegativeReal() throws TemplateParseException {
-        Parser parser = createParser2();
-        Map<String, Node> nodes = parser.parse("test", "{{-3+4i}}");
-        assertNotNull(nodes.get("test"));
-    }
-
-
-    @Test
-    void testComplexNumberNegativeImaginary() throws TemplateParseException {
-        Parser parser = createParser2();
-        // Note: Go template complex number syntax requires + between real and imaginary
-        Map<String, Node> nodes = parser.parse("test", "{{3+-4i}}");
-        assertNotNull(nodes.get("test"));
-    }
-
-
-    @Test
-    void testComplexNumberBothNegative() throws TemplateParseException {
-        Parser parser = createParser2();
-        // Note: Go template complex number syntax requires + between real and imaginary
-        Map<String, Node> nodes = parser.parse("test", "{{-3+-4i}}");
-        assertNotNull(nodes.get("test"));
-    }
-
-
-    @Test
-    void testComplexNumberIntegerSimplification() throws TemplateParseException {
-        Parser parser = createParser2();
-        // Complex with zero imaginary and integer real should simplify to int
-        Map<String, Node> nodes = parser.parse("test", "{{5+0i}}");
-        assertNotNull(nodes.get("test"));
+        for (String source : new String[]{
+                "{{3+0i}}", "{{5i}}", "{{1.5+2.5i}}",
+                "{{-3+4i}}", "{{3+-4i}}", "{{-3+-4i}}"}) {
+            TemplateParseException exception = assertThrows(TemplateParseException.class,
+                    () -> parser.parse("test", source));
+            assertTrue(exception.getMessage().contains("complex number literals are not supported"));
+        }
     }
 
     // Test chain node formation with different node types

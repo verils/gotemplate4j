@@ -51,8 +51,9 @@ import java.util.stream.Stream;
  *   <li>Template cloning for thread-safe reuse</li>
  * </ul>
  * <p>
- * Thread Safety: This class is NOT thread-safe during parsing. Once parsing is complete,
- * execution is thread-safe if different Writer instances are used for each execution.
+ * Thread Safety: This class is NOT thread-safe while parsing or changing configuration.
+ * Once parsing and configuration are complete, concurrent execution is safe if each call
+ * uses a different Writer. Configuration must not overlap with execution.
  * For concurrent scenarios, use {@link #Template(Template)} copy constructor to create independent copies.
  *
  * @see Function for implementing custom template functions
@@ -301,7 +302,9 @@ public class Template {
     /**
      * Applies Go-style string options supported by gotemplate4j.
      * <p>
-     * Supported values are {@code missingkey=default}, {@code missingkey=zero}, and {@code missingkey=error}.
+     * Supported values are {@code missingkey=default}, {@code missingkey=zero},
+     * {@code missingkey=error}, {@code mapkeysorting=true}, and
+     * {@code mapkeysorting=false}.
      *
      * @param option option string
      * @return this template
@@ -314,7 +317,7 @@ public class Template {
         }
 
         int pos = option.indexOf('=');
-        if (pos == -1) {
+        if (pos <= 0 || pos == option.length() - 1) {
             throw new IllegalArgumentException("option must be in format 'key=value'");
         }
 
@@ -335,8 +338,18 @@ public class Template {
             }
         }
 
+        if ("mapkeysorting".equals(key)) {
+            switch (value) {
+                case "true":
+                    return withMapKeySorting(true);
+                case "false":
+                    return withMapKeySorting(false);
+                default:
+                    throw new IllegalArgumentException("unsupported option: " + option);
+            }
+        }
 
-        return this;
+        throw new IllegalArgumentException("unsupported option key: " + key);
     }
 
     /**
@@ -489,7 +502,7 @@ public class Template {
      * Parses template content from an InputStream.
      * <p>
      * The stream is read using UTF-8 encoding and processed as template text.
-     * The stream will be closed after reading.
+     * The caller retains ownership of the stream and is responsible for closing it.
      *
      * @param in InputStream providing the template content
      * @throws TemplateParseException if the template contains syntax errors or parsing issues
@@ -505,7 +518,7 @@ public class Template {
      * Parses template content from an InputStream with specified charset.
      * <p>
      * The stream is read using the specified charset and processed as template text.
-     * The stream will be closed after reading.
+     * The caller retains ownership of the stream and is responsible for closing it.
      *
      * @param in      InputStream providing the template content
      * @param charset the charset to use for reading the stream
@@ -523,7 +536,7 @@ public class Template {
      * Parses template content from a Reader.
      * <p>
      * The reader's content is read completely and processed as template text.
-     * The reader will be closed after reading.
+     * The caller retains ownership of the reader and is responsible for closing it.
      *
      * @param reader Reader providing the template content
      * @throws TemplateParseException if the template contains syntax errors or parsing issues
@@ -877,7 +890,7 @@ public class Template {
     public void executeTemplate(Writer writer, String name, Object data) throws TemplateException, IOException {
         Node rootNode = nodes.get(name);
         if (rootNode == null) {
-            throw new TemplateNotFoundException(String.format("Template '%s' not found.", name));
+            throw new TemplateNotFoundException(String.format("template '%s' not found", name));
         }
 
         Executor executor = new Executor(nodes, functions, missingKeyPolicy, mapKeySorting, classMetadataCache);

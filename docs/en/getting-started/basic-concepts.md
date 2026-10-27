@@ -144,8 +144,8 @@ Inside the `with` block, `.` refers to `.User` instead of the root data.
 Pipelines chain operations together using the pipe operator (`|`):
 
 ```gotemplate
-{{.Name | upper}}           <!-- Convert to uppercase -->
-{{.Text | lower | trim}}    <!-- Chain multiple operations -->
+{{.Name | printf "Name: %s"}}
+{{.Items | len}}
 {{printf "%.2f" .Price}}    <!-- Format number -->
 ```
 
@@ -156,13 +156,14 @@ Pipelines chain operations together using the pipe operator (`|`):
 3. The final result is rendered
 
 ```gotemplate
-{{"hello" | upper | printf "Greeting: %s"}}
-<!-- Output: Greeting: HELLO -->
+{{"hello" | printf "Greeting: %s"}}
+<!-- Output: Greeting: hello -->
 ```
 
 ## Functions
 
-Functions perform operations on data. gotemplate4j includes many built-in functions.
+Functions perform operations on data. gotemplate4j includes the Go template built-ins
+plus a small set of documented extensions.
 
 ### Using Functions
 
@@ -170,8 +171,8 @@ Call functions with arguments:
 
 ```gotemplate
 {{len .Items}}              <!-- Get length -->
-{{upper .Name}}             <!-- Convert to uppercase -->
-{{add 1 2}}                 <!-- Add numbers -->
+{{index .Items 0}}          <!-- Read the first item -->
+{{eq .Status "active"}}     <!-- Compare values -->
 ```
 
 ### Common Built-in Functions
@@ -179,11 +180,8 @@ Call functions with arguments:
 | Function | Description | Example |
 |----------|-------------|---------|
 | `len` | Get length | `{{len .Items}}` |
-| `upper` | Uppercase | `{{upper .Text}}` |
-| `lower` | Lowercase | `{{lower .Text}}` |
-| `trim` | Trim whitespace | `{{trim .Text}}` |
-| `add` | Addition | `{{add 1 2}}` |
-| `sub` | Subtraction | `{{sub 5 3}}` |
+| `index` | Read an element | `{{index .Items 0}}` |
+| `slice` | Slice a sequence | `{{slice .Items 1 3}}` |
 | `printf` | Format string | `{{printf "%d" .Num}}` |
 | `eq` | Equal | `{{eq .A .B}}` |
 | `ne` | Not equal | `{{ne .A .B}}` |
@@ -437,7 +435,7 @@ Now that you understand the basics:
 ### Pipeline Examples
 
 ```gotemplate
-{{.Name | upper}}
+{{.Name | printf "Name: %s"}}
 {{printf "Hello, %s!" .Name}}
 {{len .Items | printf "Count: %d"}}
 ```

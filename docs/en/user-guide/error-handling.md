@@ -8,7 +8,7 @@ gotemplate4j has a well-defined exception hierarchy:
 - **TemplateException**: Base class for all template errors
 - **TemplateParseException**: Errors during template parsing
 - **TemplateExecutionException**: Errors during template execution
-- **TemplateNotFoundException**: Template file not found
+- **TemplateNotFoundException**: Named template not found
 
 Understanding these exceptions helps you handle errors gracefully.
 
@@ -61,7 +61,7 @@ try {
 
 ```java
 try {
-    template.parse("{{.Name | | upper}}");
+    template.parse("{{.Name | | printf \"%s\"}}");
 } catch (TemplateParseException e) {
     System.err.println("Parse error: " + e.getMessage());
     // Output: missing pipeline operand
@@ -139,7 +139,7 @@ try {
 Map<String, Object> data = new HashMap<>();
 data.put("Count", "not a number");
 
-template.parse("{{add .Count 1}}");
+template.parse("{{.RequiredField}}");
 
 try {
     StringWriter writer = new StringWriter();
@@ -190,13 +190,13 @@ Control how missing keys are handled during execution.
 
 ### Policy Options
 
-#### DEFAULT
+#### INVALID
 
 Missing keys render as empty string.
 
 ```java
 Template template = new Template("demo")
-    .withMissingKeyPolicy(MissingKeyPolicy.DEFAULT);
+    .withMissingKeyPolicy(MissingKeyPolicy.INVALID);
 
 template.parse("Name: '{{.Name}}'");
 
@@ -211,7 +211,8 @@ System.out.println(writer.toString());
 
 #### ZERO
 
-Missing keys render as zero value for the type.
+Requests the map element type's zero value. Java maps do not retain that type,
+so a missing map key resolves to `null` and renders as `<no value>`.
 
 ```java
 Template template = new Template("demo")
@@ -222,7 +223,7 @@ template.parse("Count: {{.Count}}, Name: '{{.Name}}'");
 StringWriter writer = new StringWriter();
 template.execute(writer, new HashMap<>());
 System.out.println(writer.toString());
-// Output: Count: 0, Name: ''
+// Output: Count: <no value>, Name: '<no value>'
 ```
 
 #### ERROR
@@ -246,8 +247,8 @@ try {
 
 ### Choosing a Policy
 
-- **DEFAULT**: Best for production, lenient handling
-- **ZERO**: Useful for numeric-heavy templates
+- **INVALID**: Lenient handling; missing values are reported as `<no value>`
+- **ZERO**: Explicit Go-style policy; Java maps still resolve missing keys to `null`
 - **ERROR**: Best for development, catches issues early
 
 ## Template Not Found
@@ -316,7 +317,7 @@ Template template = new Template("demo");
 if (isDevelopment()) {
     template.withMissingKeyPolicy(MissingKeyPolicy.ERROR);
 } else {
-    template.withMissingKeyPolicy(MissingKeyPolicy.DEFAULT);
+    template.withMissingKeyPolicy(MissingKeyPolicy.INVALID);
 }
 ```
 
@@ -527,7 +528,7 @@ When referencing an undefined function:
 function leng not defined
 
 // After v0.9.0:
-undefined function: leng. Available functions: [and, call, deepEqual, default, eq, ge, gt, html, index, js, kindOf, len, lt, ne, not, or, printf, sprintf, typeOf, urlquery]. Did you mean 'len'?
+undefined function: leng. Available functions: [and, call, deepEqual, default, eq, ge, gt, html, index, js, kindOf, le, len, lt, ne, not, or, print, printf, println, slice, typeof, urlquery]. Did you mean 'len'?
 ```
 
 The error message lists all available built-in functions and suggests the closest match.
@@ -538,12 +539,14 @@ When a function call fails at runtime:
 
 ```java
 // Custom function expecting 2 arguments
-template.addFunction("divide", args -> {
+Map<String, Function> functions = new HashMap<>();
+functions.put("divide", args -> {
     if (args.length != 2) {
         throw new IllegalArgumentException("Requires exactly 2 arguments");
     }
     // ...
 });
+Template template = new Template("math", functions);
 
 // Template: {{divide 10}}
 
@@ -786,7 +789,7 @@ public void testMissingKeyWithErrorPolicy() {
 @Test
 public void testMissingKeyWithDefaultPolicy() {
     Template template = new Template("test")
-        .withMissingKeyPolicy(MissingKeyPolicy.DEFAULT);
+        .withMissingKeyPolicy(MissingKeyPolicy.INVALID);
     template.parse("{{.Missing}}");
     
     StringWriter writer = new StringWriter();

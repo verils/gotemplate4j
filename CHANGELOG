@@ -77,6 +77,30 @@ pipeline handling, and unifies template truthiness.
 - Added static conveniences `fromFile`, `fromClasspath`, `fromDirectory`, and
   `fromClasspathResources`; existing instance methods remain available with
   their current root-name semantics.
+- `option` now validates `key=value` syntax and supports
+  `mapkeysorting=true|false`; unsupported keys and values raise
+  `IllegalArgumentException`.
+- `MissingKeyPolicy.ZERO` now documents its Java contract: absent map element
+  types resolve to `null` and render as `<no value>`.
+- `deepEqual` now recursively compares arrays, maps, collections, lists, and
+  sets, handles cyclic containers, and rejects unequal concrete runtime types.
+- Complex number literals now fail during parsing with a clear
+  `TemplateParseException` instead of silently rendering as zero.
+- Caller-provided InputStreams and Readers remain caller-owned and are not
+  closed by parsing.
+- Missing named templates now consistently raise `TemplateNotFoundException`,
+  both from `executeTemplate` and from `{{template}}` actions.
+- `Functions.BUILTIN` is now an immutable registry view; per-template custom
+  functions can still override built-ins.
+- Function execution errors now include a compact argument type summary without
+  exposing argument values.
+
+### 🔧 Build
+
+- Compilation now uses `maven.compiler.release=11`, preventing accidental use of
+  APIs newer than the Java 11 baseline.
+- Documentation, AGENTS, CONTRIBUTING, and CI workflows now consistently require
+  JDK 11, with Go added to CI for differential template tests.
 
 ### 🧪 Testing
 
@@ -103,6 +127,12 @@ pipeline handling, and unifies template truthiness.
   failed-parse isolation.
 - Added file, directory, full-glob, classpath, missing-resource, duplicate-name,
   and temporary-JAR coverage, including JARs without directory entries.
+- Added a Go `text/template` differential probe for core control flow,
+  collections, formatting, escaping, map ordering, template definitions, and
+  error behavior.
+- Added option validation, map-sorting option, immutable registry, caller-owned
+  stream, concurrent execution, recursive/cyclic `deepEqual`, complex-number
+  rejection, and safe error-summary coverage.
 
 ### 📚 Documentation
 
@@ -118,6 +148,11 @@ pipeline handling, and unifies template truthiness.
   across parse calls or files, not between duplicate definitions in one call.
 - Corrected README, FAQ, API reference, compatibility, and example code to use
   the actual instance APIs and new static loading factories.
+- Rewrote the English and Chinese function guides around the real built-in
+  registry and clearly separated custom-function examples.
+- Aligned documentation for `ZERO`, `mapkeysorting`, stream ownership, missing
+  template exceptions, thread safety, integer ranges, and unsupported complex
+  literals.
 
 v0.10.0 (2026-05-23)
 

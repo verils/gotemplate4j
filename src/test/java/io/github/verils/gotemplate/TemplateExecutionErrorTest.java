@@ -50,10 +50,10 @@ class TemplateExecutionErrorTest {
         Template template = new Template("test");
         template.parse("{{template \"missing\" .}}");
 
-        TemplateExecutionException exception = assertThrows(TemplateExecutionException.class,
+        TemplateNotFoundException exception = assertThrows(TemplateNotFoundException.class,
                 () -> template.execute(new StringWriter(), TemplateTestSupport.data()));
 
-        assertTrue(exception.getMessage().contains("template missing not defined"));
+        assertTrue(exception.getMessage().contains("template 'missing' not found"));
     }
 
     @Test

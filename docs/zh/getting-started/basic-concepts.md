@@ -144,8 +144,8 @@ Bob 住在 北京
 管道使用管道操作符（`|`）将操作串联起来：
 
 ```gotemplate
-{{.Name | upper}}           <!-- 转换为大写 -->
-{{.Text | lower | trim}}    <!-- 串联多个操作 -->
+{{.Name | printf "姓名: %s"}}
+{{.Items | len}}
 {{printf "%.2f" .Price}}    <!-- 格式化数字 -->
 ```
 
@@ -156,13 +156,13 @@ Bob 住在 北京
 3. 最终结果被渲染
 
 ```gotemplate
-{{"hello" | upper | printf "问候：%s"}}
-<!-- 输出：问候：HELLO -->
+{{"hello" | printf "问候：%s"}}
+<!-- 输出：问候：hello -->
 ```
 
 ## 函数
 
-函数对数据执行操作。gotemplate4j 包含许多内置函数。
+函数对数据执行操作。gotemplate4j 包含 Go template 内置函数以及少量有明确文档的扩展。
 
 ### 使用函数
 
@@ -170,8 +170,8 @@ Bob 住在 北京
 
 ```gotemplate
 {{len .Items}}              <!-- 获取长度 -->
-{{upper .Name}}             <!-- 转换为大写 -->
-{{add 1 2}}                 <!-- 数字相加 -->
+{{index .Items 0}}          <!-- 读取第一个元素 -->
+{{eq .Status "active"}}     <!-- 比较值 -->
 ```
 
 ### 常用内置函数
@@ -179,11 +179,8 @@ Bob 住在 北京
 | 函数 | 描述 | 示例 |
 |----------|-------------|---------|
 | `len` | 获取长度 | `{{len .Items}}` |
-| `upper` | 转大写 | `{{upper .Text}}` |
-| `lower` | 转小写 | `{{lower .Text}}` |
-| `trim` | 去除空白 | `{{trim .Text}}` |
-| `add` | 加法 | `{{add 1 2}}` |
-| `sub` | 减法 | `{{sub 5 3}}` |
+| `index` | 读取元素 | `{{index .Items 0}}` |
+| `slice` | 截取序列 | `{{slice .Items 1 3}}` |
 | `printf` | 格式化字符串 | `{{printf "%d" .Num}}` |
 | `eq` | 等于 | `{{eq .A .B}}` |
 | `ne` | 不等于 | `{{ne .A .B}}` |
@@ -437,7 +434,7 @@ Template template = new Template("demo")
 ### 管道示例
 
 ```gotemplate
-{{.Name | upper}}
+{{.Name | printf "姓名: %s"}}
 {{printf "你好，%s！" .Name}}
 {{len .Items | printf "数量：%d"}}
 ```

@@ -133,8 +133,8 @@ Assign multiple variables at once:
 Pipelines chain operations using `|`:
 
 ```gotemplate
-{{.Name | upper}}
-{{.Text | lower | trim}}
+{{.Name | printf "Name: %s"}}
+{{.Items | len}}
 {{printf "Hello, %s!" .Name}}
 ```
 
@@ -148,11 +148,11 @@ Examples:
 
 ```gotemplate
 <!-- These are equivalent -->
-{{upper .Name}}
-{{.Name | upper}}
+{{printf "Name: %s" .Name}}
+{{.Name | printf "Name: %s"}}
 
 <!-- Chaining -->
-{{.Text | trim | upper | printf "Result: %s"}}
+{{.Text | printf "Result: %s"}}
 ```
 
 ### Parentheses
@@ -160,7 +160,7 @@ Examples:
 Use parentheses for clarity or to override precedence:
 
 ```gotemplate
-{{printf "%s (%d)" (.Name | upper) (len .Items)}}
+{{printf "%s (%d)" .Name (len .Items)}}
 ```
 
 ## Conditional Actions
@@ -451,8 +451,8 @@ Call functions with arguments:
 
 ```gotemplate
 {{len .Items}}
-{{upper .Name}}
-{{add 1 2}}
+{{index .Items 0}}
+{{eq .Status "active"}}
 {{printf "%s is %d years old" .Name .Age}}
 ```
 
@@ -464,11 +464,11 @@ Common functions:
 
 | Category | Functions |
 |----------|-----------|
-| String | `upper`, `lower`, `trim`, `len`, `replace` |
-| Math | `add`, `sub`, `mul`, `div`, `mod` |
-| Logic | `and`, `or`, `not`, `eq`, `ne`, `lt`, `gt` |
-| Format | `printf`, `print`, `println` |
-| Type | `typeof`, `kindof` |
+| Collections | `len`, `index`, `slice` |
+| Logic | `and`, `or`, `not`, `eq`, `ne`, `lt`, `le`, `gt`, `ge` |
+| Formatting | `printf`, `print`, `println` |
+| Escaping | `html`, `js`, `urlquery` |
+| Type | `typeof`, `kindOf`, `deepEqual` |
 
 ### Custom Functions
 
@@ -610,7 +610,7 @@ Note: Methods with arguments are not supported for security reasons.
   <title>{{.Title | default "Profile"}}</title>
 </head>
 <body>
-  <h1>{{.User.Name | upper}}</h1>
+  <h1>{{.User.Name | printf "%s"}}</h1>
   
   {{with .User}}
   <div class="profile">
@@ -686,7 +686,7 @@ Error: `unclosed action`
 ### Invalid Pipeline
 
 ```gotemplate
-{{.Name | | upper}}
+{{.Name | | printf "%s"}}
 ```
 
 Error: `missing pipeline operand`

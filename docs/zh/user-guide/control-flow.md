@@ -322,8 +322,8 @@ Template template = new Template("demo")
 
 ```gotemplate
 <select name="year">
-{{range $i := 10}}
-  <option value="{{add 2020 $i}}">{{add 2020 $i}}</option>
+{{range .Years}}
+  <option value="{{.}}">{{.}}</option>
 {{end}}
 </select>
 ```
@@ -496,7 +496,7 @@ Template template = new Template("demo")
 {{end}}
 
 {{if gt (len .Items) .EndIndex}}
-  <a href="?page={{add .Page 1}}">下一页</a>
+  <a href="?page={{.NextPage}}">下一页</a>
 {{end}}
 ```
 
@@ -543,9 +543,9 @@ Template template = new Template("demo")
 ### 模式 2：交替样式
 
 ```gotemplate
-{{range $i, $item := .Items}}
-  <div class="{{if mod $i 2 | eq 0}}even{{else}}odd{{end}}">
-    {{$item}}
+{{range .Items}}
+  <div class="{{if .Even}}even{{else}}odd{{end}}">
+    {{.Name}}
   </div>
 {{end}}
 ```
@@ -566,7 +566,7 @@ Template template = new Template("demo")
 {{range $i, $item := .Items}}
   {{if eq $i 0}}第一个: {{end}}
   {{$item}}
-  {{if eq $i (sub (len $.Items) 1)}}（最后一个）{{end}}
+  {{if eq $i $.LastIndex}}（最后一个）{{end}}
 {{end}}
 ```
 

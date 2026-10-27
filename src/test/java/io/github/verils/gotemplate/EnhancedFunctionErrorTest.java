@@ -74,6 +74,43 @@ public class EnhancedFunctionErrorTest {
     }
 
     @Test
+    public void testFunctionErrorIncludesArgumentTypesWithoutValues() throws TemplateException {
+        Map<String, Function> customFunctions = new HashMap<>();
+        customFunctions.put("fail", args -> {
+            throw new IllegalStateException("sensitive failure");
+        });
+
+        Template template = new Template("test", customFunctions);
+        template.parse("{{fail \"secret-value\" 42}}");
+
+        TemplateExecutionException exception = assertThrows(TemplateExecutionException.class,
+                () -> template.execute(new StringWriter(), null));
+
+        String message = exception.getMessage();
+        assertTrue(message.contains("types: String, Long"));
+        assertFalse(message.contains("secret-value"));
+        assertFalse(message.contains("42"));
+    }
+
+    @Test
+    void builtInFunctionRegistryIsImmutable() {
+        assertThrows(UnsupportedOperationException.class,
+                () -> Functions.BUILTIN.put("custom", args -> "custom"));
+    }
+
+    @Test
+    void customFunctionsCanStillOverrideBuiltIns() throws Exception {
+        Map<String, Function> customFunctions = new HashMap<>();
+        customFunctions.put("len", args -> 99);
+        Template template = new Template("test", customFunctions);
+        template.parse("{{len \"ignored\"}}");
+
+        StringWriter writer = new StringWriter();
+        template.execute(writer, null);
+        assertEquals("99", writer.toString());
+    }
+
+    @Test
     public void testUndefinedFunctionParseErrorWithSuggestions() {
         Template template = new Template("test");
         

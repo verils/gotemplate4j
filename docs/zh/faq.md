@@ -171,7 +171,7 @@ Gotemplate4j 支持：
 Map<String, Object> data = new HashMap<>();
 data.put("name", "John");
 data.put("age", 30);
-template.execute(data, writer);
+template.execute(writer, data);
 ```
 
 **使用对象：**
@@ -183,7 +183,7 @@ public class UserData {
 }
 
 UserData data = new UserData("John", 30);
-template.execute(data, writer);
+template.execute(writer, data);
 ```
 
 ### 如何处理 null 值？
@@ -198,7 +198,7 @@ template.withMissingKeyPolicy(MissingKeyPolicy.ERROR);
 template.withMissingKeyPolicy(MissingKeyPolicy.ZERO);
 
 // 默认：显示空字符串
-template.withMissingKeyPolicy(MissingKeyPolicy.DEFAULT);
+template.withMissingKeyPolicy(MissingKeyPolicy.INVALID);
 ```
 
 ### 可以使用 Java 8 Optional 吗？
@@ -237,13 +237,15 @@ public class Customer {
 
 ### 有哪些内置函数可用？
 
-Gotemplate4j 提供 18+ 内置函数：
+Gotemplate4j 提供以下内置函数：
 
-**比较：** `eq`、`ne`、`lt`、`le`、`gt`、`ge`  
-**逻辑：** `and`、`or`、`not`  
-**字符串：** `len`、`print`、`printf`、`println`  
-**类型转换：** `js`、`html`、`urlquery`  
-**内省：** `index`、`call`
+- **比较：** `eq`、`ne`、`lt`、`le`、`gt`、`ge`
+- **逻辑：** `and`、`or`、`not`
+- **集合：** `len`、`index`、`slice`
+- **格式化：** `print`、`printf`、`println`
+- **转义：** `js`、`html`、`urlquery`
+- **调用：** `call`
+- **扩展：** `deepEqual`、`typeof`、`kindOf`、`default`
 
 请参阅[函数指南](user-guide/functions.md)获取完整文档。
 
@@ -252,24 +254,17 @@ Gotemplate4j 提供 18+ 内置函数：
 实现 `Function` 接口：
 
 ```java
-public class UpperCaseFunction implements Function {
-    @Override
-    public String name() {
-        return "upper";
+Function upper = args -> {
+    if (args.length != 1) {
+        throw new IllegalArgumentException("upper 需要 1 个参数");
     }
-    
-    @Override
-    public Object apply(Object... args) throws Exception {
-        if (args.length != 1) {
-            throw new IllegalArgumentException("upper 需要 1 个参数");
-        }
-        return args[0].toString().toUpperCase();
-    }
-}
+    return args[0].toString().toUpperCase();
+};
 
-// 注册函数
-Template template = new Template("demo")
-    .func(new UpperCaseFunction());
+Map<String, Function> functions = new HashMap<>();
+functions.put("upper", upper);
+Template template = new Template("demo", functions);
+template.parse("{{upper \"hello\"}}");
 ```
 
 在模板中使用：
@@ -279,10 +274,12 @@ Template template = new Template("demo")
 
 ### 可以覆盖内置函数吗？
 
-可以，注册一个同名的自定义函数：
+可以，向构造函数传入同名自定义函数：
 
 ```java
-template.func(new CustomPrintFunction()); // 覆盖 "print"
+Map<String, Function> functions = new HashMap<>();
+functions.put("print", args -> "custom");
+Template template = new Template("demo", functions);
 ```
 
 ⚠️ **警告：** 覆盖内置函数可能会破坏模板兼容性。
@@ -299,7 +296,7 @@ template.func(new CustomPrintFunction()); // 覆盖 "print"
 在自定义函数中，通过 `args` 数组访问：
 ```java
 @Override
-public Object apply(Object... args) {
+public Object invoke(Object... args) {
     // args[0], args[1], 等等
 }
 ```
@@ -313,7 +310,7 @@ public Object apply(Object... args) {
 三种主要的异常类型：
 
 1. **TemplateParseException** - 解析期间的语法错误
-2. **TemplateNotFoundException** - 模板文件未找到
+2. **TemplateNotFoundException** - 命名模板未找到
 3. **TemplateExecutionException** - 执行期间的运行时错误
 
 所有这些都继承自 `TemplateException`。
@@ -337,7 +334,7 @@ try {
 
 ```java
 try {
-    template.execute(data, writer);
+    template.execute(writer, data);
 } catch (TemplateExecutionException e) {
     System.err.println("执行错误：" + e.getMessage());
 }
@@ -350,8 +347,11 @@ try {
 ```java
 catch (TemplateException e) {
     System.err.println("错误：" + e.getMessage());
-    System.err.println("模板：" + e.getTemplateName());
-    System.err.println("行号：" + e.getLineNumber());
+    if (e instanceof TemplateParseException) {
+        TemplateParseException parseError = (TemplateParseException) e;
+        System.err.println("行号：" + parseError.getLine());
+        System.err.println("列号：" + parseError.getColumn());
+    }
     e.printStackTrace();
 }
 ```
@@ -365,7 +365,7 @@ catch (TemplateException e) {
 - 数据完整性至关重要
 - 你希望采用快速失败的行为
 
-**使用 DEFAULT 或 ZERO 的情况：**
+**使用 INVALID 或 ZERO 的情况：**
 - 某些字段确实是可选的
 - 你偏好优雅降级
 - 模板使用 `if` 检查来处理缺失值
@@ -380,7 +380,7 @@ Gotemplate4j 针对典型用例进行了优化：
 - **解析**：中等模板约 1-5ms
 - **执行**：每次执行约 0.1-1ms（取决于数据复杂度）
 
-参阅 [TemplateBenchmark.java](../../src/test/java/io/github/verils/gotemplate/TemplateBenchmark.java) 获取详细的基准测试。
+参阅 [TemplateJmhBenchmark.java](../../src/test/java/io/github/verils/gotemplate/TemplateJmhBenchmark.java) 获取详细的基准测试。
 
 ### 如何提高性能？
 
@@ -388,16 +388,18 @@ Gotemplate4j 针对典型用例进行了优化：
 
 1. **复用已解析的模板** - 解析一次，执行多次
    ```java
-   Template template = new Template("demo").parse("{{.name}}");
+   Template template = new Template("demo");
+   template.parse("{{.name}}");
    // 多次执行时复用 'template'
    ```
 
 2. **克隆模板以保证线程安全**
    ```java
-   Template shared = new Template("demo").parse("{{.name}}");
+   Template shared = new Template("demo");
+   shared.parse("{{.name}}");
    // 在每个线程中：
-   Template clone = shared.clone();
-   clone.execute(data, writer);
+   Template clone = new Template(shared);
+   clone.execute(writer, data);
    ```
 
 3. **避免在循环中使用复杂表达式**
@@ -414,7 +416,7 @@ Gotemplate4j 针对典型用例进行了优化：
 4. **对大型输出使用 StringBuilder**
    ```java
    StringWriter writer = new StringWriter();
-   template.execute(data, writer);
+   template.execute(writer, data);
    String result = writer.toString();
    ```
 
@@ -425,13 +427,14 @@ Gotemplate4j 针对典型用例进行了优化：
 **推荐模式：**
 ```java
 // 一次性创建和配置（在启动期间）
-Template baseTemplate = new Template("demo")
-    .parse("{{.name}}")
-    .func(myFunction);
+Map<String, Function> functions = new HashMap<>();
+functions.put("myFunction", myFunction);
+Template baseTemplate = new Template("demo", functions);
+baseTemplate.parse("{{.name}}");
 
 // 为每个线程/请求克隆
-Template threadSafe = baseTemplate.clone();
-threadSafe.execute(data, writer);
+Template threadSafe = new Template(baseTemplate);
+threadSafe.execute(writer, data);
 ```
 
 ### gotemplate4j 支持模板缓存吗？
@@ -523,7 +526,7 @@ Go 模板支持 `{{.Method arg1 arg2}}`，但 gotemplate4j 出于安全原因对
 调试方法：
 ```java
 System.out.println("数据：" + data);
-template.execute(data, new PrintWriter(System.out));
+template.execute(new PrintWriter(System.out), data);
 ```
 
 ### 我收到 "unexpected EOF" 错误。这是什么意思？
@@ -573,14 +576,14 @@ Go 模板按值比较数字，但类型很重要。确保类型一致：
 ### 我的自定义函数没有被调用。为什么？
 
 检查：
-1. 函数是否已注册：`.func(myFunction)`
-2. 函数名称是否匹配：`name()` 返回正确的名称
+1. 函数是否已加入构造函数的函数 map
+2. map key 是否与模板中使用的名称一致
 3. 参数数量是否正确
 4. `apply()` 中是否没有抛出异常
 
 调试方法：
 ```java
-System.out.println("已注册的函数：" + template.functions());
+System.out.println("已注册的函数：" + functions.keySet());
 ```
 
 ### 模板执行很慢。如何优化？
@@ -606,9 +609,9 @@ public class TemplateService {
     }
     
     public String render(String name, Object data) {
-        Template template = templates.get(name).clone();
+        Template template = new Template(templates.get(name));
         StringWriter writer = new StringWriter();
-        template.execute(data, writer);
+        template.execute(writer, data);
         return writer.toString();
     }
 }

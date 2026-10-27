@@ -99,7 +99,7 @@ gotemplate4j includes many useful functions:
 ```java
 Template template = new Template("functions");
 template.parse(
-    "Upper: {{upper .Text}}\n" +
+    "Escaped: {{html .Text}}\n" +
     "Length: {{len .Items}}\n" +
     "Formatted: {{printf \"%.2f\" .Price}}"
 );
@@ -113,7 +113,7 @@ StringWriter writer = new StringWriter();
 template.execute(writer, data);
 System.out.println(writer.toString());
 // Output:
-// Upper: HELLO
+// Escaped: hello
 // Length: 3
 // Formatted: 19.99
 ```
@@ -170,7 +170,7 @@ public class CompleteExample {
             "{{end}}" +
             "Items ({{len .Items}} total):\n" +
             "{{range $index, $item := .Items}}" +
-            "{{add $index 1}}. {{upper $item}}\n" +
+            "{{printf \"%d. %s\" $index $item}}\n" +
             "{{end}}" +
             "\n" +
             "Generated at: {{.Timestamp}}";

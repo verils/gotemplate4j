@@ -8,7 +8,7 @@ gotemplate4j 有定义良好的异常层次结构：
 - **TemplateException**：所有模板错误的基类
 - **TemplateParseException**：模板解析期间的错误
 - **TemplateExecutionException**：模板执行期间的错误
-- **TemplateNotFoundException**：未找到模板文件
+- **TemplateNotFoundException**：未找到命名模板
 
 理解这些异常有助于你优雅地处理错误。
 
@@ -61,7 +61,7 @@ try {
 
 ```java
 try {
-    template.parse("{{.Name | | upper}}");
+    template.parse("{{.Name | | printf \"%s\"}}");
 } catch (TemplateParseException e) {
     System.err.println("解析错误: " + e.getMessage());
     // 输出: missing pipeline operand
@@ -139,7 +139,7 @@ try {
 Map<String, Object> data = new HashMap<>();
 data.put("Count", "not a number");
 
-template.parse("{{add .Count 1}}");
+template.parse("{{.RequiredField}}");
 
 try {
     StringWriter writer = new StringWriter();
@@ -190,13 +190,13 @@ try {
 
 ### 策略选项
 
-#### DEFAULT
+#### INVALID
 
 缺失键渲染为空字符串。
 
 ```java
 Template template = new Template("demo")
-    .withMissingKeyPolicy(MissingKeyPolicy.DEFAULT);
+    .withMissingKeyPolicy(MissingKeyPolicy.INVALID);
 
 template.parse("姓名: '{{.Name}}'");
 
@@ -211,7 +211,8 @@ System.out.println(writer.toString());
 
 #### ZERO
 
-缺失键渲染为该类型的零值。
+请求 map 元素类型的零值。Java map 不保留该类型，因此缺失键会解析为 `null`，
+并渲染为 `<no value>`。
 
 ```java
 Template template = new Template("demo")
@@ -222,7 +223,7 @@ template.parse("计数: {{.Count}}, 姓名: '{{.Name}}'");
 StringWriter writer = new StringWriter();
 template.execute(writer, new HashMap<>());
 System.out.println(writer.toString());
-// 输出: 计数: 0, 姓名: ''
+// 输出: 计数: <no value>, 姓名: '<no value>'
 ```
 
 #### ERROR
@@ -246,8 +247,8 @@ try {
 
 ### 选择策略
 
-- **DEFAULT**：最适合生产环境，宽容处理
-- **ZERO**：适用于数字密集型模板
+- **INVALID**：宽容处理；缺失值显示为 `<no value>`
+- **ZERO**：显式 Go 风格策略；Java map 缺键仍解析为 `null`
 - **ERROR**：最适合开发环境，及早发现问题
 
 ## 模板未找到
@@ -316,7 +317,7 @@ Template template = new Template("demo");
 if (isDevelopment()) {
     template.withMissingKeyPolicy(MissingKeyPolicy.ERROR);
 } else {
-    template.withMissingKeyPolicy(MissingKeyPolicy.DEFAULT);
+    template.withMissingKeyPolicy(MissingKeyPolicy.INVALID);
 }
 ```
 
@@ -527,7 +528,7 @@ missing map key 'FristName'. 可用键: [Age, FirstName, LastName]. 你是想用
 function leng not defined
 
 // v0.9.0 之后:
-undefined function: leng. 可用函数: [and, call, deepEqual, default, eq, ge, gt, html, index, js, kindOf, len, lt, ne, not, or, printf, sprintf, typeOf, urlquery]. 你是想用 'len' 吗?
+undefined function: leng. 可用函数: [and, call, deepEqual, default, eq, ge, gt, html, index, js, kindOf, le, len, lt, ne, not, or, print, printf, println, slice, typeof, urlquery]. 你是想用 'len' 吗?
 ```
 
 错误消息列出所有可用的内置函数并建议最接近的匹配。
@@ -538,12 +539,14 @@ undefined function: leng. 可用函数: [and, call, deepEqual, default, eq, ge, 
 
 ```java
 // 自定义函数期望 2 个参数
-template.addFunction("divide", args -> {
+Map<String, Function> functions = new HashMap<>();
+functions.put("divide", args -> {
     if (args.length != 2) {
         throw new IllegalArgumentException("需要恰好 2 个参数");
     }
     // ...
 });
+Template template = new Template("math", functions);
 
 // 模板: {{divide 10}}
 
@@ -786,7 +789,7 @@ public void testMissingKeyWithErrorPolicy() {
 @Test
 public void testMissingKeyWithDefaultPolicy() {
     Template template = new Template("test")
-        .withMissingKeyPolicy(MissingKeyPolicy.DEFAULT);
+        .withMissingKeyPolicy(MissingKeyPolicy.INVALID);
     template.parse("{{.Missing}}");
     
     StringWriter writer = new StringWriter();

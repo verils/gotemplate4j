@@ -131,8 +131,8 @@ Hello {{.Name}} {{/* 显示名称 */}}
 管道使用 `|` 串联操作：
 
 ```gotemplate
-{{.Name | upper}}
-{{.Text | lower | trim}}
+{{.Name | printf "姓名: %s"}}
+{{.Items | len}}
 {{printf "Hello, %s!" .Name}}
 ```
 
@@ -146,11 +146,11 @@ Hello {{.Name}} {{/* 显示名称 */}}
 
 ```gotemplate
 <!-- 以下两种写法等价 -->
-{{upper .Name}}
-{{.Name | upper}}
+{{printf "姓名: %s" .Name}}
+{{.Name | printf "姓名: %s"}}
 
 <!-- 链式调用 -->
-{{.Text | trim | upper | printf "Result: %s"}}
+{{.Text | printf "结果: %s"}}
 ```
 
 ### 括号
@@ -158,7 +158,7 @@ Hello {{.Name}} {{/* 显示名称 */}}
 使用括号来提高清晰度或覆盖优先级：
 
 ```gotemplate
-{{printf "%s (%d)" (.Name | upper) (len .Items)}}
+{{printf "%s (%d)" .Name (len .Items)}}
 ```
 
 ## 条件动作
@@ -448,8 +448,8 @@ Block 可以被后续解析调用或后续文件中的定义覆盖。同一次�
 
 ```gotemplate
 {{len .Items}}
-{{upper .Name}}
-{{add 1 2}}
+{{index .Items 0}}
+{{eq .Status "active"}}
 {{printf "%s 今年 %d 岁" .Name .Age}}
 ```
 
@@ -461,11 +461,11 @@ Block 可以被后续解析调用或后续文件中的定义覆盖。同一次�
 
 | 类别 | 函数 |
 |------|------|
-| 字符串 | `upper`、`lower`、`trim`、`len`、`replace` |
-| 数学 | `add`、`sub`、`mul`、`div`、`mod` |
-| 逻辑 | `and`、`or`、`not`、`eq`、`ne`、`lt`、`gt` |
+| 集合 | `len`、`index`、`slice` |
+| 逻辑 | `and`、`or`、`not`、`eq`、`ne`、`lt`、`le`、`gt`、`ge` |
 | 格式化 | `printf`、`print`、`println` |
-| 类型 | `typeof`、`kindof` |
+| 转义 | `html`、`js`、`urlquery` |
+| 类型 | `typeof`、`kindOf`、`deepEqual` |
 
 ### 自定义函数
 
@@ -605,7 +605,7 @@ gotemplate4j 将 `\xNN` 映射为 Unicode `U+00NN`；Go 将其视为单个原始
   <title>{{.Title | default "资料"}}</title>
 </head>
 <body>
-  <h1>{{.User.Name | upper}}</h1>
+  <h1>{{.User.Name | printf "%s"}}</h1>
   
   {{with .User}}
   <div class="profile">
@@ -681,7 +681,7 @@ data.put("User", user);
 ### 无效的管道
 
 ```gotemplate
-{{.Name | | upper}}
+{{.Name | | printf "%s"}}
 ```
 
 错误：`missing pipeline operand`

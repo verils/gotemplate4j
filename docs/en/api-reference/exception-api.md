@@ -344,7 +344,7 @@ This exception occurs when:
 ### Error Message Format
 
 ```
-TemplateNotFoundException: Template 'undefined-template' not found.
+TemplateNotFoundException: template 'undefined-template' not found
 ```
 
 ### Handling Not Found Errors
@@ -412,7 +412,9 @@ template.execute(writer, new HashMap<>());
 
 #### `ZERO`
 
-Return the zero value for the map type's element.
+Requests the map element type's zero value. Java maps do not retain the
+compile-time element type, so gotemplate4j resolves a missing key to `null`,
+which renders as `<no value>`.
 
 ```java
 Template template = new Template("demo")
@@ -479,7 +481,7 @@ System.out.println("Current policy: " + policy);
 | Policy | Behavior | Use Case |
 |--------|----------|----------|
 | `INVALID` | Silent, no output | Production, optional fields |
-| `ZERO` | Returns zero value | Predictable defaults |
+| `ZERO` | Returns `null` when the Java map element type is unavailable | Explicit Go-style policy without hidden inference |
 | `ERROR` | Throws exception | Development, required fields |
 
 ### Best Practice
