@@ -16,7 +16,7 @@
 <dependency>
     <groupId>io.github.verils</groupId>
     <artifactId>gotemplate4j</artifactId>
-    <version>0.10.0</version>
+    <version>0.11.0</version>
 </dependency>
 ```
 
@@ -26,7 +26,7 @@
 
 ```groovy
 dependencies {
-    implementation 'io.github.verils:gotemplate4j:0.10.0'
+    implementation 'io.github.verils:gotemplate4j:0.11.0'
 }
 ```
 
@@ -34,7 +34,7 @@ Gradle Kotlin DSL（`build.gradle.kts`）：
 
 ```kotlin
 dependencies {
-    implementation("io.github.verils:gotemplate4j:0.10.0")
+    implementation("io.github.verils:gotemplate4j:0.11.0")
 }
 ```
 
@@ -45,9 +45,9 @@ dependencies {
 
 ### 下载链接
 
-- **JAR**：`gotemplate4j-0.10.0.jar`
-- **源码**：`gotemplate4j-0.10.0-sources.jar`
-- **Javadoc**：`gotemplate4j-0.10.0-javadoc.jar`
+- **JAR**：`gotemplate4j-0.11.0.jar`
+- **源码**：`gotemplate4j-0.11.0-sources.jar`
+- **Javadoc**：`gotemplate4j-0.11.0-javadoc.jar`
 
 ## 验证安装
 

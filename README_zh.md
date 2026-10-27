@@ -10,7 +10,7 @@
 
 > ⚠️ **核心定位**：本项目**不是**为了替代 Go 原生的 `text/template`，也**不追求**在性能或功能上超越它。它的存在仅仅是为了帮助**必须处理 Go 模板的 Java 开发者**在与 Go 系统协作或从 Go 迁移到 Java 时满足基本的工作需求。
 
-> 🆕 **最新版本 (v0.10.0)**：Java 11 基线、兼容性打磨，以及改进的错误诊断。
+> 🆕 **最新版本 (v0.11.0)**：Go 兼容性整改、更安全的转义，以及更强的错误诊断。
 
 ## 快速开始
 
@@ -19,7 +19,7 @@
 - Java 版本：>= **11**
 - 无需额外依赖（纯 Java 实现）
 
-> ⚠️ **Java 8 支持**：v0.9.x 是最后一个支持 Java 8 的发布线。v0.10.0 开发线需要 **Java 11 或更高版本**。详情请参阅 [开发计划](./PLAN.md)。
+> ⚠️ **Java 8 支持**：v0.9.x 是最后一个支持 Java 8 的发布线。v0.10.0 及之后的版本需要 **Java 11 或更高版本**。详情请参阅 [开发计划](./PLAN.md)。
 
 ### 安装
 
@@ -31,7 +31,7 @@
 <dependency>
     <groupId>io.github.verils</groupId>
     <artifactId>gotemplate4j</artifactId>
-    <version>0.10.0</version>
+    <version>0.11.0</version>
 </dependency>
 ```
 
@@ -41,7 +41,7 @@
 
 ```groovy
 dependencies {
-    implementation 'io.github.verils:gotemplate4j:0.10.0'
+    implementation 'io.github.verils:gotemplate4j:0.11.0'
 }
 ```
 
@@ -49,7 +49,7 @@ dependencies {
 
 ```kotlin
 dependencies {
-    implementation("io.github.verils:gotemplate4j:0.10.0")
+    implementation("io.github.verils:gotemplate4j:0.11.0")
 }
 ```
 

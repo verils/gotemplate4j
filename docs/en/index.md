@@ -76,7 +76,7 @@ Real-world examples and use cases:
 
 ## Version Information
 
-- **Current Version**: 0.10.0
+- **Current Version**: 0.11.0
 - **Java Requirement**: Java 11 or later
 - **License**: MIT License
 

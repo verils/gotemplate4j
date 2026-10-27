@@ -1,6 +1,6 @@
 # Go Template 兼容性
 
-gotemplate4j 实现了 Go 的 `text/template` 包的一个 Java 兼容子集。v0.10.0 开发线要求 Java 11 或更高版本。其目标是为需要执行 Go 风格模板的 Java 应用程序提供实用兼容性，同时明确保留 Java 特有的行为。
+gotemplate4j 实现了 Go 的 `text/template` 包的一个 Java 兼容子集。v0.10.0 及之后的版本要求 Java 11 或更高版本。其目标是为需要执行 Go 风格模板的 Java 应用程序提供实用兼容性，同时明确保留 Java 特有的行为。
 
 本文档详细说明了哪些功能与 Go 行为一致、哪些存在差异以及这些差异存在的原因。
 

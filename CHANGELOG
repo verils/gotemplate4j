@@ -1,10 +1,11 @@
-Unreleased
+v0.11.0 (2026-10-27)
 
 ========
 
-**Security and compatibility fixes** - This release aligns escaping,
-comparison, collection, and formatting functions with Go `text/template`, fixes
-pipeline handling, and unifies template truthiness.
+**Compatibility, security, and diagnostics release** - This release aligns
+escaping, comparison, collection, formatting, template loading, and definition
+semantics with Go `text/template`; fixes pipeline handling and template
+truthiness; and adds stronger diagnostics and regression coverage.
 
 ### 🐛 Bug Fixes
 
@@ -104,6 +105,8 @@ pipeline handling, and unifies template truthiness.
 
 ### 🧪 Testing
 
+- Verified with JDK 11: 999 tests passed with zero failures or skips,
+  instruction coverage was 91.44%, and branch coverage was 87.39%.
 - Added regression coverage for script-closing injection, control characters,
   printable and non-printable Unicode, HTML entities, URL query encoding,
   zero/multiple arguments, and null arguments.

@@ -45,7 +45,7 @@ Yes, gotemplate4j is stable and well-tested with 90%+ code coverage. However, it
 
 ### What is the current version and release cycle?
 
-Current version is **0.10.0**. The project follows semantic versioning. Check the [CHANGELOG](../../CHANGELOG) for release history.
+Current version is **0.11.0**. The project follows semantic versioning. Check the [CHANGELOG](../../CHANGELOG) for release history.
 
 ---
 
@@ -633,7 +633,7 @@ Yes. v0.9.1 is fully backward compatible with v0.9.0 and v0.8.x. Existing templa
 
 ### What Java version does v0.9.1 require?
 
-v0.9.1 requires **Java 8 or higher**. The v0.9.x line is the last line to support Java 8. The v0.10.0 development line requires **Java 11 or higher**.
+v0.9.1 requires **Java 8 or higher**. The v0.9.x line is the last line to support Java 8. v0.10.0 and later require **Java 11 or higher**.
 
 ---
 
@@ -732,7 +732,7 @@ Yes! v0.9.0 is fully backward compatible with v0.8.x. All existing templates and
 
 ### What Java version does v0.9.x require?
 
-v0.9.x requires **Java 8 or higher**. This is the last release line to support Java 8. The v0.10.0 development line requires **Java 11 or higher**.
+v0.9.x requires **Java 8 or higher**. This is the last release line to support Java 8. v0.10.0 and later require **Java 11 or higher**.
 
 ---
 
@@ -745,4 +745,4 @@ v0.9.x requires **Java 8 or higher**. This is the last release line to support J
 
 ---
 
-*Last updated: 2026-05-23 for gotemplate4j v0.10.0*
+*Last updated: 2026-10-27 for gotemplate4j v0.11.0*

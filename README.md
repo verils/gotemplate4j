@@ -10,7 +10,7 @@ A Go template engine implementation for Java that evaluates Go templates and gen
 
 > ⚠️ **Core Purpose**: This project is **NOT** a replacement for Go's native `text/template` and does **NOT** aim to surpass it in performance or features. It exists solely to help **Java developers who must work with Go templates** meet basic operational needs when dealing with Go-based systems or migrating from Go to Java.
 
-> 🆕 **Latest Release (v0.10.0)**: Java 11 baseline, compatibility polish, and improved diagnostics.
+> 🆕 **Latest Release (v0.11.0)**: Go compatibility remediation, safer escaping, and stronger diagnostics.
 
 ## Quick Start
 
@@ -19,7 +19,7 @@ A Go template engine implementation for Java that evaluates Go templates and gen
 - Java Version: >= **11**
 - No additional dependencies required (pure Java)
 
-> ⚠️ **Java 8 Support**: v0.9.x is the final release line supporting Java 8. The v0.10.0 development line requires **Java 11 or higher**. See [Development Plan](./PLAN.md) for details.
+> ⚠️ **Java 8 Support**: v0.9.x is the final release line supporting Java 8. v0.10.0 and later require **Java 11 or higher**. See [Development Plan](./PLAN.md) for details.
 
 ### Installation
 
@@ -31,7 +31,7 @@ Add the dependency to your `pom.xml`:
 <dependency>
     <groupId>io.github.verils</groupId>
     <artifactId>gotemplate4j</artifactId>
-    <version>0.10.0</version>
+    <version>0.11.0</version>
 </dependency>
 ```
 
@@ -41,7 +41,7 @@ Add the dependency to your `build.gradle`:
 
 ```groovy
 dependencies {
-    implementation 'io.github.verils:gotemplate4j:0.10.0'
+    implementation 'io.github.verils:gotemplate4j:0.11.0'
 }
 ```
 
@@ -49,7 +49,7 @@ For Gradle Kotlin DSL (`build.gradle.kts`):
 
 ```kotlin
 dependencies {
-    implementation("io.github.verils:gotemplate4j:0.10.0")
+    implementation("io.github.verils:gotemplate4j:0.11.0")
 }
 ```
 

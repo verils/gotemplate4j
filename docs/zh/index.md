@@ -76,7 +76,7 @@ GoTemplate4J 将 Go 的 `text/template` 包的强大和简洁带到了 Java 应�
 
 ## 版本信息
 
-- **当前版本**：0.10.0
+- **当前版本**：0.11.0
 - **Java 要求**：Java 11 或更高版本
 - **许可证**：MIT License
 
