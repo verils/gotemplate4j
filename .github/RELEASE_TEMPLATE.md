@@ -2,63 +2,81 @@
 
 **{{DATE}}**
 
-{{SUMMARY}}
+## 中文
+
+{{SUMMARY_ZH}}
+
+### ✨ 新功能
+
+{{NEW_FEATURES_ZH}}
+
+### 📈 改进
+
+{{IMPROVEMENTS_ZH}}
+
+### 🐛 缺陷修复
+
+{{BUG_FIXES_ZH}}
+
+### ⚠️ 破坏性变更
+
+{{BREAKING_CHANGES_ZH}}
+
+### 🧪 测试
+
+{{TESTING_ZH}}
+
+**总计：{{TOTAL_TESTS}}+ 个测试，零失败**
+
+### 📦 升级说明
+
+{{UPGRADE_NOTES_ZH}}
+
+### 🙏 致谢
+
+感谢所有贡献者和早期使用者帮助完善本版本！
 
 ---
 
-## ✨ New Features
+<details>
+<summary><strong>English</strong></summary>
 
-{{NEW_FEATURES}}
+## English
 
----
+{{SUMMARY_EN}}
 
-## 📈 Improvements
+### ✨ New Features
 
-{{IMPROVEMENTS}}
+{{NEW_FEATURES_EN}}
 
-<!-- Optional sections: uncomment and fill in as needed -->
+### 📈 Improvements
 
-<!--
-## 🔄 Compatibility Decisions
+{{IMPROVEMENTS_EN}}
 
-{{COMPATIBILITY_DECISIONS}}
+### 🐛 Bug Fixes
 
----
+{{BUG_FIXES_EN}}
 
-## ⏳ Deferred APIs
+### ⚠️ Breaking Changes
 
-{{DEFERRED_APIS}}
+{{BREAKING_CHANGES_EN}}
 
----
+### 🧪 Testing
 
-## 🛠 Bug Fixes
+{{TESTING_EN}}
 
-{{BUG_FIXES}}
+**Total: {{TOTAL_TESTS}}+ tests, zero failures**
 
----
+### 📦 Upgrade Notes
 
-## ⚠️ Breaking Changes
+{{UPGRADE_NOTES_EN}}
 
-{{BREAKING_CHANGES}}
-
----
--->
-
-## 🧪 Testing
-
-{{TESTING}}
-**Total: {{TOTAL_TESTS}}+ tests – zero failures**
-
----
-
-## 📦 Upgrade Notes
-
-{{UPGRADE_NOTES}}
-
----
-
-## 🙏 Thanks
+### 🙏 Thanks
 
 Thanks to all contributors and early adopters who helped shape this release!
 
-[View the full changelog](CHANGELOG) · [Report an issue](https://github.com/verils/gotemplate4j/issues)
+</details>
+
+---
+
+[完整中文变更日志](https://github.com/verils/gotemplate4j/blob/master/CHANGELOG.md) · [Full English changelog](https://github.com/verils/gotemplate4j/blob/master/CHANGELOG_en.md) · [报告问题 / Report an issue](https://github.com/verils/gotemplate4j/issues)

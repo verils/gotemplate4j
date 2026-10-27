@@ -1,31 +1,31 @@
-# Golang Template Engine for Java
+# Go 模板引擎 Java 版
 
 [![Test and Verify](https://github.com/verils/gotemplate4j/actions/workflows/test.yml/badge.svg)](https://github.com/verils/gotemplate4j/actions/workflows/test.yml)
 
-[中文文档](./README_zh.md)
+[English Documentation](./README_en.md)
 
-A Go template engine implementation for Java that evaluates Go templates and generates textual output.
+一个用于 Java 的 Go 模板引擎实现，用于评估 Go 模板并生成文本输出。
 
-> ✅ **Compatibility Focus**: Core behavior is covered by 90%+ tests and documented Go differences. Review the compatibility guide before production use.
+> ✅ **兼容性优先**：核心行为有 90%+ 测试覆盖，并明确记录 Go 差异。生产使用前请审阅兼容性指南。
 
-> ⚠️ **Core Purpose**: This project is **NOT** a replacement for Go's native `text/template` and does **NOT** aim to surpass it in performance or features. It exists solely to help **Java developers who must work with Go templates** meet basic operational needs when dealing with Go-based systems or migrating from Go to Java.
+> ⚠️ **核心定位**：本项目**不是**为了替代 Go 原生的 `text/template`，也**不追求**在性能或功能上超越它。它的存在仅仅是为了帮助**必须处理 Go 模板的 Java 开发者**在与 Go 系统协作或从 Go 迁移到 Java 时满足基本的工作需求。
 
-> 🆕 **Latest Release (v0.11.0)**: Go compatibility remediation, safer escaping, and stronger diagnostics.
+> 🆕 **最新版本 (v0.11.0)**：Go 兼容性整改、更安全的转义和更强的诊断。
 
-## Quick Start
+## 快速开始
 
-### Requirements
+### 环境要求
 
-- Java Version: >= **11**
-- No additional dependencies required (pure Java)
+- Java 版本：>= **11**
+- 无需额外依赖（纯 Java 实现）
 
-> ⚠️ **Java 8 Support**: v0.9.x is the final release line supporting Java 8. v0.10.0 and later require **Java 11 or higher**. See [Development Plan](./PLAN.md) for details.
+> ⚠️ **Java 8 支持**：v0.9.x 是最后一个支持 Java 8 的发布线。v0.10.0 及之后的版本需要 **Java 11 或更高版本**。详情请参阅 [开发计划](./PLAN.md)。
 
-### Installation
+### 安装
 
 #### Maven
 
-Add the dependency to your `pom.xml`:
+将依赖项添加到您的 `pom.xml`：
 
 ```xml
 <dependency>
@@ -37,7 +37,7 @@ Add the dependency to your `pom.xml`:
 
 #### Gradle
 
-Add the dependency to your `build.gradle`:
+将依赖项添加到您的 `build.gradle`：
 
 ```groovy
 dependencies {
@@ -45,7 +45,7 @@ dependencies {
 }
 ```
 
-For Gradle Kotlin DSL (`build.gradle.kts`):
+对于 Gradle Kotlin DSL (`build.gradle.kts`)：
 
 ```kotlin
 dependencies {
@@ -53,97 +53,97 @@ dependencies {
 }
 ```
 
-For more installation options, see the [Installation Guide](./docs/en/getting-started/installation.md).
+更多安装选项，请参阅 [安装指南](./docs/zh/getting-started/installation.md)。
 
-### Basic Usage
+### 基本用法
 
 ```java
-// Create a user as the input data
+// 创建用户作为输入数据
 User user = new User();
 user.setName("Bob");
 
-// Prepare your template
+// 准备您的模板
 Template template = new Template("demo");
 template.parse("Hello, {{ .Name }}!");
 
-// Execute and print out the result text
+// 执行并打印结果文本
 StringWriter writer = new StringWriter();
 template.execute(writer, user);
 System.out.print(writer.toString());  // "Hello Bob!"
 ```
 
-### File and Classpath Loading
+### 文件和 Classpath 加载
 
-Load templates from classpath, directories, or with specific encoding:
+从 classpath、目录或指定编码加载模板：
 
 ```java
-// Load from classpath
+// 从 classpath 加载
 Template emailTemplate = Template.fromClasspath("templates/email.tmpl");
 
-// Load from directory (all .tmpl files)
+// 从目录加载（所有 .tmpl 文件）
 Map<String, Template> directoryTemplates = Template.fromDirectory(Paths.get("templates"));
 
-// Load with specific encoding
+// 使用指定编码加载
 Template encodedTemplate = Template.fromFile(Paths.get("template.tmpl"), StandardCharsets.UTF_8);
 
-// Batch load from classpath with pattern
+// 批量从 classpath 加载（支持模式匹配）
 List<Template> classpathTemplates = Template.fromClasspathResources("templates/*.tmpl");
 ```
 
-For more examples, see [Basic Examples](./docs/en/examples/basic-examples.md).
+更多示例，请参阅 [基础示例](./docs/zh/examples/basic-examples.md)。
 
-## Documentation
+## 文档
 
-Comprehensive documentation is available in the `docs/` directory:
+完整的文档可在 `docs/` 目录中找到：
 
-### 🚀 Getting Started
-- [Installation Guide](./docs/en/getting-started/installation.md) - Add gotemplate4j to your project
-- [Quick Start Tutorial](./docs/en/getting-started/quick-start.md) - Create your first template in 5 minutes
-- [Basic Concepts](./docs/en/getting-started/basic-concepts.md) - Understand core concepts
+### 🚀 入门指南
+- [安装指南](./docs/zh/getting-started/installation.md) - 将 gotemplate4j 添加到您的项目
+- [快速入门教程](./docs/zh/getting-started/quick-start.md) - 5分钟内创建第一个模板
+- [基本概念](./docs/zh/getting-started/basic-concepts.md) - 理解核心概念
 
-### 📖 User Guide
-- [Template Syntax Reference](./docs/en/user-guide/template-syntax.md) - Complete syntax guide
-- [Working with Java Data](./docs/en/user-guide/data-models.md) - JavaBeans, Maps, Lists, Enums
-- [Built-in and Custom Functions](./docs/en/user-guide/functions.md) - Function reference
-- [Control Flow](./docs/en/user-guide/control-flow.md) - If, range, with, break/continue
-- [Template Sets and Inheritance](./docs/en/user-guide/template-sets.md) - Define, template, blocks
-- [Error Handling](./docs/en/user-guide/error-handling.md) - Handle errors gracefully
+### 📖 用户指南
+- [模板语法参考](./docs/zh/user-guide/template-syntax.md) - 完整语法指南
+- [使用 Java 数据](./docs/zh/user-guide/data-models.md) - JavaBeans、Maps、Lists、Enums
+- [内置和自定义函数](./docs/zh/user-guide/functions.md) - 函数参考
+- [控制流](./docs/zh/user-guide/control-flow.md) - If、range、with、break/continue
+- [模板集和继承](./docs/zh/user-guide/template-sets.md) - Define、template、blocks
+- [错误处理](./docs/zh/user-guide/error-handling.md) - 优雅地处理错误
 
-### 🔧 Advanced Topics
-- [Go Template Compatibility](./docs/en/advanced/compatibility.md) - Detailed compatibility guide
-- [Migration from Go Templates](./docs/en/advanced/migration.md) - Step-by-step migration
-- [Performance Tuning](./docs/en/advanced/performance.md) - Optimize template execution
-- [Security Best Practices](./docs/en/advanced/security.md) - Security considerations
-- [Design Patterns](./docs/en/advanced/best-practices.md) - Best practices and patterns
+### 🔧 高级主题
+- [Go 模板兼容性](./docs/zh/advanced/compatibility.md) - 详细的兼容性指南
+- [从 Go 模板迁移](./docs/zh/advanced/migration.md) - 逐步迁移指南
+- [性能优化](./docs/zh/advanced/performance.md) - 优化模板执行
+- [安全最佳实践](./docs/zh/advanced/security.md) - 安全注意事项
+- [设计模式](./docs/zh/advanced/best-practices.md) - 最佳实践和模式
 
-### 📚 API Reference
-- [Template API](./docs/en/api-reference/template-api.md) - Template class reference
-- [Function API](./docs/en/api-reference/function-api.md) - Function interface guide
-- [Exception API](./docs/en/api-reference/exception-api.md) - Exception hierarchy
+### 📚 API 参考
+- [Template API](./docs/zh/api-reference/template-api.md) - Template 类参考
+- [Function API](./docs/zh/api-reference/function-api.md) - Function 接口指南
+- [Exception API](./docs/zh/api-reference/exception-api.md) - 异常层次结构
 
-### 💡 Examples
-- [Basic Examples](./docs/en/examples/basic-examples.md) - Simple use cases
-- [Web Templates](./docs/en/examples/web-templates.md) - HTML generation patterns
-- [Email Templates](./docs/en/examples/email-templates.md) - Email generation examples
-- [Complex Scenarios](./docs/en/examples/complex-scenarios.md) - Advanced real-world scenarios
+### 💡 示例
+- [基础示例](./docs/zh/examples/basic-examples.md) - 简单用例
+- [Web 模板](./docs/zh/examples/web-templates.md) - HTML 生成模式
+- [邮件模板](./docs/zh/examples/email-templates.md) - 邮件生成示例
+- [复杂场景](./docs/zh/examples/complex-scenarios.md) - 高级实际场景
 
 ### ❓ FAQ
-- [Frequently Asked Questions](./docs/en/faq.md) - Common questions and answers
+- [常见问题解答](./docs/zh/faq.md) - 常见问题和答案
 
-**Start here:** [Documentation Hub](./docs/en/index.md)
+**从这里开始：** [文档中心](./docs/zh/index.md)
 
-## References
+## 参考资料
 
-- [Go text/template Documentation](https://pkg.go.dev/text/template)
-- [Go template Source Code](https://github.com/golang/go/tree/master/src/text/template)
-- [Java Template Engine (Alternative)](https://github.com/proninyaroslav/java-template-engine)
-- [Changelog](./CHANGELOG)
-- [Development Plan](./PLAN.md)
+- [Go text/template 文档](https://pkg.go.dev/text/template)
+- [Go template 源代码](https://github.com/golang/go/tree/master/src/text/template)
+- [Java Template Engine（替代方案）](https://github.com/proninyaroslav/java-template-engine)
+- [变更日志](./CHANGELOG.md)
+- [开发计划](./PLAN.md)
 
-## Roadmap
+## 开发路线
 
-See [PLAN.md](./PLAN.md) for the detailed development roadmap.
+请参阅 [PLAN.md](./PLAN.md) 获取详细的开发路线图。
 
-## Contributing
+## 贡献指南
 
-Contributions are welcome! Please see [CONTRIBUTING.md](./CONTRIBUTING.md) for detailed guidelines.
+欢迎贡献！请参阅 [CONTRIBUTING.md](./CONTRIBUTING.md) 获取详细指南。

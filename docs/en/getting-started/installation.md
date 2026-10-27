@@ -106,6 +106,6 @@ If you get `ClassNotFoundException` or `NoClassDefFoundError`:
 
 ### Need Help?
 
-- 📚 Browse the [Documentation Index](index.md)
+- 📚 Browse the [Documentation Index](../index.md)
 - ❓ Check the [FAQ](../faq.md)
 - 🐛 Report issues on [GitHub](https://github.com/verils/gotemplate4j/issues)

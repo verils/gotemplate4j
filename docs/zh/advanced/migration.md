@@ -629,6 +629,6 @@ public void benchmarkTemplateExecution() throws Exception {
 ## 参见
 
 - [兼容性指南](compatibility.md) - 详细的兼容性信息
-- [用户指南](user-guide/) - 全面的使用文档
-- [示例](examples/) - 实际代码示例
-- [API 参考](api-reference/) - 详细的 API 文档
+- [用户指南](../user-guide/) - 全面的使用文档
+- [示例](../examples/) - 实际代码示例
+- [API 参考](../api-reference/) - 详细的 API 文档

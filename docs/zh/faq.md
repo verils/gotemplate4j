@@ -45,7 +45,7 @@ Gotemplate4j 优先考虑**兼容性和简洁性**，而非功能丰富度或性
 
 ### 当前版本和发布周期是什么？
 
-当前版本是 **0.11.0**。项目遵循语义化版本管理。查看 [CHANGELOG](../../CHANGELOG) 了解发布历史。
+当前版本是 **0.11.0**。项目遵循语义化版本管理。查看 [CHANGELOG](../../CHANGELOG.md) 了解发布历史。
 
 ---
 
@@ -647,7 +647,7 @@ v0.9.1 需要 **Java 8 或更高版本**。v0.9.x 系列是最后一个支持 Ja
 2. **整数范围支持** - Go 风格的 `{{range $i := 5}}` 语法，用于迭代数字序列
 3. **增强的错误诊断** - 智能的错误消息，包含拼写建议和可用选项列表
 
-完整详情请参阅 [CHANGELOG](../../CHANGELOG)。
+完整详情请参阅 [CHANGELOG](../../CHANGELOG.md)。
 
 ### 如何从 classpath 加载模板？
 
@@ -741,7 +741,7 @@ v0.9.x 需要 **Java 8 或更高版本**。这是最后一个支持 Java 8 的�
 - 📖 浏览[用户指南](user-guide/)获取详细文档
 - 💡 查看[示例](examples/)获取真实场景用例
 - 🐛 在 [GitHub Issues](https://github.com/verils/gotemplate4j/issues) 上报告 bug 或提问
-- 📝 阅读 [CHANGELOG](../../CHANGELOG) 了解最近的更新
+- 📝 阅读 [CHANGELOG](../../CHANGELOG.md) 了解最近的更新
 
 ---
 

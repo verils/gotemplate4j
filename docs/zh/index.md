@@ -1,5 +1,7 @@
 # GoTemplate4J 文档
 
+[English](../en/index.md) | **中文**
+
 欢迎来到 **gotemplate4j** 的全面文档——一个用于 Java 的 Go 模板引擎实现。
 
 ## 什么是 GoTemplate4J？
@@ -85,7 +87,7 @@ GoTemplate4J 将 Go 的 `text/template` 包的强大和简洁带到了 Java 应�
 - 📖 浏览上方的文档章节
 - 💬 查看 [常见问题](faq.md) 了解常见问题
 - 🐛 在 [GitHub](https://github.com/verils/gotemplate4j/issues) 上报告问题
-- 📝 阅读 [CHANGELOG](../../CHANGELOG) 了解最近的更新
+- 📝 阅读 [CHANGELOG](../../CHANGELOG.md) 了解最近的更新
 
 ## 贡献
 

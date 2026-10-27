@@ -157,7 +157,7 @@ Reference performance data measured with JMH on JDK 1.8:
 ./mvnw test-compile exec:java -Dexec.mainClass=io.github.verils.gotemplate.TemplateJmhBenchmark
 ```
 
-**Note:** These numbers serve as a baseline for future performance comparisons. Actual performance may vary based on hardware and JVM configuration. For more details, see [TemplateJmhBenchmark.java](../../src/test/java/io/github/verils/gotemplate/TemplateJmhBenchmark.java).
+**Note:** These numbers serve as a baseline for future performance comparisons. Actual performance may vary based on hardware and JVM configuration. For more details, see [TemplateJmhBenchmark.java](../../../src/test/java/io/github/verils/gotemplate/TemplateJmhBenchmark.java).
 
 ---
 

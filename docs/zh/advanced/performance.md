@@ -157,7 +157,7 @@ public class TemplateJMHTest {
 ./mvnw test-compile exec:java -Dexec.mainClass=io.github.verils.gotemplate.TemplateJmhBenchmark
 ```
 
-**注意：** 这些数据作为未来性能比较的基线。实际性能可能因硬件和 JVM 配置而异。更多详情请参见 [TemplateJmhBenchmark.java](../../src/test/java/io/github/verils/gotemplate/TemplateJmhBenchmark.java)。
+**注意：** 这些数据作为未来性能比较的基线。实际性能可能因硬件和 JVM 配置而异。更多详情请参见 [TemplateJmhBenchmark.java](../../../src/test/java/io/github/verils/gotemplate/TemplateJmhBenchmark.java)。
 
 ---
 

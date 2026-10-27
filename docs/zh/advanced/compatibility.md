@@ -429,6 +429,6 @@ try {
 ## 参见
 
 - [迁移指南](migration.md) - 从 Go template 迁移的逐步指南
-- [用户指南](user-guide/) - 全面的使用文档
-- [示例](examples/) - 实际代码示例
-- [API 参考](api-reference/) - 详细的 API 文档
+- [用户指南](../user-guide/) - 全面的使用文档
+- [示例](../examples/) - 实际代码示例
+- [API 参考](../api-reference/) - 详细的 API 文档

@@ -1,5 +1,7 @@
 # GoTemplate4J Documentation
 
+**English** | [中文](../zh/index.md)
+
 Welcome to the comprehensive documentation for **gotemplate4j** - a Go template engine implementation for Java.
 
 ## What is GoTemplate4J?
@@ -85,11 +87,11 @@ Real-world examples and use cases:
 - 📖 Browse the documentation sections above
 - 💬 Check the [FAQ](faq.md) for common questions
 - 🐛 Report issues on [GitHub](https://github.com/verils/gotemplate4j/issues)
-- 📝 Read the [CHANGELOG](../../CHANGELOG) for recent updates
+- 📝 Read the [CHANGELOG_en.md](../../CHANGELOG_en.md) for recent updates
 
 ## Contributing
 
-Contributions are welcome! Please see [CONTRIBUTING.md](../../CONTRIBUTING.md) for guidelines.
+Contributions are welcome! Please see [CONTRIBUTING_en.md](../../CONTRIBUTING_en.md) for guidelines.
 
 ---
 

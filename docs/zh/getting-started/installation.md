@@ -106,6 +106,6 @@ public class InstallationTest {
 
 ### 需要帮助？
 
-- 📚 浏览[文档索引](index.md)
+- 📚 浏览[文档索引](../index.md)
 - ❓ 查看[常见问题](../faq.md)
 - 🐛 在 [GitHub](https://github.com/verils/gotemplate4j/issues) 上报告问题

@@ -45,7 +45,7 @@ Yes, gotemplate4j is stable and well-tested with 90%+ code coverage. However, it
 
 ### What is the current version and release cycle?
 
-Current version is **0.11.0**. The project follows semantic versioning. Check the [CHANGELOG](../../CHANGELOG) for release history.
+Current version is **0.11.0**. The project follows semantic versioning. Check the [CHANGELOG_en.md](../../CHANGELOG_en.md) for release history.
 
 ---
 
@@ -647,7 +647,7 @@ Version 0.9.0 introduces three major enhancements:
 2. **Integer Range Support** - Go-style `{{range $i := 5}}` syntax for iterating over number sequences
 3. **Enhanced Error Diagnostics** - Intelligent error messages with typo suggestions and available options listing
 
-See the [CHANGELOG](../../CHANGELOG) for complete details.
+See the [CHANGELOG_en.md](../../CHANGELOG_en.md) for complete details.
 
 ### How do I load templates from classpath?
 
@@ -741,7 +741,7 @@ v0.9.x requires **Java 8 or higher**. This is the last release line to support J
 - 📖 Browse the [User Guide](user-guide/) for detailed documentation
 - 💡 Check [Examples](examples/) for real-world use cases
 - 🐛 Report bugs or ask questions on [GitHub Issues](https://github.com/verils/gotemplate4j/issues)
-- 📝 Read the [CHANGELOG](../../CHANGELOG) for recent updates
+- 📝 Read the [CHANGELOG_en.md](../../CHANGELOG_en.md) for recent updates
 
 ---
 

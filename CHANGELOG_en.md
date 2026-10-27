@@ -1,3 +1,7 @@
+# Changelog
+
+[中文](./CHANGELOG.md) | **English**
+
 v0.11.0 (2026-10-27)
 
 ========
@@ -507,10 +511,10 @@ v0.7.0 (2026-05-11)
   - FAQ with 30+ common questions and answers
 
 - **Enhanced Compatibility Documentation**:
-  - Expanded [Go Template Compatibility Guide](./docs/advanced/compatibility.md) with detailed behavior comparison table
-  - Comprehensive [Migration Guide](./docs/advanced/migration.md) with Go vs Java side-by-side examples
+  - Expanded [Go Template Compatibility Guide](./docs/en/advanced/compatibility.md) with detailed behavior comparison table
+  - Comprehensive [Migration Guide](./docs/en/advanced/migration.md) with Go vs Java side-by-side examples
   - Added common migration patterns and testing strategies
-  - Updated [Control Flow Guide](./docs/user-guide/control-flow.md) with Map iteration order details
+  - Updated [Control Flow Guide](./docs/en/user-guide/control-flow.md) with Map iteration order details
 
 - **Production-Grade Examples**:
   - Basic examples covering all core features
@@ -549,8 +553,8 @@ v0.6.0 (2026-05-10)
 
 ### Documentation
 
-- Added detailed compatibility guide: `docs/go-template-compatibility.md`.
-- Added migration guide from Go `text/template`: `docs/migration-from-go-template.md`.
+- Added detailed [compatibility guide](./docs/en/advanced/compatibility.md).
+- Added a [migration guide](./docs/en/advanced/migration.md) for Go `text/template`.
 - Added focused compatibility and Java-deviation fixture tests.
 
 ### Implementation Notes
