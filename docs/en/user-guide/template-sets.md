@@ -139,6 +139,9 @@ Pass specific data to the template.
 The `block` action defines and executes a template inline. It's Go-compatible,
 and definitions in later parse calls or files can override it.
 
+`block` and `define` are the only supported template inheritance mechanisms.
+A separate `extends` or layout syntax is not planned.
+
 ### Basic Block
 
 ```gotemplate

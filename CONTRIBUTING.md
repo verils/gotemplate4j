@@ -156,42 +156,45 @@ test(parser): add tests for error diagnostics
 
 **Important:** All commit messages must be in **English**.
 
-## 🎯 Priority Areas for Contribution
+## 🎯 Contribution Boundaries
 
-See [PLAN.md](./PLAN.md) for the complete development roadmap.
+See [PLAN.md](./PLAN.md) for active work. Contributions should prioritize:
 
-### High Priority
-1. **Performance Optimizations**
-   - AST caching strategies
-   - Method reflection caching
-   - Memory usage improvements
+1. **Go compatibility and correctness**
+   - Focused regression tests for documented behavior
+   - Go differential coverage for compatibility changes
+   - Clear diagnostics for unsupported syntax and values
 
-2. **Documentation**
-   - Comprehensive Javadoc for public APIs
-   - Usage examples and tutorials
-   - Architecture documentation
+2. **Documentation and test quality**
+   - Javadoc and examples that match the public API
+   - Synchronized English and Chinese user documentation
+   - Useful tests that cover behavior instead of implementation details
 
-3. **Advanced Features**
-   - Custom delimiters support
-   - Enhanced whitespace control
-   - Template inheritance patterns
+3. **Evidence-based performance work**
+   - Profile a concrete bottleneck before changing hot paths
+   - Reproduce improvements with the existing JMH benchmark
+   - Preserve compatibility and error behavior
 
-### Medium Priority
-4. **Type System Enhancements**
-   - Support for Java Optional types
-   - Better enum handling
-   - Public field access (not just getters)
+### Template Engine Non-Goals
 
-5. **Developer Experience**
-   - Better error messages with suggestions
-   - Debugging utilities
-   - IDE integration helpers
+- **Method calls with arguments:** Templates invoke public no-argument methods only.
+  Register a `Function` for operations that need parameters.
+- **Non-Go inheritance syntax:** `block` and `define` are the only inheritance
+  mechanisms. A separate `extends`, layout, or enhanced inheritance language is
+  not planned.
+- **Bytecode template compilation:** Reuse a parsed `Template` and cache it where
+  appropriate. A public `Template.compile` API or generated template classes are
+  not planned.
 
-### Low Priority
-6. **Framework Integrations**
-   - Spring Boot starter module
-   - Jakarta EE support
-   - Micronaut/Quarkus modules
+### Quality Tooling Decisions
+
+- Keep the documented test layout: `internal/*` for lexer, parser, AST, and
+  internal utilities, with focused feature tests at the public package level.
+  A repository-wide package reorganization is not planned.
+- JaCoCo, the Go differential suite, and JMH are the supported quality and
+  performance checks. Mutation testing, property testing, and additional static
+  analysis plugins are not part of the roadmap; propose them separately only
+  when a concrete quality gap cannot be covered by the current suite.
 
 ## 🔍 Code Review Process
 

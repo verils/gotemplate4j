@@ -136,6 +136,15 @@ pipeline handling, and unifies template truthiness.
 
 ### 📚 Documentation
 
+- Closed the remaining deferred roadmap decisions: test package reorganization,
+  argument-taking method calls, bytecode template compilation, non-Go
+  inheritance syntax, and additional quality-tool adoption are now explicit
+  contribution boundaries instead of inactive backlog items.
+- Corrected the English and Chinese performance guides to describe parse-once
+  reuse without advertising nonexistent `Template.compile` or
+  `CompiledTemplate` APIs.
+- Clarified that `block` and `define` are the only supported inheritance
+  mechanisms.
 - Synchronized English and Chinese function, security, API, and compatibility
   documentation with the implemented escaping behavior.
 - Documented multi-dimensional indexing, zero-to-three-index slicing, strict

@@ -784,37 +784,16 @@ Use this checklist to optimize your template performance:
 
 ---
 
-## Future Optimizations
+## Template Compilation Scope
 
-These optimizations are planned for future versions:
+`Template` parses source into reusable internal nodes. Parsing once and caching
+the `Template` instance is the supported optimization; there is no separate AST
+compile or bytecode-generation API.
 
-### AST Caching
-
-Cache parsed AST trees to avoid reparsing:
-
-```java
-// Future API (not yet implemented)
-Template template = Template.compile("{{.name}}"); // Pre-compiled AST
-```
-
-### Reflection Caching
-
-Cache reflection lookups for frequently accessed fields:
-
-```java
-// Future optimization (internal)
-// Automatically cache Method objects for getter methods
-```
-
-### Template Pre-compilation
-
-Compile templates to bytecode for maximum performance:
-
-```java
-// Future feature (not planned for v0.7.0)
-CompiledTemplate compiled = template.compile();
-compiled.execute(writer, data); // Faster execution
-```
+A public `Template.compile` method, generated template classes, and conversion
+of templates into JVM bytecode are not planned. If profiling identifies parsing
+or execution as a concrete bottleneck, propose an optimization separately with
+JMH evidence and preserve the current `parse`/`execute` contract.
 
 ---
 

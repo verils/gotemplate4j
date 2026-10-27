@@ -139,6 +139,9 @@ gotemplate4j 支持：
 `block` 动作定义并内联执行模板。它与 Go 兼容，后续解析调用或后续文件中的定义
 可以覆盖它。
 
+`block` 和 `define` 是唯一支持的模板继承机制。项目不计划增加独立的 `extends`
+或布局语法。
+
 ### 基本 Block
 
 ```gotemplate

@@ -784,37 +784,14 @@ Template template = new Template("demo")
 
 ---
 
-## 未来优化
+## 模板编译范围
 
-以下优化计划在未来的版本中实现：
+`Template` 会将模板源码解析为可复用的内部节点。支持的优化方式是解析一次并缓存
+`Template` 实例；项目没有独立的 AST 编译 API 或字节码生成 API。
 
-### AST 缓存
-
-缓存已解析的 AST 树以避免重复解析：
-
-```java
-// 未来 API（尚未实现）
-Template template = Template.compile("{{.name}}"); // 预编译的 AST
-```
-
-### 反射缓存
-
-缓存频繁访问的字段的反射查找：
-
-```java
-// 未来优化（内部）
-// 自动为 getter 方法缓存 Method 对象
-```
-
-### 模板预编译
-
-将模板编译为字节码以获得最大性能：
-
-```java
-// 未来功能（未计划在 v0.7.0 中实现）
-CompiledTemplate compiled = template.compile();
-compiled.execute(writer, data); // 更快的执行
-```
+项目不计划提供公开的 `Template.compile` 方法、生成模板类或将模板转换为 JVM
+字节码。如果性能分析确认解析或执行是具体瓶颈，应使用 JMH 数据单独提出优化方案，
+并保持当前 `parse`/`execute` 契约不变。
 
 ---
 
