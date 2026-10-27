@@ -76,14 +76,7 @@ public class Parser {
             throw new TemplateParseException("unexpected node: " + listNode);
         }
 
-        ListNode root = (ListNode) state.getNode(name);
-        if (root != null) {
-            for (Node node : root) {
-                listNode.append(node);
-            }
-        } else {
-            state.putNode(name, listNode);
-        }
+        state.addNode(name, listNode, null);
 
         return state.getNodes();
     }
@@ -205,6 +198,7 @@ public class Parser {
         }
 
         String blockTemplateName = decodeStringLiteral(token);
+        Token blockNameToken = token;
         TemplateNode blockTemplateNode = new TemplateNode(blockTemplateName);
 
         PipeNode pipeNode = new PipeNode(context);
@@ -232,7 +226,7 @@ public class Parser {
 
         listNode.append(blockTemplateNode);
 
-        state.nodes.put(blockTemplateName, blockListNode);
+        state.addNode(blockTemplateName, blockListNode, blockNameToken);
     }
 
 
@@ -250,6 +244,7 @@ public class Parser {
         }
 
         String definitionTemplateName = decodeStringLiteral(token);
+        Token definitionNameToken = token;
 
         token = moveToNextNonSpaceToken(lexer, state);
         if (token == null) {
@@ -277,7 +272,7 @@ public class Parser {
             return;
         }
 
-        state.nodes.put(definitionTemplateName, definitionListNode);
+        state.addNode(definitionTemplateName, definitionListNode, definitionNameToken);
     }
 
 
@@ -1032,12 +1027,20 @@ public class Parser {
             return nodes;
         }
 
-        public Node getNode(String name) {
-            return nodes.get(name);
-        }
+        public void addNode(String name, Node node, Token token) throws TemplateParseException {
+            Node existingNode = nodes.get(name);
+            if (existingNode == null || NodeUtils.isEmpty(existingNode)) {
+                nodes.put(name, node);
+                return;
+            }
 
-        public void putNode(String name, Node node) {
-            nodes.put(name, node);
+            if (!NodeUtils.isEmpty(node)) {
+                String message = String.format("multiple definition of template \"%s\"", name);
+                if (token == null) {
+                    throw new TemplateParseException(message);
+                }
+                throw new TemplateParseException(message, token.line(), token.column());
+            }
         }
 
         public void addVariable(String variable) {

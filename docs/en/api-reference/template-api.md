@@ -160,6 +160,9 @@ threadSafe.execute(writer, data);
 ### `void parse(String template)`
 
 Parses the provided text as a template body.
+Within one call, defining the same non-empty template more than once is a
+parse error. A later call may replace an existing definition with non-empty
+content, while whitespace-only or comment-only definitions do not replace it.
 
 ```java
 Template template = new Template("greeting");
@@ -171,6 +174,7 @@ template.parse("Hello, {{.Name}}!");
 
 **Throws:**
 - `TemplateParseException` if the template contains syntax errors, undefined variables, or other parsing issues
+- `TemplateParseException` if the same non-empty template is defined more than once in this call
 
 **Example with template definitions:**
 

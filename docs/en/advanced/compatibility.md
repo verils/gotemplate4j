@@ -41,7 +41,14 @@ gotemplate4j supports most common Go template features used in practice.
 - **Definitions**: `define` to create named template blocks.
 - **Invocation**: `template` to include other templates.
 - **Blocks**: Block-style overrides for template inheritance.
-- **Re-parsing**: Templates can be parsed multiple times to add definitions.
+- **Re-parsing**: Later parse calls can replace definitions with non-empty content.
+- **Empty definitions**: Whitespace-only and comment-only bodies do not replace
+  existing templates.
+- **Duplicate definitions**: Two non-empty definitions with the same name in one
+  parse call, including `define`, `block`, and the root template name, are
+  rejected with `TemplateParseException`.
+- **Definitions-only input**: The root template remains available with an empty
+  body when the input contains only template definitions.
 - **Named execution**: Execute specific templates from a set by name.
 
 ### Built-in Functions

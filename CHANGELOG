@@ -62,6 +62,11 @@ pipeline handling, and unifies template truthiness.
 - Comment markers inside strings, raw strings, URLs, and the middle of actions
   are no longer misclassified as comments. Comments are recognized only at the
   start of an action, including the optional trim-marker position.
+- Template definitions now follow Go's registration rules within one parse:
+  duplicate non-empty names are rejected instead of silently using the last
+  body, while empty definitions do not replace existing content.
+- Duplicate detection also covers `block` definitions and collisions with the
+  root template name.
 - File and classpath loading now uses complete file names for batch-loaded root
   templates, preventing independent templates from overwriting one another.
 - `parseDirectory`, `parseGlob`, and `parseClasspathResources` now fail on empty
@@ -93,6 +98,9 @@ pipeline handling, and unifies template truthiness.
 - Added lexer and execution coverage for comment-like text inside quoted and raw
   strings, real trailing comments, custom comment delimiters, and strict
   comment-start whitespace behavior.
+- Added regression coverage for duplicate `define` and `block` names, empty and
+  comment-only redefinitions, root-name collisions, definitions-only roots, and
+  failed-parse isolation.
 - Added file, directory, full-glob, classpath, missing-resource, duplicate-name,
   and temporary-JAR coverage, including JARs without directory entries.
 
@@ -106,6 +114,8 @@ pipeline handling, and unifies template truthiness.
   print spacing, and explicit formatting-error behavior.
 - Documented the required comment position and the treatment of comment markers
   inside string content.
+- Clarified in the English and Chinese guides that template overrides occur
+  across parse calls or files, not between duplicate definitions in one call.
 - Corrected README, FAQ, API reference, compatibility, and example code to use
   the actual instance APIs and new static loading factories.
 

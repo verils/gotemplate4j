@@ -202,7 +202,7 @@ public class TemplateInheritanceTest {
             "{{define \"main\"}}Page Content{{end}}" +
             "{{define \"footer\"}}Page Footer{{end}}";
         
-        Template template = new Template("layout");
+        Template template = new Template("page");
         template.parse(layoutTemplate);
         template.parse(pageTemplate);
         

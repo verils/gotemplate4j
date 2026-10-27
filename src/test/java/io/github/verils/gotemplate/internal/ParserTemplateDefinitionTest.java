@@ -1,14 +1,18 @@
 package io.github.verils.gotemplate.internal;
 
 import io.github.verils.gotemplate.TemplateParseException;
+import io.github.verils.gotemplate.internal.ast.ListNode;
 import io.github.verils.gotemplate.internal.ast.Node;
+import io.github.verils.gotemplate.internal.ast.TextNode;
 import org.junit.jupiter.api.Test;
 
 import java.util.Map;
 
 import static io.github.verils.gotemplate.internal.ParserTestSupport.createParser2;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class ParserTemplateDefinitionTest {
 
@@ -123,6 +127,73 @@ class ParserTemplateDefinitionTest {
         assertNotNull(nodes.get("t2"));
     }
 
+    @Test
+    void duplicateNonEmptyDefinitionsAreRejectedWithinOneParse() {
+        Parser parser = createParser2();
+
+        TemplateParseException exception = assertThrows(TemplateParseException.class,
+                () -> parser.parse("test",
+                        "{{define \"item\"}}First{{end}}{{define \"item\"}}Second{{end}}"));
+
+        assertTrue(exception.getMessage().contains("multiple definition of template \"item\""));
+        assertTrue(exception.getLine() > 0);
+        assertTrue(exception.getColumn() > 0);
+    }
+
+    @Test
+    void emptyDefinitionDoesNotBlockLaterDefinitionInSameParse() throws TemplateParseException {
+        Parser parser = createParser2();
+
+        Map<String, Node> nodes = parser.parse("test",
+                "{{define \"item\"}}{{end}}{{define \"item\"}}Second{{end}}");
+
+        assertEquals("Second", firstText(nodes.get("item")));
+    }
+
+    @Test
+    void emptyOrCommentOnlyDefinitionDoesNotReplaceEarlierDefinitionInSameParse()
+            throws TemplateParseException {
+        Parser parser = createParser2();
+
+        Map<String, Node> nodes = parser.parse("test",
+                "{{define \"item\"}}First{{end}}" +
+                        "{{define \"item\"}} \t\n {{end}}" +
+                        "{{define \"item\"}}{{/* comment */}}{{end}}");
+
+        assertEquals("First", firstText(nodes.get("item")));
+    }
+
+    @Test
+    void blockAndDefineWithSameNameAreDuplicateWithinOneParse() {
+        Parser parser = createParser2();
+
+        TemplateParseException exception = assertThrows(TemplateParseException.class,
+                () -> parser.parse("test",
+                        "{{block \"item\" .}}Block{{end}}{{define \"item\"}}Define{{end}}"));
+
+        assertTrue(exception.getMessage().contains("multiple definition of template \"item\""));
+    }
+
+    @Test
+    void nonEmptyRootAndSameNamedDefinitionAreDuplicateWithinOneParse() {
+        Parser parser = createParser2();
+
+        TemplateParseException exception = assertThrows(TemplateParseException.class,
+                () -> parser.parse("root", "Root{{define \"root\"}}Definition{{end}}"));
+
+        assertTrue(exception.getMessage().contains("multiple definition of template \"root\""));
+    }
+
+    @Test
+    void sameNamedDefinitionCanSupplyRootWhenRootBodyIsEmpty() throws TemplateParseException {
+        Parser parser = createParser2();
+
+        Map<String, Node> nodes = parser.parse(
+                "root", "{{define \"root\"}}Definition{{end}}");
+
+        assertEquals("Definition", firstText(nodes.get("root")));
+    }
+
     // Test template invocation with argument
 
     @Test
@@ -212,5 +283,9 @@ class ParserTemplateDefinitionTest {
         assertNotNull(nodes.get("template123"));
     }
 
+    private static String firstText(Node node) {
+        ListNode listNode = (ListNode) node;
+        return ((TextNode) listNode.iterator().next()).getText();
+    }
 
 }

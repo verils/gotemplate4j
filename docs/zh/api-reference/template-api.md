@@ -160,6 +160,8 @@ threadSafe.execute(writer, data);
 ### `void parse(String template)`
 
 将给定文本解析为模板主体。
+同一次调用中重复定义同一个非空模板会抛出解析错误。后续调用可以用非空内容覆盖
+已有定义，而仅包含空白或注释的定义不会覆盖已有内容。
 
 ```java
 Template template = new Template("greeting");
@@ -171,6 +173,7 @@ template.parse("Hello, {{.Name}}!");
 
 **抛出异常：**
 - 如果模板包含语法错误、未定义变量或其他解析问题，抛出 `TemplateParseException`
+- 如果本次调用中重复定义同一个非空模板，抛出 `TemplateParseException`
 
 **模板定义示例：**
 

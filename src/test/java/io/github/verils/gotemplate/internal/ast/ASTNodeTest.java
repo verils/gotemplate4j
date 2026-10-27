@@ -79,4 +79,21 @@ class ASTNodeTest {
             }
         }
     }
+
+    @Test
+    void testNodeUtilsRecognizesOnlyWhitespaceCommentsAndEmptyListsAsEmpty() {
+        assertTrue(NodeUtils.isEmpty(null));
+        assertTrue(NodeUtils.isEmpty(new ListNode()));
+        assertTrue(NodeUtils.isEmpty(new TextNode(" \t\n")));
+        assertTrue(NodeUtils.isEmpty(new CommentNode("comment")));
+
+        ListNode listNode = new ListNode();
+        listNode.append(new TextNode(" "));
+        listNode.append(new CommentNode("comment"));
+        assertTrue(NodeUtils.isEmpty(listNode));
+
+        assertFalse(NodeUtils.isEmpty(new TextNode("content")));
+        listNode.append(new ActionNode());
+        assertFalse(NodeUtils.isEmpty(listNode));
+    }
 }

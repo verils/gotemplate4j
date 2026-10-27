@@ -9,6 +9,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Tests for enhanced block action with proper overriding semantics.
@@ -40,6 +42,19 @@ public class BlockOverrideTest {
         template.execute(writer, null);
         
         assertEquals("BeforeOverridden ContentAfter", writer.toString());
+    }
+
+    @Test
+    void testBlockAndDefineConflictWithinOneParse() {
+        Template template = new Template("master");
+
+        TemplateParseException exception = assertThrows(TemplateParseException.class,
+                () -> template.parse(
+                        "{{block \"content\" .}}Default Content{{end}}" +
+                                "{{define \"content\"}}Overridden Content{{end}}"));
+
+        assertTrue(exception.getMessage().contains(
+                "multiple definition of template \"content\""));
     }
 
     @Test

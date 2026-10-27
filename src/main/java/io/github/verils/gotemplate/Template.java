@@ -6,9 +6,8 @@ import io.github.verils.gotemplate.internal.IOUtils;
 import io.github.verils.gotemplate.internal.Parser;
 import io.github.verils.gotemplate.internal.TemplateResourceLoader;
 import io.github.verils.gotemplate.internal.TemplateResourceLoader.Resource;
-import io.github.verils.gotemplate.internal.ast.ListNode;
 import io.github.verils.gotemplate.internal.ast.Node;
-import io.github.verils.gotemplate.internal.ast.TextNode;
+import io.github.verils.gotemplate.internal.ast.NodeUtils;
 
 import java.io.*;
 import java.nio.charset.Charset;
@@ -443,6 +442,10 @@ public class Template {
      * If the content includes definitions of additional templates, those templates will be
      * registered and available for use via the template action.
      * <p>
+     * Within one call, defining the same non-empty template more than once is a parse error.
+     * Later calls may replace an existing definition with non-empty content. Definitions whose
+     * bodies contain only whitespace or comments do not replace existing content.
+     * <p>
      * Example:
      * <pre>{@code
      * template.parse(
@@ -470,7 +473,7 @@ public class Template {
                 return;
             }
 
-            if (isNotEmpty(node)) {
+            if (!NodeUtils.isEmpty(node)) {
                 this.nodes.put(name, node);
             }
         });
@@ -480,23 +483,6 @@ public class Template {
         for (Resource resource : resources) {
             parseAs(resource.name(), resource.content());
         }
-    }
-
-    private boolean isNotEmpty(Node currentNode) {
-        if (currentNode instanceof ListNode) {
-            ListNode listNode = (ListNode) currentNode;
-            for (Node node : listNode) {
-                if (isNotEmpty(node)) {
-                    return true;
-                }
-            }
-            return false;
-        }
-        if (currentNode instanceof TextNode) {
-            TextNode textNode = (TextNode) currentNode;
-            return !textNode.getText().isBlank();
-        }
-        return true;
     }
 
     /**

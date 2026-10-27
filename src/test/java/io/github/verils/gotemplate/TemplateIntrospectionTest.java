@@ -28,6 +28,20 @@ class TemplateIntrospectionTest {
     }
 
     @Test
+    void definitionsOnlyTemplateHasExecutableEmptyRoot() throws Exception {
+        Template template = new Template("root");
+        template.parse("{{define \"child\"}}Child{{end}}");
+
+        assertTrue(template.hasTemplate("root"));
+        assertEquals("root", template.definedTemplates().iterator().next());
+
+        StringWriter writer = new StringWriter();
+        template.execute(writer, null);
+
+        assertEquals("", writer.toString());
+    }
+
+    @Test
     void definedTemplatesReturnsStableNamesForDefinitions() throws Exception {
         Template template = new Template("root");
         template.parse("Root{{define \"header\"}}Header{{end}}{{define \"footer\"}}Footer{{end}}");
@@ -103,6 +117,33 @@ class TemplateIntrospectionTest {
         StringWriter writer = new StringWriter();
         template.lookup("child").execute(writer, null);
 
+        assertEquals("First", writer.toString());
+    }
+
+    @Test
+    void commentOnlyDefinitionDoesNotOverrideExistingTemplate() throws Exception {
+        Template template = new Template("root");
+        template.parse("{{define \"child\"}}First{{end}}");
+        template.parse("{{define \"child\"}}{{/* comment */}}{{end}}");
+
+        StringWriter writer = new StringWriter();
+        template.lookup("child").execute(writer, null);
+
+        assertEquals("First", writer.toString());
+    }
+
+    @Test
+    void failedDuplicateParseDoesNotReplaceExistingDefinition() throws Exception {
+        Template template = new Template("root");
+        template.parse("{{define \"child\"}}First{{end}}");
+
+        assertThrows(TemplateParseException.class,
+                () -> template.parse(
+                        "{{define \"child\"}}Second{{end}}" +
+                                "{{define \"child\"}}Third{{end}}"));
+
+        StringWriter writer = new StringWriter();
+        template.lookup("child").execute(writer, null);
         assertEquals("First", writer.toString());
     }
 

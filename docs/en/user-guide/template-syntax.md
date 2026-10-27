@@ -442,7 +442,8 @@ Equivalent to:
 {{template "content" .}}
 ```
 
-Blocks can be overridden by later definitions.
+Blocks can be overridden by definitions in a later parse call or file. Two
+non-empty definitions with the same name in one parse call are rejected.
 
 ## Function Calls
 

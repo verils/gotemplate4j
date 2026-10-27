@@ -136,7 +136,8 @@ Pass specific data to the template.
 
 ## Block Action
 
-The `block` action defines and executes a template inline. It's Go-compatible and allows later overrides.
+The `block` action defines and executes a template inline. It's Go-compatible,
+and definitions in later parse calls or files can override it.
 
 ### Basic Block
 
@@ -153,17 +154,21 @@ Equivalent to:
 
 ### Block with Override
 
-Later definitions override earlier ones:
+Definitions in a later parse call or file override earlier ones:
 
 ```gotemplate
-{{/* Base template */}}
+{{/* base.tmpl */}}
 {{block "title" .}}Default Title{{end}}
-
-{{/* Later in template set */}}
-{{define "title"}}Custom Title{{end}}
-
-<!-- When executed, outputs: Custom Title -->
 ```
+
+```gotemplate
+{{/* child.tmpl, parsed in a later call */}}
+{{define "title"}}Custom Title{{end}}
+```
+
+When the base template is executed after the child file is loaded, the block
+outputs `Custom Title`. Two non-empty definitions with the same name in one
+parse call are rejected, whether they use `define` or `block`.
 
 ### Block in Layout
 
