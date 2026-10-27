@@ -851,7 +851,7 @@ public class Template {
      * <ul>
      *   <li>{{.FieldName}} - Calls getFieldName() on the data object</li>
      *   <li>{{.Field.SubField}} - Chains getter calls: getField().getSubField()</li>
-     *   <li>{{index .ArrayOrMap 0}} - Accesses array/map elements</li>
+     *   <li>{{index .Matrix 1 0}} - Accesses nested collection or map elements</li>
      * </ul>
      * <p>
      * Example:

@@ -23,6 +23,15 @@ class ParserNumberTest {
         assertFalse(numberNode.isComplex(), String.format("invalid number: %s", "0"));
     }
 
+    @Test
+    void signedIntegerLiteralsPreserveTheirSign() throws TemplateParseException {
+        Parser parser = new Parser();
+
+        assertEquals(-73L, parser.parseNumber(new Token(TokenType.NUMBER, "-73", 0, 0, 0)).getIntValue());
+        assertEquals(-16L, parser.parseNumber(new Token(TokenType.NUMBER, "-0x10", 0, 0, 0)).getIntValue());
+        assertEquals(73L, parser.parseNumber(new Token(TokenType.NUMBER, "+73", 0, 0, 0)).getIntValue());
+    }
+
 
     @Test
     void testParseNumber() {

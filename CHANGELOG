@@ -2,9 +2,9 @@ Unreleased
 
 ========
 
-**Security and compatibility fixes** - This release aligns escaping and
-comparison functions with Go `text/template`, fixes pipeline handling, and
-unifies template truthiness.
+**Security and compatibility fixes** - This release aligns escaping,
+comparison, and collection functions with Go `text/template`, fixes pipeline
+handling, and unifies template truthiness.
 
 ### 🐛 Bug Fixes
 
@@ -42,6 +42,16 @@ unifies template truthiness.
   for null, mixed-type, custom, and incomparable keys.
 - Map key sorting now requires one concrete basic key type; other maps preserve
   their snapshot iteration order without partial sorting or `toString()` order.
+- `index` now supports chained multi-dimensional access through nested maps,
+  arrays, lists, collections, and strings, with strict integral indexes and
+  clear out-of-range errors.
+- Nested `index` map lookups now apply `MissingKeyPolicy` at every level and
+  unwrap `Optional` values between levels.
+- `slice` now supports zero to three indexes, validates all bounds, and rejects
+  negative, reversed, out-of-range, and excessive indexes instead of clamping
+  them.
+- Signed integer literals such as `-1` now preserve their sign instead of being
+  interpreted as positive values during execution.
 
 ### 🧪 Testing
 
@@ -56,11 +66,15 @@ unifies template truthiness.
   character code point coverage.
 - Added map sorting fallback coverage for mixed numeric types, mixed basic
   types, null keys, custom objects, custom Comparable keys, and nested maps.
+- Added nested indexing, missing-key policy, Optional, strict index type,
+  negative literal, and index/slice boundary coverage.
 
 ### 📚 Documentation
 
 - Synchronized English and Chinese function, security, API, and compatibility
   documentation with the implemented escaping behavior.
+- Documented multi-dimensional indexing, zero-to-three-index slicing, strict
+  bounds, and Java-specific string/list behavior.
 
 v0.10.0 (2026-05-23)
 

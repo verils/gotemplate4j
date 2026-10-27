@@ -271,8 +271,8 @@ types raise errors. Use `deepEqual` for arrays, collections, and maps.
 | Function | Description | Example |
 |----------|-------------|---------|
 | `len` | Length of string/collection | `{{len .Items}}` |
-| `index` | Access array/map element | `{{index .Array 0}}`, `{{index .Map "key"}}` |
-| `slice` | Slice array/string | `{{slice .Array 1 3}}` |
+| `index` | Access nested array, list, collection, string, or map elements | `{{index .Matrix 1 2}}`, `{{index .Users 0 "Name"}}` |
+| `slice` | Slice an array, list, or string with 0–3 indexes | `{{slice .Array 1 3}}`, `{{slice .Array 1}}` |
 
 ### Type Inspection
 

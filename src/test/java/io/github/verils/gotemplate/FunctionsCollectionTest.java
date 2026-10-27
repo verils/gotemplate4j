@@ -5,10 +5,16 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 
 import java.io.IOException;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Stream;
 
 import static io.github.verils.gotemplate.TemplateTestSupport.data;
@@ -16,6 +22,7 @@ import static io.github.verils.gotemplate.TemplateTestSupport.render;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
 
 class FunctionsCollectionTest {
@@ -62,71 +69,128 @@ class FunctionsCollectionTest {
         assertEquals("h", render("{{index .Text 0}}", data("Text", "hello")));
     }
 
-    @ParameterizedTest
-    @MethodSource("indexConversionCases")
-    void indexConvertsNumericLikeIndexes(Object index, String expected) throws IOException, TemplateException {
-        assertEquals(expected, render("{{index .Items .Index}}", data("Items", new String[]{"a", "b", "c"}, "Index", index)));
+    @Test
+    void indexReadsNestedSequencesAndMaps() throws IOException, TemplateException {
+        Map<String, Object> map = new LinkedHashMap<>();
+        map.put("rows", Arrays.asList(Arrays.asList("a", "b"), Arrays.asList("c", "d")));
+
+        assertEquals("d", render("{{index .Map \"rows\" 1 1}}", data("Map", map)));
+        assertEquals("b", render("{{1 | index .Items 0}}",
+                data("Items", new String[][]{{"a", "b"}, {"c", "d"}})));
+        assertEquals("Bob", render("{{index .Rows 0 \"Name\"}}",
+                data("Rows", java.util.Collections.singletonList(TemplateTestSupport.data("Name", "Bob")))));
     }
 
-    private static Stream<org.junit.jupiter.params.provider.Arguments> indexConversionCases() {
+    @ParameterizedTest
+    @MethodSource("integralIndexCases")
+    void indexAcceptsIntegralJavaTypes(Object index) throws IOException, TemplateException {
+        assertEquals("b", render("{{index .Items .Index}}",
+                data("Items", new String[]{"a", "b", "c"}, "Index", index)));
+    }
+
+    private static Stream<org.junit.jupiter.params.provider.Arguments> integralIndexCases() {
         return Stream.of(
-                arguments("1", "b"),
-                arguments("abc", "a"),
-                arguments(null, "a"),
-                arguments(1.9, "b")
+                arguments((byte) 1),
+                arguments((short) 1),
+                arguments(1),
+                arguments(1L),
+                arguments(BigInteger.ONE),
+                arguments(new AtomicInteger(1)),
+                arguments(new AtomicLong(1))
         );
     }
 
     @ParameterizedTest
-    @MethodSource("indexMissCases")
-    void indexReturnsCurrentOutputForMissingValues(String template, Object data, String expected) throws IOException, TemplateException {
-        assertEquals(expected, render(template, data));
+    @MethodSource("invalidIndexCases")
+    void indexRejectsNonIntegralAndOutOfRangeIndexes(Object index) throws IOException, TemplateException {
+        TemplateExecutionException exception = assertThrows(TemplateExecutionException.class,
+                () -> render("{{index .Items .Index}}",
+                        data("Items", new String[]{"a", "b", "c"}, "Index", index)));
+
+        assertTrue(exception.getMessage().contains("function 'index' failed"));
     }
 
-    private static Stream<org.junit.jupiter.params.provider.Arguments> indexMissCases() {
+    private static Stream<org.junit.jupiter.params.provider.Arguments> invalidIndexCases() {
         return Stream.of(
-                arguments("{{index .Collection \"key\"}}", data("Collection", null), "<no value>"),
-                arguments("{{index .Items 10}}", data("Items", new String[]{"a", "b", "c"}), "<no value>"),
-                arguments("{{index .Items 10}}", data("Items", Arrays.asList("a", "b", "c")), "<no value>"),
-                arguments("{{index .Text 100}}", data("Text", "hi"), "")
+                arguments((Object) null),
+                arguments("1"),
+                arguments(1.9),
+                arguments('1'),
+                arguments(-1),
+                arguments(3)
         );
     }
 
     @Test
-    void templateIndexWithNegativeArrayIndexKeepsCurrentExecutorBehavior() throws IOException, TemplateException {
-        assertEquals("b", render("{{index .Items -1}}", data("Items", new String[]{"a", "b", "c"})));
+    void indexPreservesOptionalValuesBetweenLevels() throws IOException, TemplateException {
+        Map<String, Object> row = new HashMap<>();
+        row.put("Name", Optional.of("Bob"));
+        List<Optional<Map<String, Object>>> rows = java.util.Collections.singletonList(Optional.of(row));
+
+        assertEquals("Bob", render("{{index .Rows 0 \"Name\"}}", data("Rows", Optional.of(rows))));
     }
 
     @Test
     void indexRejectsInvalidArgumentCountsAndTypes() {
         assertThrows(IllegalArgumentException.class, () -> TemplateTestSupport.invoke("index", (Object) new String[]{"a"}));
         assertThrows(IllegalArgumentException.class, () -> TemplateTestSupport.invoke("index", 42, 0));
+        assertThrows(IllegalArgumentException.class, () -> TemplateTestSupport.invoke("index", new String[]{"a"}, 1));
+        assertThrows(IllegalArgumentException.class,
+                () -> TemplateTestSupport.invoke("index", new String[]{"a"}, "0"));
     }
 
     @ParameterizedTest
-    @MethodSource("stringSliceCases")
-    void sliceHandlesStringBounds(String template, String expected) throws IOException, TemplateException {
-        assertEquals(expected, render(template, data("Text", "hello")));
+    @MethodSource("sliceArities")
+    void sliceSupportsZeroToThreeIndexes(String template, Object data, String expected)
+            throws IOException, TemplateException {
+        assertEquals(expected, render(template, data));
     }
 
-    private static Stream<org.junit.jupiter.params.provider.Arguments> stringSliceCases() {
+    private static Stream<org.junit.jupiter.params.provider.Arguments> sliceArities() {
+        List<String> items = Arrays.asList("a", "b", "c");
         return Stream.of(
-                arguments("{{slice .Text 1 4}}", "ell"),
-                arguments("{{slice \"hello\" 1 4}}", "ell"),
-                arguments("{{slice .Text 3 1}}", ""),
-                arguments("{{slice .Text 0 100}}", "hello")
+                arguments("{{slice .Text}}", data("Text", "hello"), "hello"),
+                arguments("{{slice .Text 1}}", data("Text", "hello"), "ello"),
+                arguments("{{slice .Text 1 4}}", data("Text", "hello"), "ell"),
+                arguments("{{slice .Items}}", data("Items", items), "[a, b, c]"),
+                arguments("{{slice .Items 1}}", data("Items", items), "[b, c]"),
+                arguments("{{slice .Items 1 2}}", data("Items", items), "[b]"),
+                arguments("{{slice .Items 1 2 3}}", data("Items", items), "[b]")
+        );
+    }
+
+    @ParameterizedTest
+    @MethodSource("invalidSliceCases")
+    void sliceRejectsInvalidRanges(Object value, Object[] indexes) {
+        assertThrows(IllegalArgumentException.class, () -> TemplateTestSupport.invoke(
+                "slice", concat(value, indexes)));
+    }
+
+    private static Stream<org.junit.jupiter.params.provider.Arguments> invalidSliceCases() {
+        return Stream.of(
+                arguments("hello", new Object[]{-1}),
+                arguments("hello", new Object[]{3, 1}),
+                arguments("hello", new Object[]{1, 6}),
+                arguments("hello", new Object[]{1, 2, 2}),
+                arguments(Arrays.asList("a", "b", "c"), new Object[]{-1, 2}),
+                arguments(Arrays.asList("a", "b", "c"), new Object[]{2, 1}),
+                arguments(Arrays.asList("a", "b", "c"), new Object[]{1, 3, 2}),
+                arguments(Arrays.asList("a", "b", "c"), new Object[]{0, 1, 2, 3}),
+                arguments(null, new Object[]{}),
+                arguments("hello", new Object[]{"1"}),
+                arguments("hello", new Object[]{1.0})
         );
     }
 
     @Test
-    void directSliceClampsNegativeStringStart() {
-        assertEquals("hel", TemplateTestSupport.invoke("slice", "hello", -5, 3));
-    }
-
-    @Test
     void sliceReturnsArrayForArrayInput() {
+        Object full = TemplateTestSupport.invoke("slice", (Object) new String[]{"a", "b", "c", "d"});
         Object result = TemplateTestSupport.invoke("slice", new String[]{"a", "b", "c", "d"}, 1, 3);
+        Object bounded = TemplateTestSupport.invoke("slice", new String[]{"a", "b", "c", "d"}, 1, 3, 4);
+
+        assertArrayEquals(new String[]{"a", "b", "c", "d"}, (String[]) full);
         assertArrayEquals(new String[]{"b", "c"}, (String[]) result);
+        assertArrayEquals(new String[]{"b", "c"}, (String[]) bounded);
     }
 
     @Test
@@ -135,20 +199,24 @@ class FunctionsCollectionTest {
     }
 
     @Test
-    void directSliceClampsListBounds() {
-        Object result = TemplateTestSupport.invoke("slice", Arrays.asList("a", "b", "c"), -2, 10);
-        assertEquals(Arrays.asList("a", "b", "c"), result);
-    }
-
-    @Test
-    void sliceReturnsEmptyArrayWhenArrayStartIsNotBeforeEnd() {
-        Object result = TemplateTestSupport.invoke("slice", new String[]{"a", "b", "c"}, 3, 2);
-        assertEquals(0, java.lang.reflect.Array.getLength(result));
-    }
-
-    @Test
     void sliceRejectsInvalidArgumentCountsAndTypes() {
-        assertThrows(IllegalArgumentException.class, () -> TemplateTestSupport.invoke("slice", "abc", 0));
+        assertThrows(IllegalArgumentException.class, () -> TemplateTestSupport.invoke("slice"));
         assertThrows(IllegalArgumentException.class, () -> TemplateTestSupport.invoke("slice", 42, 0, 1));
+    }
+
+    @Test
+    void sliceWrapsExecutionFailuresWithDiagnostics() {
+        TemplateExecutionException exception = assertThrows(TemplateExecutionException.class,
+                () -> render("{{slice .Text 2 1}}", data("Text", "abc")));
+
+        assertTrue(exception.getMessage().contains("function 'slice' failed"));
+        assertTrue(exception.getMessage().contains("invalid slice index"));
+    }
+
+    private static Object[] concat(Object value, Object[] indexes) {
+        Object[] args = new Object[indexes.length + 1];
+        args[0] = value;
+        System.arraycopy(indexes, 0, args, 1, indexes.length);
+        return args;
     }
 }

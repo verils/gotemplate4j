@@ -7,9 +7,12 @@ import java.io.ByteArrayOutputStream;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
@@ -115,6 +118,43 @@ class MissingKeyPolicyTest {
         data.put("Name", java.util.Optional.of("Bob"));
 
         assertEquals("Bob", TemplateTestSupport.render("{{index . \"Name\"}}", data));
+    }
+
+    @Test
+    void indexValuesUnwrapOptionalAtEveryLevel() throws Exception {
+        Map<String, Object> row = new HashMap<>();
+        row.put("Name", Optional.of("Bob"));
+        List<Optional<Map<String, Object>>> rows = new ArrayList<>();
+        rows.add(Optional.of(row));
+
+        assertEquals("Bob", TemplateTestSupport.render("{{index .Rows 0 \"Name\"}}",
+                TemplateTestSupport.data("Rows", Optional.of(rows))));
+    }
+
+    @Test
+    void nestedIndexMissingMapKeyUsesNonStrictPolicies() throws Exception {
+        Map<String, Object> row = new HashMap<>();
+        row.put("Name", "Bob");
+        List<Map<String, Object>> rows = Arrays.asList(row);
+
+        assertEquals("<no value>", TemplateTestSupport.render("{{index .Rows 0 \"Missing\"}}",
+                TemplateTestSupport.data("Rows", rows)));
+        assertEquals("<no value>", TemplateTestSupport.render("{{index .Rows 0 \"Missing\" 1}}",
+                TemplateTestSupport.data("Rows", rows)));
+    }
+
+    @Test
+    void errorPolicyFailsForNestedIndexMissingMapKey() throws Exception {
+        Map<String, Object> row = new HashMap<>();
+        row.put("Name", "Bob");
+        List<Map<String, Object>> rows = Arrays.asList(row);
+        Template template = new Template("test").withMissingKeyPolicy(MissingKeyPolicy.ERROR);
+        template.parse("{{index .Rows 0 \"Missing\"}}");
+
+        TemplateExecutionException exception = assertThrows(TemplateExecutionException.class,
+                () -> template.execute(new StringWriter(), TemplateTestSupport.data("Rows", rows)));
+
+        assertTrue(exception.getMessage().contains("missing map key 'Missing'"));
     }
 
     @Test

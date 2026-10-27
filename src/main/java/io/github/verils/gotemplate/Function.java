@@ -28,8 +28,8 @@ package io.github.verils.gotemplate;
  *   <li>eq, ne, lt, le, gt, ge - Comparison operators</li>
  *   <li>and, or, not - Logical operators</li>
  *   <li>len - Length of collections/strings</li>
- *   <li>index - Access array/map elements</li>
- *   <li>slice - Slice arrays/strings</li>
+ *   <li>index - Access nested array, collection, string, and map elements</li>
+ *   <li>slice - Slice arrays, lists, and strings</li>
  *   <li>call - Call functions dynamically</li>
  *   <li>html, js, urlquery - Escaping functions</li>
  *   <li>deepEqual, typeof, kindOf - Type inspection</li>

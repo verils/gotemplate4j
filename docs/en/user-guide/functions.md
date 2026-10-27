@@ -432,7 +432,9 @@ and the explicit argument supplies the fallback.
 
 #### index
 
-Access element by index (for arrays, lists, maps).
+Access an element in arrays, lists, collections, strings, or maps. Additional
+arguments continue indexing the previous result, so nested containers can be
+accessed in one expression.
 
 ```gotemplate
 {{index .Items 0}}
@@ -443,19 +445,37 @@ Access element by index (for arrays, lists, maps).
 
 {{index .Matrix 1 2}}
 <!-- Multi-dimensional indexing -->
+
+{{index .Users 0 "Name"}}
+<!-- Index a list, then index the resulting map -->
 ```
+
+Sequence indexes must be integral Java values. Strings, floating-point values,
+`null`, negative indexes, and out-of-range indexes raise a template execution
+error. Missing map keys continue to follow `MissingKeyPolicy`.
 
 #### slice
 
-Extract slice from array or string.
+Extract a slice from an array, list, or string. The function accepts zero to
+three indexes:
 
 ```gotemplate
+{{slice .Items}}
+<!-- The complete sequence -->
+
+{{slice .Items 1}}
+<!-- From index 1 to the end -->
+
 {{slice "hello" 1 4}}
 <!-- Output: ell -->
 
-{{slice .Items 0 5}}
-<!-- First 5 items -->
+{{slice .Items 1 4 5}}
+<!-- Bounded slice: start=1, end=4, max=5 -->
 ```
+
+Indexes must be integral and non-negative, and must not exceed the sequence
+length. Reversed or out-of-range ranges raise an error. The third index is not
+allowed for strings.
 
 ### URL and HTML Functions
 

@@ -50,7 +50,7 @@ All standard Go template functions are supported:
 
 - **Comparison**: `eq`, `ne`, `lt`, `le`, `gt`, `ge`
 - **Logical**: `and`, `or`, `not`
-- **Collection**: `len`, `index`
+- **Collection**: `len`, `index`, `slice`
 - **Formatting**: `printf`, `print`, `println`
 - **String escaping**: `html`, `js`, `urlquery`
 - **Function calling**: `call` for invoking Function instances
@@ -68,6 +68,11 @@ other, decimal types compare with each other, and mixing groups raises an error.
 `eq` matches the first argument against any following candidate. Arrays,
 collections, and maps are not directly comparable and should use `deepEqual`.
 
+`index` supports chained indexing through nested arrays, lists, collections,
+strings, and maps. Sequence indexes must be integral Java values, while map keys
+retain their Java object types. `slice` accepts zero to three indexes and
+performs strict bounds checks rather than clamping invalid ranges.
+
 ### Error Handling
 
 - **Parse errors**: Include source context showing where parsing failed.
@@ -84,6 +89,11 @@ These behaviors differ from Go templates due to Java language characteristics.
 - **Public fields**: Direct field access is supported for public fields.
 - **No-argument methods**: Public methods with no arguments can be called in field chains.
 - **Methods with arguments**: Intentionally not supported from templates for security reasons.
+- **String indexing and slicing**: Positions count Java UTF-16 code units rather than Go string bytes.
+- **Three-index lists**: The maximum index is validated against `List.size()`; the returned
+  `ArrayList` does not preserve a separate capacity.
+- **Generic collections**: Indexing an ordered Java `Collection` that is not a `List` is a
+  gotemplate4j extension and follows its iteration order.
 
 Example:
 ```java

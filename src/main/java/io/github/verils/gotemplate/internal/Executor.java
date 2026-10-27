@@ -2,6 +2,7 @@ package io.github.verils.gotemplate.internal;
 
 import io.github.verils.gotemplate.*;
 import io.github.verils.gotemplate.internal.ast.*;
+import io.github.verils.gotemplate.internal.lang.CollectionAccessUtils;
 import io.github.verils.gotemplate.internal.lang.ErrorUtils;
 import io.github.verils.gotemplate.internal.lang.Truthiness;
 
@@ -696,31 +697,35 @@ public class Executor {
             throw new TemplateExecutionException("function 'index' failed", new IllegalArgumentException("index requires at least 2 arguments"));
         }
 
-        Object collection = functionArgs[0];
-        Object key = functionArgs[1];
-        if (collection == null) {
-            if (missingKeyPolicy == MissingKeyPolicy.ERROR) {
-                throw new TemplateExecutionException("index of null value");
+        Object current = functionArgs[0];
+        for (int i = 1; i < functionArgs.length; i++) {
+            current = unwrapOptional(current);
+            if (current == null) {
+                if (missingKeyPolicy == MissingKeyPolicy.ERROR) {
+                    throw new TemplateExecutionException("index of null value");
+                }
+                return null;
             }
-            return null;
-        }
-        if (collection instanceof Map) {
-            Map<?, ?> map = (Map<?, ?>) collection;
-            if (!map.containsKey(key)) {
-                return handleMissingMapKey(String.valueOf(key), map);
+            if (current instanceof Map) {
+                Map<?, ?> map = (Map<?, ?>) current;
+                Object key = functionArgs[i];
+                try {
+                    if (!map.containsKey(key)) {
+                        return handleMissingMapKey(String.valueOf(key), map);
+                    }
+                    current = map.get(key);
+                } catch (RuntimeException e) {
+                    throw new TemplateExecutionException(buildFunctionExecutionError("index", functionArgs, e), e);
+                }
+                continue;
             }
-            return unwrapOptional(map.get(key));
+            try {
+                current = CollectionAccessUtils.index(current, functionArgs[i]);
+            } catch (RuntimeException e) {
+                throw new TemplateExecutionException(buildFunctionExecutionError("index", functionArgs, e), e);
+            }
         }
-
-        Function indexFunction = functions.get("index");
-        if (indexFunction == null) {
-            throw new TemplateExecutionException("index is not a defined function");
-        }
-        try {
-            return indexFunction.invoke(functionArgs);
-        } catch (RuntimeException e) {
-            throw new TemplateExecutionException(buildFunctionExecutionError("index", functionArgs, e), e);
-        }
+        return unwrapOptional(current);
     }
 
     private Object handleMissingMapKey(String key, Map<?, ?> map) throws TemplateExecutionException {

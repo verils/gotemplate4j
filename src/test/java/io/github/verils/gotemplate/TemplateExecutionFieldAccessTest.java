@@ -10,6 +10,8 @@ import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Tests for field access and navigation.
@@ -57,8 +59,9 @@ class TemplateExecutionFieldAccessTest {
         Map<String, Object> data = new HashMap<>();
         data.put("Items", new String[]{"a", "b", "c"});
 
-        template.execute(writer, data);
-        assertEquals("<no value>", writer.toString());
+        TemplateExecutionException exception = assertThrows(TemplateExecutionException.class,
+                () -> template.execute(writer, data));
+        assertTrue(exception.getMessage().contains("index out of range"));
     }
 
     @Test
@@ -70,8 +73,9 @@ class TemplateExecutionFieldAccessTest {
         Map<String, Object> data = new HashMap<>();
         data.put("Items", new String[]{"a", "b", "c"});
 
-        template.execute(writer, data);
-        assertNotNull(writer.toString());
+        TemplateExecutionException exception = assertThrows(TemplateExecutionException.class,
+                () -> template.execute(writer, data));
+        assertTrue(exception.getMessage().contains("index out of range"));
     }
 
     @Test

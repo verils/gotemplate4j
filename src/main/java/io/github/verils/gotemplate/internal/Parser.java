@@ -812,20 +812,24 @@ public class Parser {
     private long parseIntValue(String text, boolean signed) {
         int offset = signed ? 1 : 0;
         String trimUnderscore = trimUnderscore(text);
-
-        if (text.startsWith("0b", offset) || text.startsWith("0B", offset)) {
-            return Long.parseLong(trimUnderscore.substring(offset + 2), 2);
+        String digits = trimUnderscore.substring(offset);
+        if (digits.startsWith("+") || digits.startsWith("-")) {
+            throw new NumberFormatException("multiple signs in number");
         }
 
-        if (text.startsWith("0o", offset) || text.startsWith("0O", offset)) {
-            return Long.parseLong(trimUnderscore.substring(offset + 2), 8);
+        if (digits.startsWith("0b") || digits.startsWith("0B")) {
+            return Long.parseLong(digits.substring(2), 2);
         }
 
-        if (text.startsWith("0x", offset) || text.startsWith("0X", offset)) {
-            return Long.parseLong(trimUnderscore.substring(offset + 2), 16);
+        if (digits.startsWith("0o") || digits.startsWith("0O")) {
+            return Long.parseLong(digits.substring(2), 8);
         }
 
-        return Long.parseLong(trimUnderscore, 10);
+        if (digits.startsWith("0x") || digits.startsWith("0X")) {
+            return Long.parseLong(digits.substring(2), 16);
+        }
+
+        return Long.parseLong(digits, 10);
     }
 
     private double parseFloatValue(String text) {

@@ -1,14 +1,13 @@
 package io.github.verils.gotemplate;
 
 import io.github.verils.gotemplate.internal.lang.ComparisonUtils;
+import io.github.verils.gotemplate.internal.lang.CollectionAccessUtils;
 import io.github.verils.gotemplate.internal.lang.Truthiness;
 
 import java.lang.reflect.Array;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 
 public class Functions {
@@ -212,105 +211,22 @@ public class Functions {
             if (args.length < 2) {
                 throw new IllegalArgumentException("index requires at least 2 arguments");
             }
-            Object collection = args[0];
-            if (collection == null) {
-                return null;
+            Object current = args[0];
+            for (int i = 1; i < args.length && current != null; i++) {
+                current = CollectionAccessUtils.index(current, args[i]);
             }
-
-            if (collection instanceof Map) {
-                Map<?, ?> map = (Map<?, ?>) collection;
-                return map.get(args[1]);
-            }
-
-            if (collection.getClass().isArray()) {
-                int index = toInt(args[1]);
-                int arrayLength = Array.getLength(collection);
-                if (index >= 0 && index < arrayLength) {
-                    return Array.get(collection, index);
-                }
-                return null;
-            }
-
-            if (collection instanceof List) {
-                List<?> list = (List<?>) collection;
-                int index = toInt(args[1]);
-                if (index >= 0 && index < list.size()) {
-                    return list.get(index);
-                }
-                return null;
-            }
-
-            if (collection instanceof Collection) {
-                Collection<?> values = (Collection<?>) collection;
-                int index = toInt(args[1]);
-                if (index < 0 || index >= values.size()) {
-                    return null;
-                }
-                int current = 0;
-                for (Object value : values) {
-                    if (current == index) {
-                        return value;
-                    }
-                    current++;
-                }
-                return null;
-            }
-
-            if (collection instanceof String) {
-                String str = (String) collection;
-                int index = toInt(args[1]);
-                if (index >= 0 && index < str.length()) {
-                    return String.valueOf(str.charAt(index));
-                }
-                return "";
-            }
-
-            throw new IllegalArgumentException("index: invalid type " + collection.getClass().getName());
+            return current;
         };
     }
 
     private static Function slice() {
         return args -> {
-            if (args.length < 3) {
-                throw new IllegalArgumentException("slice requires at least 3 arguments: collection, start, end");
+            if (args.length < 1) {
+                throw new IllegalArgumentException("slice requires at least 1 argument");
             }
-            Object collection = args[0];
-            int start = toInt(args[1]);
-            int end = toInt(args[2]);
-
-            if (collection instanceof String) {
-                String str = (String) collection;
-                if (start < 0) start = 0;
-                if (end > str.length()) end = str.length();
-                if (start >= end) return "";
-                return str.substring(start, end);
-            }
-
-            if (collection.getClass().isArray()) {
-                int arrayLength = Array.getLength(collection);
-                if (start < 0) start = 0;
-                if (end > arrayLength) end = arrayLength;
-                if (start >= end) {
-                    return Array.newInstance(collection.getClass().getComponentType(), 0);
-                }
-                int length = end - start;
-                Object newArray = Array.newInstance(collection.getClass().getComponentType(), length);
-                //noinspection SuspiciousSystemArraycopy
-                System.arraycopy(collection, start, newArray, 0, length);
-                return newArray;
-            }
-
-            if (collection instanceof List) {
-                List<?> list = (List<?>) collection;
-                if (start < 0) start = 0;
-                if (end > list.size()) end = list.size();
-                if (start >= end) {
-                    return new ArrayList<>();
-                }
-                return new ArrayList<>(list.subList(start, end));
-            }
-
-            throw new IllegalArgumentException("slice: invalid type " + collection.getClass().getName());
+            Object[] indexes = new Object[args.length - 1];
+            System.arraycopy(args, 1, indexes, 0, indexes.length);
+            return CollectionAccessUtils.slice(args[0], indexes);
         };
     }
 
@@ -386,28 +302,6 @@ public class Functions {
     }
 
     // Helper methods
-    private static int toInt(Object obj) {
-        if (obj == null) {
-            return 0;
-        }
-        if (obj instanceof Number) {
-            return ((Number) obj).intValue();
-        }
-        if (obj instanceof String) {
-            try {
-                return Integer.parseInt((String) obj);
-            } catch (NumberFormatException e) {
-                return 0;
-            }
-        }
-        // Try to convert other types
-        try {
-            return Integer.parseInt(obj.toString());
-        } catch (NumberFormatException e) {
-            return 0;
-        }
-    }
-
     private static String escapeHtml(String str) {
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < str.length(); i++) {
